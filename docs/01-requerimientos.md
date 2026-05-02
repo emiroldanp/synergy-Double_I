@@ -53,12 +53,13 @@ Irving Gallart opera un negocio de compraventa de tarjetas coleccionables TCG (T
 | RF-019 | El formulario de checkout solicita: nombre completo, correo electrónico, teléfono, dirección de envío (calle, número, colonia, ciudad, estado, CP). |
 | RF-020 | **Cotizador de envíos:** al ingresar la dirección, el sistema consulta la API de Skydropx y muestra opciones de paquetería disponibles (Estafeta, DHL, FedEx) con costo y tiempo de entrega estimado por cada opción. |
 | RF-021 | El costo del envío seleccionado se suma al subtotal antes de proceder al pago. |
-| RF-022 | El checkout debe incluir la opción "Recoger en tienda física — GRATIS" como alternativa a los envíos. La dirección de la tienda se define en kickoff con Irving. |
+| ~~RF-022~~ | ~~El checkout debe incluir la opción "Recoger en tienda física — GRATIS" como alternativa a los envíos.~~ **Eliminado en kickoff — todo en línea, sin pickup.** |
 | RF-023 | **Facturación CFDI:** el checkout incluye una sección opcional de facturación. Si el cliente la activa, debe ingresar: RFC, razón social y uso del CFDI. El sistema genera la factura automáticamente vía Facturapi al confirmar el pedido. |
 | RF-024 | La factura CFDI se envía al correo del comprador en formato PDF y XML. |
-| RF-025 | El sistema debe integrarse con la pasarela de pagos definida en kickoff (Mercado Pago recomendado) y soportar al menos: tarjeta de crédito/débito, OXXO Pay y SPEI. |
+| RF-025 | El sistema se integra con **Mercado Pago**. Métodos soportados: transferencias bancarias (SPEI) y pago en tiendas de conveniencia (OXXO Pay). La comisión de la pasarela ya está implícita en el precio del paquete. |
 | RF-026 | Al completar el pago, el cliente recibe un correo de confirmación del pedido con resumen de artículos, total, método de envío y número de seguimiento (cuando esté disponible). |
 | RF-027 | El pedido confirmado descuenta automáticamente las unidades del inventario en Supabase. |
+| RF-027b | Irving puede crear y gestionar promociones desde el panel admin (descuentos por monto o porcentaje, fechas de vigencia). Las promociones activas se reflejan en el catálogo y en el checkout. |
 
 ### Módulo 4: Panel Admin
 
@@ -83,7 +84,7 @@ Irving Gallart opera un negocio de compraventa de tarjetas coleccionables TCG (T
 | RF-039 | La homepage incluye accesos directos por franquicia (Pokémon / Yu-Gi-Oh! / Lorcana) con imagen representativa. |
 | RF-040 | La homepage incluye llamada a la acción para suscripción a email marketing. |
 | RF-041 | Botón de WhatsApp flotante en la página de contacto y en la homepage. |
-| RF-042 | Botones de redes sociales del cliente (Instagram, Facebook, TikTok u otras que Irving confirme) en el footer. |
+| RF-042 | Botones de redes sociales de Irving en el footer. Plataformas exactas por confirmar. **[PLACEHOLDER — confirmar redes con Irving]** |
 
 ### Módulo 6: Blog y SEO
 
@@ -127,7 +128,7 @@ Irving Gallart opera un negocio de compraventa de tarjetas coleccionables TCG (T
 | RNF-005 | **Disponibilidad:** el sitio debe tolerar picos de tráfico durante lanzamientos de nuevas colecciones. El backend en Hostinger debe configurarse con reintentos en las llamadas a APIs externas. |
 | RNF-006 | **Accesibilidad básica:** contraste de texto mínimo WCAG AA, etiquetas alt en todas las imágenes de producto, formularios con labels correctos y mensajes de error inline legibles. |
 | RNF-007 | **SEO técnico:** URLs amigables (slugs), sin parámetros GET en URLs de catálogo, sitemap.xml y robots.txt configurados. Sin bloqueos de indexación en producción. |
-| RNF-008 | **Confiabilidad del checkout:** si la API de Skydropx no responde en más de 5 segundos, el sistema muestra un mensaje de error claro y permite continuar eligiendo "Recoger en tienda" o reintentar. El checkout no debe bloquearse indefinidamente por una API externa. |
+| RNF-008 | **Confiabilidad del checkout:** si la API de Skydropx no responde en más de 5 segundos, el sistema muestra un mensaje de error claro y permite reintentar la cotización. El checkout no debe bloquearse indefinidamente por una API externa. |
 
 ---
 
@@ -135,7 +136,7 @@ Irving Gallart opera un negocio de compraventa de tarjetas coleccionables TCG (T
 
 Las siguientes funcionalidades quedan fuera del alcance del paquete PRO contratado:
 
-1. Fotografía profesional de productos — Irving proporciona todas las imágenes.
+1. Fotografía profesional de productos e inventario en excel o similar — Irving proporciona todas las imágenes.
 2. Gestión de campañas de pauta publicitaria (Meta Ads, Google Ads) — no incluida.
 3. Mantenimiento correctivo o evolutivo posterior a los 30 días post-lanzamiento — requiere contrato de mantenimiento separado.
 4. Integración con marketplaces externos (MercadoLibre, Amazon) — fuera de alcance.
@@ -147,11 +148,14 @@ Las siguientes funcionalidades quedan fuera del alcance del paquete PRO contrata
 
 ## Pendientes de Kickoff con Irving
 
-Los siguientes puntos deben resolverse en la sesión de kickoff antes de iniciar el desarrollo. Son bloqueantes para las fases indicadas.
+Estado al 2025-05-02 — ✅ resuelto | ⏳ pendiente
 
-1. **Pasarela de pagos:** confirmar si se usará Mercado Pago o Stripe. Impacta la implementación del backend de checkout.
-2. **Dirección de tienda física:** dirección completa para la opción "Recoger en tienda — GRATIS" y como origen de envíos en la API de Skydropx.
-3. **RFC y CSD del SAT:** RFC del emisor de facturas, Certificado de Sello Digital (.cer y .key) y contraseña del CSD. Necesarios para configurar Facturapi como emisor de CFDI 4.0.
-4. **Dominio:** dominio deseado para el sitio (ej. irvingcards.com.mx). Synergy gestiona el alta si Irving no lo tiene.
-5. **Identidad visual:** paleta de colores, logotipo en formato vectorial (SVG o AI), tipografías preferidas. Si Irving no tiene identidad definida, Synergy puede proponer una como alcance adicional.
-6. **Muestra inicial de productos:** mínimo 10-15 productos con nombre, franquicia, set, rareza, edición, condición, variante, idioma, precio y fotografía — para poblar el catálogo en staging.
+| # | Pendiente | Estado | Nota |
+|---|-----------|--------|------|
+| 1 | **Pasarela de pagos** | ✅ Resuelto | Mercado Pago — transferencias y tiendas de conveniencia |
+| 2 | **Dirección de origen para envíos** (Skydropx) | ⏳ Pendiente | Ya no hay pickup, pero se necesita la dirección de origen para cotizar envíos |
+| 3 | **RFC y CSD del SAT** | ⏳ Pendiente | RFC, archivos .cer y .key, contraseña CSD — necesarios para Facturapi |
+| 4 | **Dominio** | ⏳ Pendiente | Synergy enviará opciones a Irving para que elija |
+| 5 | **Identidad visual** | ⏳ Pendiente | Irving compartirá su logo — la guía visual seguirá esa línea |
+| 6 | **Redes sociales** | ⏳ Pendiente | Confirmar plataformas exactas para el footer |
+| 7 | **Muestra inicial de productos** | ⏳ Pendiente | Mínimo 10-15 productos con todos sus campos y fotografías para staging |

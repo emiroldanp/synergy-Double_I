@@ -46,16 +46,18 @@ Stack estándar Synergy **más** Express.js backend obligatorio en este proyecto
 
 ---
 
-## Bloqueantes hasta kickoff con Irving
+## Bloqueantes post-kickoff (estado 2026-05-02)
 
-| Bloqueante | Impacta |
-|------------|---------|
-| Pasarela de pagos (Mercado Pago o Stripe) | Webhook de pagos, paso 5 del checkout |
-| Dirección de tienda física | Opción "Recoger en tienda", origen Skydropx |
-| RFC y CSD del SAT | Configuración Facturapi, emisión CFDI |
-| Dominio deseado | DNS, CI/CD, URLs SEO |
-| Paleta de colores, logotipo, tipografías | Identidad visual del frontend |
-| Número de WhatsApp de Irving | Botón flotante |
+| Bloqueante | Estado | Impacta |
+|------------|--------|---------|
+| Pasarela de pagos | ✅ Mercado Pago | Webhook de pagos, checkout |
+| Pickup en tienda | ✅ Eliminado — todo en línea | — |
+| Dirección de origen (envíos) | ⏳ Pendiente | Cotización Skydropx |
+| RFC y CSD del SAT | ⏳ Pendiente | Facturapi, emisión CFDI |
+| Dominio | ⏳ Pendiente (Synergy envía opciones) | DNS, CI/CD, URLs SEO |
+| Logo e identidad visual | ⏳ Pendiente (Irving lo comparte) | Frontend completo |
+| Redes sociales del footer | ⏳ Pendiente | Footer |
+| Número de WhatsApp de Irving | ⏳ Pendiente | Botón flotante |
 
 ---
 

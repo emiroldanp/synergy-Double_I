@@ -2,7 +2,7 @@
 
 **Cliente:** Irving Gallart  
 **Proyecto:** Ecommerce especializado TCG  
-**Paquete:** PRO — $35,000 MXN + IVA  
+**Paquete:** PRO — $35,000 MXN 
 **Elaborado por:** Synergy Tech MX  
 **Fecha:** Mayo 2026  
 **Versión:** 1.0
@@ -397,7 +397,7 @@ Ambos archivos `.env` deben tener su correspondiente `.env.example` con todos lo
 ## Estructura de Carpetas
 
 ```
-synergy-irving-tcg/
+synergy-double-i/
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          ← CI/CD: dev→staging, main→producción
