@@ -6,7 +6,7 @@
 
 ## Proyecto
 
-**Cliente:** Irving Gallart  
+**Cliente:** Irving Gallart  | Double-I
 **Proyecto:** Ecommerce de tarjetas coleccionables TCG — Pokémon, Yu-Gi-Oh!, Lorcana  
 **Paquete:** PRO — $35,000 MXN + IVA  
 **Nombre del repositorio:** `synergy-irving-tcg`
