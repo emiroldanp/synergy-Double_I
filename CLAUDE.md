@@ -6,7 +6,7 @@
 
 ## Proyecto
 
-**Cliente:** Irving Gallart  
+**Cliente:** Irving Gallart  | Double-I
 **Proyecto:** Ecommerce de tarjetas coleccionables TCG — Pokémon, Yu-Gi-Oh!, Lorcana  
 **Paquete:** PRO — $35,000 MXN + IVA  
 **Nombre del repositorio:** `synergy-irving-tcg`
@@ -17,6 +17,8 @@
 
 Stack estándar Synergy **más** Express.js backend obligatorio en este proyecto (las API keys de Skydropx, Facturapi y la pasarela de pagos nunca pueden estar expuestas en el frontend).
 
+**Decisión de arquitectura (2026-05-02):** Se reemplaza Supabase como BaaS por Neon Postgres + Prisma + Clerk + Cloudflare R2. Motivo: límite de 2 proyectos en plan gratuito de Supabase y costo de Pro ($44/mes) no justificado en esta etapa.
+
 | Capa | Tecnología |
 |------|------------|
 | Frontend | React + Vite + TypeScript + Tailwind CSS |
@@ -24,12 +26,14 @@ Stack estándar Synergy **más** Express.js backend obligatorio en este proyecto
 | Formularios | React Hook Form + Zod |
 | SEO | react-helmet-async |
 | Backend | Express.js + Node.js |
-| Base de datos | Supabase (PostgreSQL) con RLS |
-| Autenticación | Supabase Auth |
+| Base de datos | **Neon Postgres** |
+| ORM | **Prisma** |
+| Autenticación | **Clerk** |
+| Almacenamiento de imágenes | **Cloudflare R2** |
 | Cotización de envíos | Skydropx API |
 | Facturación CFDI | Facturapi SDK Node.js |
 | Email marketing | Brevo API |
-| Pasarela de pagos | `[PLACEHOLDER — Mercado Pago o Stripe — confirmar en kickoff]` |
+| Pasarela de pagos | Mercado Pago |
 | Hosting | Hostinger |
 | CI/CD | GitHub Actions |
 
@@ -39,8 +43,8 @@ Stack estándar Synergy **más** Express.js backend obligatorio en este proyecto
 
 1. **Nunca inventar datos del cliente.** Si un dato no está definido (WhatsApp, dirección de tienda, RFC, paleta de colores, dominio), usar `[PLACEHOLDER — confirmar con Irving en kickoff]`.
 2. **MadeBy siempre en el footer** de todas las páginas — obligatorio según estándar Synergy.
-3. **API keys solo en backend** — `SKYDROPX_API_KEY`, `FACTURAPI_API_KEY`, `BREVO_API_KEY`, `PAYMENT_ACCESS_TOKEN` nunca en el frontend.
-4. **RLS habilitado en todas las tablas** de Supabase — no hay tabla sin políticas.
+3. **API keys solo en backend** — `SKYDROPX_API_KEY`, `FACTURAPI_API_KEY`, `BREVO_API_KEY`, `PAYMENT_ACCESS_TOKEN`, `CLERK_SECRET_KEY`, `CLOUDFLARE_R2_*` nunca en el frontend.
+4. **Prisma es el único punto de acceso a la base de datos** — no escribir SQL crudo salvo en migraciones. El schema vive en `prisma/schema.prisma`.
 5. **Commits en español** con formato Synergy: `feat:`, `fix:`, `style:`, `refactor:`, `docs:`, `chore:`.
 6. **El agente `database` debe completarse antes de despachar `backend` y `frontend`.**
 
@@ -66,7 +70,7 @@ Stack estándar Synergy **más** Express.js backend obligatorio en este proyecto
 | Agente | Rol |
 |--------|-----|
 | `orchestrator` | Coordina todos los agentes |
-| `database` | Esquema Supabase + RLS + seed |
+| `database` | Schema Prisma + migraciones Neon + seed |
 | `backend` | Express.js + integraciones externas |
 | `frontend` | React — todas las páginas y componentes |
 | `docs` | README técnico + ENTREGA-CLIENTE.md |
