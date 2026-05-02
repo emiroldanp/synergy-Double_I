@@ -26,6 +26,12 @@ export async function subscribeEmail(req: Request, res: Response, next: NextFunc
       return res.status(400).json({ error: 'email y source son requeridos' })
     }
 
+    // Validar formato de email antes de llamar a Brevo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Formato de email inválido' })
+    }
+
     const validSources = ['homepage_form', 'checkout', 'manual']
     if (!validSources.includes(source)) {
       return res.status(400).json({ error: `source inválido. Valores permitidos: ${validSources.join(', ')}` })

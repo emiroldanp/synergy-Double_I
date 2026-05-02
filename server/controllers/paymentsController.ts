@@ -6,6 +6,11 @@ import { createInvoice } from './invoicesController'
 import { sendOrderConfirmationEmail } from './emailController'
 import crypto from 'crypto'
 
+// Verificar en producción que el webhook secret esté configurado
+if (process.env.NODE_ENV === 'production' && !process.env.PAYMENT_WEBHOOK_SECRET) {
+  throw new Error('PAYMENT_WEBHOOK_SECRET es requerido en producción')
+}
+
 // Inicializar cliente de Mercado Pago
 function getMpClient() {
   return new MercadoPagoConfig({ accessToken: process.env.PAYMENT_ACCESS_TOKEN! })
@@ -111,19 +116,27 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
     }
 
     // Verificar firma si está configurado el webhook secret
-    const xSignature = req.headers['x-signature'] as string | undefined
+    const xSignature = req.headers['x-signature'] as string || ''
+    const xRequestId = req.headers['x-request-id'] as string || ''
     const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET
 
     if (webhookSecret && xSignature) {
-      const [, signaturePart] = xSignature.split(',')
-      const [, signatureValue] = (signaturePart || '').split('=')
-      const xRequestId = req.headers['x-request-id'] as string | undefined
-      const dataId = notification?.data?.id || ''
+      const paymentId = notification?.data?.id || ''
 
-      const manifest = `id:${dataId};request-id:${xRequestId || ''};ts:${Date.now()};`
+      // Parsear ts y v1 del header x-signature (formato: ts=TIMESTAMP,v1=HASH)
+      const parts = xSignature.split(',')
+      let ts = ''
+      let v1 = ''
+      for (const part of parts) {
+        const [key, value] = part.split('=')
+        if (key === 'ts') ts = value
+        if (key === 'v1') v1 = value
+      }
+
+      const manifest = `id:${paymentId};request-id:${xRequestId};ts:${ts};`
       const hmac = crypto.createHmac('sha256', webhookSecret).update(manifest).digest('hex')
 
-      if (hmac !== signatureValue) {
+      if (hmac !== v1) {
         console.error('Webhook MP: firma inválida')
         return
       }
@@ -173,16 +186,15 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
           },
         })
 
-        // Descontar stock de cada item
+        // Descontar stock de cada item (con guard para evitar negativos)
         for (const item of order.items) {
-          const product = await tx.product.findUnique({ where: { id: item.productId } })
-          if (product && product.stock - item.quantity < 0) {
-            console.error(`Stock negativo en producto ${item.productId} — revisar manualmente`)
-          }
-          await tx.product.update({
-            where: { id: item.productId },
+          const updated = await tx.product.updateMany({
+            where: { id: item.productId, stock: { gte: item.quantity } },
             data: { stock: { decrement: item.quantity } },
           })
+          if (updated.count === 0) {
+            console.error('[STOCK] Stock insuficiente para producto', item.productId)
+          }
         }
       })
 

@@ -56,13 +56,21 @@ export async function listProducts(req: Request, res: Response, next: NextFuncti
  */
 export async function createProduct(req: Request, res: Response, next: NextFunction) {
   try {
-    const { isActive, ...productData } = req.body
+    // Whitelist de campos permitidos — nunca spread req.body directo a Prisma
+    const {
+      categoryId, name, cardNumber, setName, edition, language,
+      rarity, condition, variant, price, stock, slug, description, isActive
+    } = req.body
 
     const product = await prisma.product.create({
       data: {
-        ...productData,
-        price: new Prisma.Decimal(productData.price),
-        isActive: Boolean(isActive),
+        categoryId, name, cardNumber, setName, edition, language,
+        rarity, condition, variant,
+        price: new Prisma.Decimal(price),
+        stock,
+        slug,
+        description,
+        isActive: isActive ?? true,
       },
     })
 
@@ -138,6 +146,16 @@ export async function uploadProductImage(req: Request, res: Response, next: Next
       const filename = `${Date.now()}.${ext}`
       finalUrl = await uploadToR2(`products/${id}/${filename}`, buffer, mimeType)
     } else if (imageUrl) {
+      // Validar que imageUrl es HTTPS y no apunta a red interna (prevenir SSRF)
+      const parsedUrl = new URL(imageUrl) // lanza si mal formada
+      if (parsedUrl.protocol !== 'https:') {
+        return res.status(400).json({ error: 'Solo se permiten URLs HTTPS' })
+      }
+      const blockedHosts = ['169.254.169.254', '169.254.170.2', 'metadata.google.internal', '::1', '127.0.0.1', 'localhost']
+      if (blockedHosts.some(h => parsedUrl.hostname === h)) {
+        return res.status(400).json({ error: 'URL no permitida' })
+      }
+
       // Descargar la imagen y subirla a R2
       const response = await axios.get(imageUrl, { responseType: 'arraybuffer' })
       const buffer = Buffer.from(response.data)
@@ -229,7 +247,10 @@ export async function updateOrder(req: Request, res: Response, next: NextFunctio
     const order = await prisma.order.update({ where: { id }, data: updateData })
 
     res.json({ data: order })
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'P2025') {
+      return res.status(404).json({ error: 'Registro no encontrado' })
+    }
     next(error)
   }
 }
@@ -350,7 +371,10 @@ export async function deleteSubscriber(req: Request, res: Response, next: NextFu
     const id = String(req.params.id)
     await prisma.emailSubscriber.delete({ where: { id } })
     res.json({ success: true })
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === 'P2025') {
+      return res.status(404).json({ error: 'Registro no encontrado' })
+    }
     next(error)
   }
 }

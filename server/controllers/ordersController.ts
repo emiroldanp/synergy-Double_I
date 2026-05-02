@@ -39,29 +39,20 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ error: 'La orden debe tener al menos un item' })
     }
 
-    // Validar stock para cada item antes de crear la orden
-    for (const item of items) {
-      const product = await prisma.product.findUnique({ where: { id: item.productId } })
-      if (!product) {
-        return res.status(400).json({ error: `Producto no encontrado: ${item.productId}` })
-      }
-      if (!product.isActive) {
-        return res.status(400).json({ error: `Producto no disponible: ${product.name}` })
-      }
-      if (product.stock < item.quantity) {
-        return res.status(400).json({
-          error: `Stock insuficiente para "${product.name}". Disponible: ${product.stock}`,
-          code: 'INSUFFICIENT_STOCK',
-        })
-      }
-    }
-
     // Calcular totales
     const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
     const total = subtotal + (shippingCost || 0)
 
-    // Crear orden e items en una sola transacción
+    // Crear orden e items en una sola transacción (validación de stock incluida para eliminar TOCTOU)
     const order = await prisma.$transaction(async (tx) => {
+      // 1. Validar stock dentro de la transacción
+      for (const item of items) {
+        const product = await tx.product.findUnique({ where: { id: item.productId } })
+        if (!product || !product.isActive) throw new Error(`Producto ${item.productId} no disponible`)
+        if (product.stock < item.quantity) throw new Error(`Stock insuficiente para ${product.name}`)
+      }
+
+      // 2. Crear orden e items
       const newOrder = await tx.order.create({
         data: {
           customerId: customerId || null,
@@ -102,7 +93,12 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
     })
 
     res.status(201).json({ data: { orderId: order.id } })
-  } catch (error) {
+  } catch (error: any) {
+    // Errores de validación (stock, producto no disponible) lanzados dentro de la transacción
+    const validationMessages = ['no disponible', 'Stock insuficiente']
+    if (validationMessages.some(msg => error?.message?.includes(msg))) {
+      return res.status(400).json({ error: error.message, code: 'INSUFFICIENT_STOCK' })
+    }
     next(error)
   }
 }
