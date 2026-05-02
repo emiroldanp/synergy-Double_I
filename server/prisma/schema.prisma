@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  imageUrl    String?
+  createdAt   DateTime   @default(now())
+  products    Product[]
+  blogPosts   BlogPost[]
+}
+
+enum Edition {
+  first_edition
+  shadowless
+  unlimited
+}
+
+enum Language {
+  es
+  en
+  jp
+}
+
+enum Condition {
+  mint
+  near_mint
+  lightly_played
+}
+
+enum Variant {
+  standard
+  holo
+  reverse_holo
+}
+
+enum PaymentStatus {
+  pending
+  confirmed
+  failed
+}
+
+enum OrderStatus {
+  pending_payment
+  confirmed
+  preparing
+  shipped
+  delivered
+  cancelled
+}
+
+enum InvoiceStatus {
+  draft
+  valid
+  cancelled
+}
+
+enum SubscriberSource {
+  homepage_form
+  checkout
+  manual
+}
+
+model Product {
+  id          String     @id @default(cuid())
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id])
+  name        String
+  cardNumber  String?
+  setName     String?
+  edition     Edition?
+  language    Language?
+  rarity      String?
+  condition   Condition?
+  variant     Variant?
+  price       Decimal    @db.Decimal(10, 2)
+  stock       Int        @default(0)
+  isActive    Boolean    @default(true)
+  slug        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  images      ProductImage[]
+  orderItems  OrderItem[]
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  isPrimary Boolean @default(false)
+  sortOrder Int     @default(0)
+}
+
+model Customer {
+  id             String   @id
+  email          String   @unique
+  fullName       String?
+  phone          String?
+  defaultAddress Json?
+  createdAt      DateTime @default(now())
+  orders         Order[]
+}
+
+model Order {
+  id               String        @id @default(cuid())
+  customerId       String?
+  customer         Customer?     @relation(fields: [customerId], references: [id])
+  guestEmail       String?
+  guestName        String?
+  guestPhone       String?
+  shippingAddress  Json
+  shippingMethod   String?
+  shippingCost     Decimal       @default(0) @db.Decimal(10, 2)
+  subtotal         Decimal       @db.Decimal(10, 2)
+  total            Decimal       @db.Decimal(10, 2)
+  paymentMethod    String?
+  paymentStatus    PaymentStatus @default(pending)
+  paymentReference String?
+  orderStatus      OrderStatus   @default(pending_payment)
+  trackingNumber   String?
+  requiresInvoice  Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  items            OrderItem[]
+  invoice          Invoice?
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+}
+
+model ShippingQuote {
+  id                 String   @id @default(cuid())
+  sessionId          String
+  destinationAddress Json
+  quotesResponse     Json?
+  selectedCarrier    String?
+  selectedCost       Decimal? @db.Decimal(10, 2)
+  expiresAt          DateTime
+  createdAt          DateTime @default(now())
+}
+
+model Invoice {
+  id                 String        @id @default(cuid())
+  orderId            String        @unique
+  order              Order         @relation(fields: [orderId], references: [id])
+  rfc                String
+  razonSocial        String
+  cfdiUse            String
+  facturapiInvoiceId String?
+  pdfUrl             String?
+  xmlUrl             String?
+  status             InvoiceStatus @default(draft)
+  createdAt          DateTime      @default(now())
+}
+
+model BlogPost {
+  id               String    @id @default(cuid())
+  title            String
+  slug             String    @unique
+  body             String?
+  excerpt          String?
+  featuredImageUrl String?
+  categoryId       String?
+  category         Category? @relation(fields: [categoryId], references: [id])
+  tags             String[]
+  isPublished      Boolean   @default(false)
+  publishedAt      DateTime?
+  metaTitle        String?
+  metaDescription  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model EmailSubscriber {
+  id             String           @id @default(cuid())
+  email          String           @unique
+  fullName       String?
+  source         SubscriberSource
+  isBuyer        Boolean          @default(false)
+  brevoContactId String?
+  subscribedAt   DateTime         @default(now())
+  unsubscribedAt DateTime?
+}

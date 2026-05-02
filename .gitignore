@@ -1,0 +1,25 @@
+# Dependencias
+node_modules/
+server/node_modules/
+
+# Variables de entorno — NUNCA commitear
+.env
+.env.local
+.env.*.local
+server/.env
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma — cliente generado
+server/generated/
+server/node_modules/.prisma/
