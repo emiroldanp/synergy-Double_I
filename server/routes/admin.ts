@@ -1,0 +1,35 @@
+import { Router } from 'express'
+import { requireAdmin } from '../middleware/authAdmin'
+import {
+  listProducts,
+  createProduct,
+  updateProduct,
+  uploadProductImage,
+  listOrders,
+  updateOrder,
+  getDashboard,
+  listSubscribers,
+  deleteSubscriber,
+} from '../controllers/adminController'
+
+export const adminRoutes = Router()
+
+// Todas las rutas de admin requieren autenticación Clerk con rol 'admin'
+adminRoutes.use(requireAdmin as any)
+
+// --- Productos ---
+adminRoutes.get('/products', listProducts)
+adminRoutes.post('/products', createProduct)
+adminRoutes.patch('/products/:id', updateProduct)
+adminRoutes.post('/products/:id/images', uploadProductImage)
+
+// --- Pedidos ---
+adminRoutes.get('/orders', listOrders)
+adminRoutes.patch('/orders/:id', updateOrder)
+
+// --- Dashboard ---
+adminRoutes.get('/dashboard', getDashboard)
+
+// --- Suscriptores ---
+adminRoutes.get('/subscribers', listSubscribers)
+adminRoutes.delete('/subscribers/:id', deleteSubscriber)
