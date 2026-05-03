@@ -1,0 +1,21 @@
+stateDiagram-v2
+    state PaymentStatus {
+        [*] --> pending
+        pending --> confirmed : Webhook MP approved
+        pending --> failed : Webhook MP rejected o cancelled
+        confirmed --> [*]
+        failed --> [*]
+    }
+
+    state OrderStatus {
+        [*] --> pending_payment
+        pending_payment --> confirmed : Webhook MP approved
+        pending_payment --> cancelled : Irving cancela desde admin
+        confirmed --> preparing : Irving actualiza desde admin
+        preparing --> shipped : Irving carga numero de guia
+        shipped --> delivered : Irving confirma entrega
+        confirmed --> cancelled : Irving cancela antes de preparar
+        preparing --> cancelled : Irving cancela antes de enviar
+        delivered --> [*]
+        cancelled --> [*]
+    }
