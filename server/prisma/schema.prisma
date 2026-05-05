@@ -199,3 +199,10 @@ model EmailSubscriber {
   subscribedAt   DateTime         @default(now())
   unsubscribedAt DateTime?
 }
+
+// Configuración persistente del sistema — clave/valor para estados que sobreviven reinicios
+model SystemConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

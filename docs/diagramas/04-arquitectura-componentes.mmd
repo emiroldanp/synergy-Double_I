@@ -1,0 +1,63 @@
+graph TB
+    subgraph Cliente
+        FE[Frontend - React + Vite + TypeScript + Tailwind]
+    end
+
+    subgraph Servidor
+        BE[Backend - Express.js + Node.js + Prisma 7]
+    end
+
+    subgraph Autenticacion
+        CL[Clerk - Auth usuarios y admin]
+    end
+
+    subgraph BaseDatos
+        DB[Neon Postgres - Product, Order, Customer, Invoice, BlogPost]
+    end
+
+    subgraph Almacenamiento
+        R2[Cloudflare R2 - Imagenes y PDFs CFDI]
+    end
+
+    subgraph Pagos
+        MP[Mercado Pago - OXXO Pay y SPEI]
+    end
+
+    subgraph Envios
+        SK[Skydropx API - Cotizacion Estafeta DHL FedEx]
+    end
+
+    subgraph Facturacion
+        FA[Facturapi - Emision CFDI 4.0]
+    end
+
+    subgraph EmailMarketing
+        BR[Brevo - Listas y emails transaccionales]
+    end
+
+    Irving[Irving Admin] -- Panel /admin --> FE
+
+    FE -- HTTPS /api/ JSON REST --> BE
+    FE -- Clerk JS SDK login --> CL
+
+    BE -- Prisma Client TCP SSL --> DB
+    BE -- AWS SDK S3 compatible --> R2
+    BE -- SDK Node.js createPreference --> MP
+    BE -- REST API cotizarEnvio --> SK
+    BE -- SDK Node.js createCFDI --> FA
+    BE -- REST API agregarContacto y enviarEmail --> BR
+    BE -- Clerk Backend SDK verifyToken --> CL
+
+    MP -- POST /api/payments/webhook --> BE
+
+    classDef frontend fill:#3b82f6,color:#fff,stroke:#1d4ed8
+    classDef backend fill:#10b981,color:#fff,stroke:#047857
+    classDef external fill:#6366f1,color:#fff,stroke:#4338ca
+    classDef db fill:#f59e0b,color:#fff,stroke:#b45309
+    classDef person fill:#64748b,color:#fff,stroke:#334155
+
+    class FE frontend
+    class BE backend
+    class CL,MP,SK,FA,BR,R2 external
+    class DB db
+    class Irving person
