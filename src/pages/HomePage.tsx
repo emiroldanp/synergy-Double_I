@@ -65,3 +65,6 @@ export function HomePage() {
     </>
   )
 }
+
+// Exportación default para compatibilidad con React.lazy e imports dinámicos
+export default HomePage
