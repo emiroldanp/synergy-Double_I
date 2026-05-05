@@ -127,6 +127,29 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
 }
 
 /**
+ * GET /api/admin/products/:id
+ * Devuelve un producto por ID con imágenes y categoría (para edición en el panel admin).
+ */
+export async function getProduct(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = String(req.params.id)
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        images: true,
+        category: true,
+      },
+    })
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' })
+    }
+    res.json({ data: product })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * POST /api/admin/products/:id/images
  * Sube imagen en base64 o URL a Cloudflare R2 y crea ProductImage.
  * Body: { base64?: string, imageUrl?: string, mimeType?: string, isPrimary?: boolean, sortOrder?: number }

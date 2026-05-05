@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { requireAdmin } from '../middleware/authAdmin'
 import {
   listProducts,
+  getProduct,
   createProduct,
   updateProduct,
   uploadProductImage,
@@ -21,6 +22,7 @@ adminRoutes.use(requireAdmin as any)
 
 // --- Productos ---
 adminRoutes.get('/products', listProducts)
+adminRoutes.get('/products/:id', getProduct)
 adminRoutes.post('/products', createProduct)
 adminRoutes.patch('/products/:id', updateProduct)
 adminRoutes.post('/products/:id/images', uploadProductImage)
