@@ -3,8 +3,10 @@ import { prisma } from '../lib/prisma'
 import { uploadToR2 } from '../lib/r2'
 import { Prisma } from '@prisma/client'
 import axios from 'axios'
+import { createInvoice } from './invoicesController'
 
 const BREVO_API = 'https://api.brevo.com/v3'
+const ARRIVAL_COOLDOWN_KEY = 'last_arrival_notification_at'
 
 function brevoHeaders() {
   return {
@@ -12,9 +14,6 @@ function brevoHeaders() {
     'Content-Type': 'application/json',
   }
 }
-
-// Control de cooldown para arrival notifications (en memoria — se resetea al reiniciar)
-let lastArrivalNotificationAt: Date | null = null
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRODUCTOS
@@ -104,7 +103,6 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
 
     // Construir el objeto de update excluyendo campos que se manejan por separado
     const updateData: Prisma.ProductUpdateInput = {}
-    // Copiar solo campos permitidos del body (evitar asignar relaciones u objetos complejos)
     const allowedFields = ['name', 'description', 'slug', 'cardNumber', 'setName', 'rarity', 'stock', 'edition', 'language', 'condition', 'variant', 'categoryId']
     for (const field of allowedFields) {
       if (rest[field] !== undefined) (updateData as any)[field] = rest[field]
@@ -256,6 +254,85 @@ export async function updateOrder(req: Request, res: Response, next: NextFunctio
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FACTURAS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/admin/invoices
+ * Lista facturas con filtro por status y paginación.
+ * Query params: status (draft | valid | cancelled), page, limit
+ */
+export async function listInvoices(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { status } = req.query
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 20)
+    const skip = (page - 1) * limit
+
+    const where: Prisma.InvoiceWhereInput = {}
+    if (status) where.status = status as any
+
+    const [invoices, total] = await Promise.all([
+      prisma.invoice.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          order: {
+            select: {
+              id: true,
+              guestEmail: true,
+              total: true,
+              createdAt: true,
+              customer: { select: { email: true, fullName: true } },
+            },
+          },
+        },
+      }),
+      prisma.invoice.count({ where }),
+    ])
+
+    res.json({ data: invoices, meta: { page, limit, total } })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * POST /api/admin/invoices/:orderId/retry
+ * Reintenta la emisión de CFDI para una factura en estado 'draft'.
+ * Solo aplicable cuando Facturapi falló en el webhook de pago.
+ */
+export async function retryInvoice(req: Request, res: Response, next: NextFunction) {
+  try {
+    const orderId = String(req.params.orderId)
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { orderId },
+      select: { status: true },
+    })
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'Factura no encontrada' })
+    }
+
+    if (invoice.status !== 'draft') {
+      return res.status(409).json({ error: `La factura ya tiene status '${invoice.status}'. Solo se pueden reintentar facturas en 'draft'.` })
+    }
+
+    // Ejecutar de forma asíncrona — puede tardar varios segundos
+    createInvoice(orderId).catch((err) =>
+      console.error(`Error en reintento de factura para orden ${orderId}:`, err)
+    )
+
+    res.json({ success: true, message: 'Reintento de emisión CFDI iniciado.' })
+  } catch (error) {
+    next(error)
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -385,23 +462,28 @@ export async function deleteSubscriber(req: Request, res: Response, next: NextFu
 
 /**
  * Dispara una notificación de nuevo producto a toda la lista de Brevo.
- * Agrupación: si en los últimos 10 minutos ya se disparó una, no se dispara otra.
+ * Cooldown de 10 min persistido en SystemConfig — sobrevive reinicios del servidor.
  */
 async function triggerArrivalNotification(productId: string): Promise<void> {
   const now = new Date()
-  const cooldownMs = 10 * 60 * 1000 // 10 minutos
+  const cooldownMs = 10 * 60 * 1000
 
-  if (lastArrivalNotificationAt && now.getTime() - lastArrivalNotificationAt.getTime() < cooldownMs) {
-    return
+  // Leer el último disparo desde la base de datos
+  const config = await prisma.systemConfig.findUnique({
+    where: { key: ARRIVAL_COOLDOWN_KEY },
+  })
+
+  if (config) {
+    const lastSentAt = new Date(config.value)
+    if (now.getTime() - lastSentAt.getTime() < cooldownMs) {
+      return
+    }
   }
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
     include: {
-      images: {
-        where: { isPrimary: true },
-        take: 1,
-      },
+      images: { where: { isPrimary: true }, take: 1 },
       category: true,
     },
   })
@@ -432,5 +514,10 @@ async function triggerArrivalNotification(productId: string): Promise<void> {
     { headers: brevoHeaders() }
   )
 
-  lastArrivalNotificationAt = now
+  // Persistir timestamp en la base de datos
+  await prisma.systemConfig.upsert({
+    where: { key: ARRIVAL_COOLDOWN_KEY },
+    update: { value: now.toISOString() },
+    create: { key: ARRIVAL_COOLDOWN_KEY, value: now.toISOString() },
+  })
 }

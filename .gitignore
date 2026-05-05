@@ -26,3 +26,6 @@ Thumbs.db
 # Prisma — cliente generado
 server/generated/
 server/node_modules/.prisma/
+
+# Claude Code — configuración local personal
+.claude/settings.local.json

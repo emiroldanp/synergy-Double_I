@@ -7,6 +7,8 @@ import {
   uploadProductImage,
   listOrders,
   updateOrder,
+  listInvoices,
+  retryInvoice,
   getDashboard,
   listSubscribers,
   deleteSubscriber,
@@ -26,6 +28,10 @@ adminRoutes.post('/products/:id/images', uploadProductImage)
 // --- Pedidos ---
 adminRoutes.get('/orders', listOrders)
 adminRoutes.patch('/orders/:id', updateOrder)
+
+// --- Facturas ---
+adminRoutes.get('/invoices', listInvoices)
+adminRoutes.post('/invoices/:orderId/retry', retryInvoice)
 
 // --- Dashboard ---
 adminRoutes.get('/dashboard', getDashboard)
