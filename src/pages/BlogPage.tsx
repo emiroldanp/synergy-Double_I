@@ -14,7 +14,7 @@ export default function BlogPage() {
         <meta name="description" content="Guías, análisis y novedades del mundo TCG: Pokémon, Yu-Gi-Oh! y Lorcana." />
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-brand-navy min-h-screen pt-20">
         <div className="page-container py-8">
           <div className="mb-8">
             <p className="section-subtitle mb-2">Noticias y guías</p>

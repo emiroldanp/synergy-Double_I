@@ -47,7 +47,7 @@ export default function CatalogPage() {
         <meta name="description" content="Explora nuestro catálogo de tarjetas coleccionables Pokémon, Yu-Gi-Oh! y Lorcana." />
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-brand-navy min-h-screen pt-20">
         <div className="page-container py-8">
           {/* Header */}
           <div className="mb-6">

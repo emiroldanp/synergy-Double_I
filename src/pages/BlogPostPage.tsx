@@ -21,7 +21,7 @@ export default function BlogPostPage() {
         <link rel="canonical" href={window.location.href} />
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-brand-navy min-h-screen pt-20">
         <div className="page-container py-8">
           <nav className="flex items-center gap-2 text-xs text-ash font-exo mb-8">
             <Link to="/" className="hover:text-frost transition-colors">Inicio</Link>
