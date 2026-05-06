@@ -42,13 +42,13 @@ export function Navbar() {
         )}
       >
         <div className="page-container">
-          <div className="flex items-center justify-between h-16 md:h-18">
+          <div className="flex items-center justify-between h-20 md:h-24">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 flex-shrink-0">
               <img
                 src="/logo-color.png"
                 alt="Double-I Trading Card Game"
-                className="h-12 md:h-14 lg:h-16 w-auto"
+                className="h-16 md:h-20 lg:h-24 w-auto"
               />
             </Link>
 
