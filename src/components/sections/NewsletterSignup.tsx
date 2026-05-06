@@ -27,23 +27,23 @@ export function NewsletterSignup() {
   }
 
   return (
-    <section className="relative bg-deep py-16 overflow-hidden">
+    <section className="relative bg-white py-16 overflow-hidden">
       {/* Background glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 60% 80% at 50% 100%, rgba(48,64,196,0.15) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 60% 80% at 50% 100%, rgba(133,197,232,0.18) 0%, transparent 70%)',
         }}
         aria-hidden="true"
       />
 
       <div className="page-container relative z-10">
         <div className="max-w-2xl mx-auto text-center">
-          <p className="section-subtitle mb-3">Mantente al día</p>
-          <h2 className="section-title mb-4">
+          <p className="section-subtitle mb-3 text-slate-500">Mantente al día</p>
+          <h2 className="font-agency text-3xl md:text-4xl text-slate-900 tracking-wider uppercase mb-4">
             Novedades en tu correo
           </h2>
-          <p className="font-exo text-ash text-sm mb-8 leading-relaxed">
+          <p className="font-exo text-slate-600 text-sm mb-8 leading-relaxed">
             Entérate primero cuando lleguen nuevas cartas, promociones exclusivas y artículos de colección.
           </p>
 
@@ -51,8 +51,8 @@ export function NewsletterSignup() {
             <div className="flex items-center justify-center gap-3 py-6">
               <span className="text-2xl">🎉</span>
               <div className="text-left">
-                <p className="font-agency text-dragon uppercase tracking-wide text-sm">¡Suscripción exitosa!</p>
-                <p className="font-exo text-ash text-xs mt-0.5">Recibirás un correo de bienvenida pronto.</p>
+                <p className="font-agency text-brand-red uppercase tracking-wide text-sm">¡Suscripción exitosa!</p>
+                <p className="font-exo text-slate-500 text-xs mt-0.5">Recibirás un correo de bienvenida pronto.</p>
               </div>
             </div>
           ) : (
@@ -63,11 +63,11 @@ export function NewsletterSignup() {
                     {...register('email')}
                     type="email"
                     placeholder="tu@correo.com"
-                    className="input-dark text-sm h-12"
+                    className="w-full px-3 py-3 text-sm font-exo border border-slate-300 bg-slate-50 focus:border-brand-sky focus:outline-none text-slate-800 placeholder:text-slate-400 h-12"
                     aria-label="Correo electrónico"
                   />
                   {errors.email && (
-                    <p className="text-xs text-crimson mt-1 text-left">{errors.email.message}</p>
+                    <p className="text-xs text-brand-red mt-1 text-left">{errors.email.message}</p>
                   )}
                 </div>
                 <button
@@ -88,7 +88,7 @@ export function NewsletterSignup() {
                   )}
                 </button>
               </div>
-              <p className="text-xs text-ash/50 mt-3 font-exo">
+              <p className="text-xs text-slate-400 mt-3 font-exo">
                 Sin spam. Cancela cuando quieras.
               </p>
             </form>
