@@ -16,18 +16,24 @@ export function DeckIcon({ className, empty = false }: DeckIconProps) {
       className={className}
       aria-hidden="true"
     >
-      <g transform="rotate(-12, 12, 12)">
-        {/* Back card */}
-        <rect x="8" y="3" width="11" height="15" rx="1.5" strokeOpacity={empty ? '0.08' : '0.2'} />
+      {/* Deck of cards tilted left — back to front, each card offset */}
+      <g transform="rotate(-15, 11, 13)">
+        {/* Card 4 — back of deck */}
+        <rect x="7.5" y="2" width="10" height="14" rx="1.5"
+          strokeOpacity={empty ? 0.05 : 0.12} />
         {/* Card 3 */}
-        <rect x="6" y="5" width="11" height="15" rx="1.5" strokeOpacity={empty ? '0.15' : '0.4'} />
+        <rect x="6" y="3.5" width="10" height="14" rx="1.5"
+          strokeOpacity={empty ? 0.1 : 0.28} />
         {/* Card 2 */}
-        <rect x="4" y="7" width="11" height="15" rx="1.5" strokeOpacity={empty ? '0.25' : '0.65'} />
-        {/* Front card */}
-        <rect x="2" y="9" width="11" height="15" rx="1.5" strokeOpacity={empty ? '0.45' : '1'} />
-        {/* Art/text separator at 1/3 height */}
+        <rect x="4.5" y="5" width="10" height="14" rx="1.5"
+          strokeOpacity={empty ? 0.18 : 0.52} />
+        {/* Card 1 — front */}
+        <rect x="3" y="6.5" width="10" height="14" rx="1.5"
+          strokeOpacity={empty ? 0.35 : 1} />
+        {/* Art separator on front card */}
         {!empty && (
-          <line x1="4" y1="14" x2="11" y2="14" strokeWidth="1" strokeOpacity="0.7" />
+          <line x1="4.5" y1="12" x2="11.5" y2="12"
+            strokeWidth="0.75" strokeOpacity="0.65" />
         )}
       </g>
     </svg>
