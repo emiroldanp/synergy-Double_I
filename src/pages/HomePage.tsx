@@ -21,7 +21,7 @@ export default function HomePage() {
         <link rel="canonical" href={window.location.href} />
       </Helmet>
 
-      <div className="pt-20 md:pt-24" />
+      <div className="pt-20 md:pt-24 lg:pt-28" />
       <NovedadesSection />
       <CategoryCards />
       <FeaturedCarousel />

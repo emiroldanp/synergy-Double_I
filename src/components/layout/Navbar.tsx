@@ -42,7 +42,7 @@ export function Navbar() {
         )}
       >
         <div className="page-container">
-          <div className="flex items-center justify-between h-20 md:h-24">
+          <div className="flex items-center justify-between h-20 md:h-24 lg:h-28">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 flex-shrink-0">
               <img
