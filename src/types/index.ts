@@ -1,99 +1,154 @@
-export interface Category {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  imageUrl: string | null
-  createdAt: string
-}
+export type Franchise = 'pokemon' | 'yugioh' | 'lorcana'
+
+export type Rarity =
+  | 'comun'
+  | 'poco_comun'
+  | 'rara'
+  | 'ultra_rara'
+  | 'secret_rare'
+  | 'full_art'
+  | 'gold_rare'
+  | 'prismatic'
+
+export type Edition = 'primera' | 'shadowless' | 'ilimitada'
+
+export type Condition = 'mint' | 'near_mint' | 'lightly_played'
+
+export type Variant = 'holo' | 'reverse_holo' | 'standard'
+
+export type Language = 'es' | 'en' | 'jp'
+
+export type OrderStatus =
+  | 'pendiente_pago'
+  | 'pago_confirmado'
+  | 'en_preparacion'
+  | 'enviado'
+  | 'entregado'
+  | 'cancelado'
 
 export interface Product {
   id: string
-  categoryId: string
+  slug: string
   name: string
-  cardNumber: string | null
-  setName: string | null
-  edition: 'first_edition' | 'shadowless' | 'unlimited' | null
-  language: 'es' | 'en' | 'jp' | null
-  rarity: string | null
-  condition: 'mint' | 'near_mint' | 'lightly_played' | null
-  variant: 'standard' | 'holo' | 'reverse_holo' | null
+  franchise: Franchise
+  set: string
+  rarity: Rarity
+  edition: Edition
+  condition: Condition
+  variant: Variant
+  language: Language
   price: number
   stock: number
+  images: string[]
+  description?: string
+  cardNumber?: string
   isActive: boolean
-  slug: string
-  description: string | null
   createdAt: string
-  updatedAt: string
-  category?: Category
-  images?: ProductImage[]
-}
-
-export interface ProductImage {
-  id: string
-  productId: string
-  url: string
-  isPrimary: boolean
-  sortOrder: number
-}
-
-export interface Customer {
-  id: string
-  email: string
-  fullName: string | null
-  phone: string | null
-  defaultAddress: ShippingAddress | null
-  createdAt: string
-}
-
-export interface ShippingAddress {
-  street: string
-  number: string
-  neighborhood: string
-  city: string
-  state: string
-  zipCode: string
-}
-
-export interface Order {
-  id: string
-  customerId: string | null
-  guestEmail: string | null
-  guestName: string | null
-  guestPhone: string | null
-  shippingAddress: ShippingAddress
-  shippingMethod: string | null
-  shippingCost: number
-  subtotal: number
-  total: number
-  paymentMethod: string | null
-  paymentStatus: 'pending' | 'confirmed' | 'failed'
-  paymentReference: string | null
-  orderStatus: 'pending_payment' | 'confirmed' | 'preparing' | 'shipped' | 'delivered' | 'cancelled'
-  trackingNumber: string | null
-  requiresInvoice: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface OrderItem {
-  id: string
-  orderId: string
-  productId: string
-  quantity: number
-  unitPrice: number
-  subtotal: number
-  product?: Product
-}
-
-export interface ShippingOption {
-  carrier: string
-  service: string
-  price: number
-  eta: string
+  salesCount?: number
 }
 
 export interface CartItem {
   product: Product
   quantity: number
+}
+
+export interface Cart {
+  items: CartItem[]
+}
+
+export interface ShippingOption {
+  id: string
+  carrier: 'estafeta' | 'dhl' | 'fedex'
+  service: string
+  price: number
+  eta: string
+}
+
+export interface OrderItem {
+  productId: string
+  name: string
+  price: number
+  quantity: number
+  image: string
+}
+
+export interface Order {
+  id: string
+  orderNumber: string
+  status: OrderStatus
+  items: OrderItem[]
+  subtotal: number
+  shippingCost: number
+  total: number
+  shippingOption: ShippingOption
+  trackingNumber?: string
+  createdAt: string
+  customer: {
+    name: string
+    email: string
+    phone: string
+  }
+  address: {
+    street: string
+    number: string
+    colonia: string
+    city: string
+    state: string
+    zip: string
+  }
+  cfdi?: {
+    rfc: string
+    razonSocial: string
+    usoCfdi: string
+  }
+}
+
+export interface BlogPost {
+  id: string
+  slug: string
+  title: string
+  excerpt: string
+  body: string
+  image: string
+  category: Franchise | 'general'
+  tags: string[]
+  publishedAt: string
+  isDraft: boolean
+  metaTitle?: string
+  metaDescription?: string
+}
+
+export interface Promotion {
+  id: string
+  title: string
+  description: string
+  discountType: 'monto' | 'porcentaje'
+  discountValue: number
+  validFrom: string
+  validTo: string
+  isActive: boolean
+  image?: string
+}
+
+export interface FilterState {
+  franchise: Franchise[]
+  rarity: Rarity[]
+  edition: Edition[]
+  condition: Condition[]
+  variant: Variant[]
+  language: Language[]
+  priceMin: number | null
+  priceMax: number | null
+  search: string
+  sortBy: 'price_asc' | 'price_desc' | 'newest'
+  page: number
+}
+
+export interface DashboardStats {
+  revenueToday: number
+  revenueWeek: number
+  revenueMonth: number
+  ordersByStatus: Record<OrderStatus, number>
+  totalProducts: number
+  lowStockProducts: number
 }

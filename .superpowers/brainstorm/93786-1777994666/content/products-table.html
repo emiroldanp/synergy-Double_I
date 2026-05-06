@@ -1,0 +1,133 @@
+<h2>¿Cómo debe verse la tabla de productos?</h2>
+<p class="subtitle">Irving gestiona el catálogo diario — alta, edición, stock y publicación</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#f9fafb;border-radius:8px;">
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:10px;">
+        <div style="background:#f3f4f6;padding:8px 12px;display:flex;gap:8px;border-bottom:1px solid #e5e7eb;align-items:center;">
+          <div style="height:22px;background:#2563eb;border-radius:4px;width:80px;"></div>
+          <div style="flex:1;height:22px;background:white;border:1px solid #e5e7eb;border-radius:4px;"></div>
+          <div style="height:22px;background:white;border:1px solid #e5e7eb;border-radius:4px;width:70px;"></div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+              <th style="padding:6px 10px;text-align:left;color:#6b7280;font-weight:600;">Producto</th>
+              <th style="padding:6px 8px;text-align:left;color:#6b7280;font-weight:600;">Precio</th>
+              <th style="padding:6px 8px;text-align:left;color:#6b7280;font-weight:600;">Stock</th>
+              <th style="padding:6px 8px;text-align:left;color:#6b7280;font-weight:600;">Estado</th>
+              <th style="padding:6px 8px;text-align:left;color:#6b7280;font-weight:600;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:7px 10px;display:flex;align-items:center;gap:6px;">
+                <div style="width:28px;height:28px;background:#dbeafe;border-radius:4px;flex-shrink:0;"></div>
+                <div>
+                  <div style="height:7px;background:#111827;border-radius:2px;width:80px;margin-bottom:3px;"></div>
+                  <div style="height:5px;background:#d1d5db;border-radius:2px;width:50px;"></div>
+                </div>
+              </td>
+              <td style="padding:7px 8px;color:#111827;">$850</td>
+              <td style="padding:7px 8px;"><span style="background:#dcfce7;color:#166534;padding:2px 6px;border-radius:10px;font-size:9px;">12</span></td>
+              <td style="padding:7px 8px;"><span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:10px;font-size:9px;">Activo</span></td>
+              <td style="padding:7px 8px;display:flex;gap:4px;">
+                <div style="width:18px;height:18px;background:#eff6ff;border-radius:3px;"></div>
+                <div style="width:18px;height:18px;background:#fef2f2;border-radius:3px;"></div>
+              </td>
+            </tr>
+            <tr style="border-bottom:1px solid #f3f4f6;">
+              <td style="padding:7px 10px;display:flex;align-items:center;gap:6px;">
+                <div style="width:28px;height:28px;background:#fce7f3;border-radius:4px;flex-shrink:0;"></div>
+                <div>
+                  <div style="height:7px;background:#111827;border-radius:2px;width:60px;margin-bottom:3px;"></div>
+                  <div style="height:5px;background:#d1d5db;border-radius:2px;width:40px;"></div>
+                </div>
+              </td>
+              <td style="padding:7px 8px;color:#111827;">$1,200</td>
+              <td style="padding:7px 8px;"><span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:10px;font-size:9px;">3</span></td>
+              <td style="padding:7px 8px;"><span style="background:#f3f4f6;color:#6b7280;padding:2px 6px;border-radius:10px;font-size:9px;">Inactivo</span></td>
+              <td style="padding:7px 8px;display:flex;gap:4px;">
+                <div style="width:18px;height:18px;background:#eff6ff;border-radius:3px;"></div>
+                <div style="width:18px;height:18px;background:#fef2f2;border-radius:3px;"></div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:7px 10px;display:flex;align-items:center;gap:6px;">
+                <div style="width:28px;height:28px;background:#ede9fe;border-radius:4px;flex-shrink:0;"></div>
+                <div>
+                  <div style="height:7px;background:#111827;border-radius:2px;width:70px;margin-bottom:3px;"></div>
+                  <div style="height:5px;background:#d1d5db;border-radius:2px;width:45px;"></div>
+                </div>
+              </td>
+              <td style="padding:7px 8px;color:#111827;">$450</td>
+              <td style="padding:7px 8px;"><span style="background:#fee2e2;color:#991b1b;padding:2px 6px;border-radius:10px;font-size:9px;">0</span></td>
+              <td style="padding:7px 8px;"><span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:10px;font-size:9px;">Activo</span></td>
+              <td style="padding:7px 8px;display:flex;gap:4px;">
+                <div style="width:18px;height:18px;background:#eff6ff;border-radius:3px;"></div>
+                <div style="width:18px;height:18px;background:#fef2f2;border-radius:3px;"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Tabla densa con imagen miniatura</h3>
+      <p>Imagen pequeña + nombre + franquicia en una celda. Muchos productos visibles a la vez. Badges de color para stock (verde/amarillo/rojo) y estado. Botones de editar y archivar por fila.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#f9fafb;border-radius:8px;">
+      <div style="background:white;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;font-size:10px;">
+        <div style="background:#f3f4f6;padding:8px 12px;display:flex;gap:8px;border-bottom:1px solid #e5e7eb;align-items:center;">
+          <div style="height:22px;background:#2563eb;border-radius:4px;width:80px;"></div>
+          <div style="flex:1;height:22px;background:white;border:1px solid #e5e7eb;border-radius:4px;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;">
+          <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
+            <div style="height:55px;background:#dbeafe;"></div>
+            <div style="padding:6px;">
+              <div style="height:7px;background:#111827;border-radius:2px;margin-bottom:4px;"></div>
+              <div style="height:5px;background:#d1d5db;border-radius:2px;width:70%;margin-bottom:6px;"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#2563eb;font-weight:700;">$850</span>
+                <span style="background:#dcfce7;color:#166534;padding:1px 5px;border-radius:8px;font-size:9px;">Stock 12</span>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
+            <div style="height:55px;background:#fce7f3;"></div>
+            <div style="padding:6px;">
+              <div style="height:7px;background:#111827;border-radius:2px;margin-bottom:4px;"></div>
+              <div style="height:5px;background:#d1d5db;border-radius:2px;width:70%;margin-bottom:6px;"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#2563eb;font-weight:700;">$1,200</span>
+                <span style="background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:8px;font-size:9px;">Stock 3</span>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;opacity:.5;">
+            <div style="height:55px;background:#ede9fe;"></div>
+            <div style="padding:6px;">
+              <div style="height:7px;background:#111827;border-radius:2px;margin-bottom:4px;"></div>
+              <div style="height:5px;background:#d1d5db;border-radius:2px;width:70%;margin-bottom:6px;"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#2563eb;font-weight:700;">$450</span>
+                <span style="background:#fee2e2;color:#991b1b;padding:1px 5px;border-radius:8px;font-size:9px;">Agotado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Grid de cards por producto</h3>
+      <p>Vista tipo galería. Cada carta coleccionable con su imagen grande. Más visual, menos información por pantalla. Útil si Irving quiere reconocer productos por imagen.</p>
+    </div>
+  </div>
+
+</div>

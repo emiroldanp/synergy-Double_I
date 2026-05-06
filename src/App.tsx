@@ -1,49 +1,52 @@
-import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { HelmetProvider } from 'react-helmet-async'
-import HomePage from './pages/HomePage'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
 
-// Páginas admin — lazy loaded
-const LoginPage = lazy(() => import('./pages/admin/LoginPage'))
-const DashboardPage = lazy(() => import('./pages/admin/DashboardPage'))
-const ProductsPage = lazy(() => import('./pages/admin/ProductsPage'))
-const ProductFormPage = lazy(() => import('./pages/admin/ProductFormPage'))
-const OrdersPage = lazy(() => import('./pages/admin/OrdersPage'))
-const InvoicesPage = lazy(() => import('./pages/admin/InvoicesPage'))
-const SubscribersPage = lazy(() => import('./pages/admin/SubscribersPage'))
+import HomePage from '@/pages/HomePage'
+import CatalogPage from '@/pages/CatalogPage'
+import ProductDetailPage from '@/pages/ProductDetailPage'
+import CartPage from '@/pages/CartPage'
+import CheckoutPage from '@/pages/CheckoutPage'
+import OrderConfirmationPage from '@/pages/OrderConfirmationPage'
+import AccountPage from '@/pages/AccountPage'
+import BlogPage from '@/pages/BlogPage'
+import BlogPostPage from '@/pages/BlogPostPage'
+import ContactPage from '@/pages/ContactPage'
 
-// Componentes admin
-import RequireAdmin from './components/admin/RequireAdmin'
-import AdminLayout from './components/admin/AdminLayout'
+import AdminDashboard from '@/pages/admin/AdminDashboard'
+import ProductsManager from '@/pages/admin/ProductsManager'
+import OrdersManager from '@/pages/admin/OrdersManager'
+import BlogManager from '@/pages/admin/BlogManager'
 
-function App() {
+function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <HelmetProvider>
-      <BrowserRouter>
-        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Cargando...</div>}>
-          <Routes>
-            {/* Rutas públicas */}
-            <Route path="/" element={<HomePage />} />
-
-            {/* Login admin — público */}
-            <Route path="/admin/login" element={<LoginPage />} />
-
-            {/* Rutas protegidas del panel admin */}
-            <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
-              <Route index element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="productos" element={<ProductsPage />} />
-              <Route path="productos/nuevo" element={<ProductFormPage />} />
-              <Route path="productos/:id" element={<ProductFormPage />} />
-              <Route path="pedidos" element={<OrdersPage />} />
-              <Route path="facturas" element={<InvoicesPage />} />
-              <Route path="suscriptores" element={<SubscribersPage />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </HelmetProvider>
+    <div className="flex flex-col min-h-screen bg-night">
+      <Navbar />
+      <main className="flex-1">{children}</main>
+      <Footer />
+    </div>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout><HomePage /></Layout>} />
+        <Route path="/catalogo" element={<Layout><CatalogPage /></Layout>} />
+        <Route path="/catalogo/:slug" element={<Layout><ProductDetailPage /></Layout>} />
+        <Route path="/carrito" element={<Layout><CartPage /></Layout>} />
+        <Route path="/checkout" element={<Layout><CheckoutPage /></Layout>} />
+        <Route path="/pedido/confirmacion" element={<Layout><OrderConfirmationPage /></Layout>} />
+        <Route path="/mi-cuenta" element={<Layout><AccountPage /></Layout>} />
+        <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
+        <Route path="/blog/:slug" element={<Layout><BlogPostPage /></Layout>} />
+        <Route path="/contacto" element={<Layout><ContactPage /></Layout>} />
+        <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
+        <Route path="/admin/productos" element={<Layout><ProductsManager /></Layout>} />
+        <Route path="/admin/pedidos" element={<Layout><OrdersManager /></Layout>} />
+        <Route path="/admin/blog" element={<Layout><BlogManager /></Layout>} />
+      </Routes>
+    </BrowserRouter>
+  )
+}

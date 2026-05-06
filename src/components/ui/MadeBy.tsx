@@ -1,13 +1,13 @@
 export function MadeBy() {
   return (
     <div className="border-t border-white/10 mt-6 pt-4 text-center">
-      <p className="text-xs text-gray-400">
-        Made by{" "}
+      <p className="text-xs text-ash">
+        Made by{' '}
         <a
           href="https://synergy-mx.tech"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-gray-300 hover:text-white transition-colors duration-200 font-medium"
+          className="text-frost hover:text-white transition-colors duration-200 font-medium"
         >
           Synergy
         </a>
