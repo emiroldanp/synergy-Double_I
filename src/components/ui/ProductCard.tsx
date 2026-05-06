@@ -8,6 +8,7 @@ import { useCart } from '@/hooks/useCart'
 interface ProductCardProps {
   product: Product
   className?: string
+  light?: boolean
 }
 
 type FlipPhase = 'idle' | 'forward' | 'return'
@@ -62,7 +63,7 @@ function flyToCart(cardEl: HTMLElement, imageUrl: string) {
   }, { once: true })
 }
 
-export function ProductCard({ product, className }: ProductCardProps) {
+export function ProductCard({ product, className, light = false }: ProductCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [isHovered, setIsHovered] = useState(false)
@@ -143,8 +144,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
         {/* ── Front face ── */}
         <div
           className={cn(
-            'relative bg-deep border border-navy/50 overflow-hidden transition-colors duration-300',
-            isHovered && flipPhase === 'idle' && 'border-dragon/40 shadow-card-hover',
+            'relative overflow-hidden transition-colors duration-300',
+            light
+              ? 'bg-white border border-slate-200 shadow-md'
+              : 'bg-deep border border-navy/50',
+            !light && isHovered && flipPhase === 'idle' && 'border-dragon/40 shadow-card-hover',
+            light && isHovered && flipPhase === 'idle' && 'border-brand-sky shadow-lg',
             outOfStock && 'opacity-60'
           )}
           style={{

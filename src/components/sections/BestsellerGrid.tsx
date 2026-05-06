@@ -7,16 +7,18 @@ export function BestsellerGrid() {
   const products = useBestsellers()
 
   return (
-    <section className="bg-abyss py-16">
+    <section className="bg-brand-sky py-16">
       <div className="page-container">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="section-subtitle mb-2">Más vendidos últimos 30 días</p>
-            <h2 className="section-title">Bestsellers</h2>
+            <p className="section-subtitle mb-2 text-slate-600">Más vendidos últimos 30 días</p>
+            <h2 className="font-agency text-3xl md:text-4xl text-slate-900 tracking-wider uppercase">
+              Bestsellers
+            </h2>
           </div>
           <Link
             to="/catalogo"
-            className="hidden sm:block font-agency text-xs uppercase tracking-wider text-dragon hover:text-frost transition-colors"
+            className="hidden sm:block font-agency text-xs uppercase tracking-wider text-brand-navy hover:text-brand-red transition-colors"
           >
             Ver todo →
           </Link>
@@ -28,7 +30,7 @@ export function BestsellerGrid() {
               key={product.id}
               style={{ animation: `slideUp 0.5s ease-out ${i * 0.07}s both` }}
             >
-              <ProductCard product={product} />
+              <ProductCard product={product} light />
             </div>
           ))}
         </ScrollRevealGrid>
@@ -36,7 +38,7 @@ export function BestsellerGrid() {
         <div className="sm:hidden mt-6 text-center">
           <Link
             to="/catalogo"
-            className="btn-secondary text-xs px-6 py-3"
+            className="font-agency text-xs uppercase tracking-wider border border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white px-6 py-3 transition-all duration-200 inline-block"
           >
             Ver todo el catálogo
           </Link>
