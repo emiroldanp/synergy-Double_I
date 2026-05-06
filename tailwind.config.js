@@ -15,6 +15,9 @@ export default {
         flame: '#FF2222',
         frost: '#C8D8F0',
         ash: '#8A90A8',
+        'brand-red': '#E82222',
+        'brand-navy': '#2B1A5E',
+        'brand-sky': '#85C5E8',
       },
       fontFamily: {
         agency: ['"Agency Bold"', 'Impact', 'sans-serif'],

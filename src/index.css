@@ -23,6 +23,9 @@
   --color-frost: #C8D8F0;
   --color-ash: #8A90A8;
   --color-white: #FFFFFF;
+  --color-brand-red: #E82222;
+  --color-brand-navy: #2B1A5E;
+  --color-brand-sky: #85C5E8;
 
   --font-agency: 'Agency Bold', Impact, sans-serif;
   --font-exo: 'Exo 2', sans-serif;
@@ -129,7 +132,7 @@ h1, h2, h3 {
   }
 
   .section-subtitle {
-    @apply font-exo text-ash text-sm uppercase tracking-widest;
+    @apply font-agency text-ash text-sm uppercase tracking-widest;
   }
 
   .badge-base {
