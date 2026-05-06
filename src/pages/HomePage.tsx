@@ -1,9 +1,8 @@
 import { Helmet } from 'react-helmet-async'
-import { Hero } from '@/components/sections/Hero'
-import { PromotionsSection } from '@/components/sections/PromotionsSection'
+import { NovedadesSection } from '@/components/sections/NovedadesSection'
+import { CategoryCards } from '@/components/sections/CategoryCards'
 import { FeaturedCarousel } from '@/components/sections/FeaturedCarousel'
 import { BestsellerGrid } from '@/components/sections/BestsellerGrid'
-import { CategoryCards } from '@/components/sections/CategoryCards'
 import { NewsletterSignup } from '@/components/sections/NewsletterSignup'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
 
@@ -22,10 +21,10 @@ export default function HomePage() {
         <link rel="canonical" href={window.location.href} />
       </Helmet>
 
-      <Hero />
-      <PromotionsSection />
-      <FeaturedCarousel />
+      <div className="pt-16" />
+      <NovedadesSection />
       <CategoryCards />
+      <FeaturedCarousel />
       <BestsellerGrid />
       <NewsletterSignup />
       <WhatsAppButton />

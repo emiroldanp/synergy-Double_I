@@ -48,7 +48,7 @@ export function Navbar() {
               <img
                 src="/logo-color.png"
                 alt="Double-I Trading Card Game"
-                className="h-10 md:h-12 w-auto"
+                className="h-12 md:h-14 lg:h-16 w-auto"
               />
             </Link>
 
@@ -87,6 +87,7 @@ export function Navbar() {
             <div className="flex items-center gap-3">
               {/* Cart button */}
               <button
+                id="navbar-deck-btn"
                 onClick={() => setCartOpen(true)}
                 aria-label={`Carrito (${totalItems} artículos)`}
                 className="relative text-ash hover:text-white transition-colors p-1"

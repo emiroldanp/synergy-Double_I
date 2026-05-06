@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { cn, formatPrice } from '@/lib/utils'
+import { cn, formatPrice, CARD_BACK } from '@/lib/utils'
 import type { Product } from '@/types'
 import { FranchiseBadge, ConditionBadge, RarityBadge, EditionBadge } from './Badge'
 import { useCart } from '@/hooks/useCart'
@@ -13,7 +13,7 @@ interface ProductCardProps {
 type FlipPhase = 'idle' | 'forward' | 'return'
 
 function flyToCart(cardEl: HTMLElement, imageUrl: string) {
-  const cartBtn = document.querySelector('[aria-label*="Carrito"]') as HTMLElement
+  const cartBtn = document.getElementById('navbar-deck-btn') as HTMLElement
   if (!cartBtn) return
 
   const cardRect = cardEl.getBoundingClientRect()
@@ -25,38 +25,33 @@ function flyToCart(cardEl: HTMLElement, imageUrl: string) {
   const startLeft = cardRect.left + (cardRect.width - cloneW) / 2
   const startTop = cardRect.top + 8
 
-  const fly = document.createElement('div')
-  fly.setAttribute('aria-hidden', 'true')
-  Object.assign(fly.style, {
-    position: 'fixed',
-    left: `${startLeft}px`,
-    top: `${startTop}px`,
-    width: `${cloneW}px`,
-    height: `${cloneH}px`,
-    backgroundImage: `url('${imageUrl}')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    borderRadius: '4px',
-    border: '1px solid rgba(107,184,236,0.6)',
-    boxShadow: '0 0 16px rgba(107,184,236,0.5)',
-    zIndex: '9999',
-    pointerEvents: 'none',
-    willChange: 'transform, opacity',
-    transition: 'none',
-  })
-  document.body.appendChild(fly)
-
-  // Force layout before animating
-  fly.getBoundingClientRect()
-
   const targetX = cartRect.left + cartRect.width / 2 - startLeft - cloneW / 2
   const targetY = cartRect.top + cartRect.height / 2 - startTop - cloneH / 2
 
-  fly.style.transition = 'transform 0.52s cubic-bezier(0.5, 0, 0.9, 0.6), opacity 0.52s ease-in'
-  fly.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.08)`
-  fly.style.opacity = '0'
+  const fly = document.createElement('div')
+  fly.setAttribute('aria-hidden', 'true')
+  fly.style.cssText = [
+    'position:fixed',
+    `left:${startLeft}px`,
+    `top:${startTop}px`,
+    `width:${cloneW}px`,
+    `height:${cloneH}px`,
+    `background-image:url('${imageUrl}')`,
+    'background-size:cover',
+    'background-position:center',
+    'border-radius:4px',
+    'border:1px solid rgba(107,184,236,0.6)',
+    'box-shadow:0 0 16px rgba(107,184,236,0.5)',
+    'z-index:9999',
+    'pointer-events:none',
+    'will-change:transform,opacity',
+    `--tx:${targetX}px`,
+    `--ty:${targetY}px`,
+    'animation:flyParabolic 0.5s cubic-bezier(0.25,0.46,0.45,0.94) forwards',
+  ].join(';')
+  document.body.appendChild(fly)
 
-  fly.addEventListener('transitionend', () => {
+  fly.addEventListener('animationend', () => {
     fly.remove()
     const badge = document.querySelector('[data-cart-badge]') as HTMLElement
     if (badge) {
@@ -95,16 +90,16 @@ export function ProductCard({ product, className }: ProductCardProps) {
     addItem(product)
     setFlipPhase('forward')
 
-    // Launch fly at the flip midpoint
+    // Launch fly at flip midpoint (card back is fully visible)
     setTimeout(() => {
       if (cardRef.current) flyToCart(cardRef.current, product.images[0])
-    }, 210)
+    }, 200)
 
-    // Start returning flip
-    setTimeout(() => setFlipPhase('return'), 520)
+    // Start return flip after forward completes
+    setTimeout(() => setFlipPhase('return'), 400)
 
     // Back to idle
-    setTimeout(() => setFlipPhase('idle'), 860)
+    setTimeout(() => setFlipPhase('idle'), 700)
   }
 
   const isHolo = product.variant === 'holo' || product.variant === 'reverse_holo'
@@ -119,7 +114,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   const flipTransition =
     flipPhase === 'forward'
-      ? 'transform 0.42s ease-in-out'
+      ? 'transform 0.4s ease-in-out'
       : flipPhase === 'return'
         ? 'transform 0.3s ease-out'
         : isHovered
@@ -253,40 +248,22 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </div>
         </div>
 
-        {/* ── Back face (card back pattern) ── */}
+        {/* ── Back face (franchise card back) ── */}
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden border border-navy/50"
+          className="absolute inset-0 overflow-hidden border border-navy/50"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
-            backgroundColor: '#030a18',
-            backgroundImage: [
-              'repeating-linear-gradient(45deg, rgba(107,184,236,0.07) 0, rgba(107,184,236,0.07) 1px, transparent 0, transparent 50%)',
-              'repeating-linear-gradient(135deg, rgba(107,184,236,0.07) 0, rgba(107,184,236,0.07) 1px, transparent 0, transparent 50%)',
-            ].join(', '),
-            backgroundSize: '10px 10px',
           }}
         >
-          {/* Outer glow border */}
-          <div
-            className="absolute inset-3 border border-dragon/25"
-            style={{ borderRadius: '2px' }}
+          {/* PLACEHOLDER: reemplazar URLs placehold.co con imágenes reales de Irving */}
+          <img
+            src={CARD_BACK[product.franchise]}
+            alt="Card back"
+            className="w-full h-full object-cover"
+            draggable={false}
           />
-          <div
-            className="absolute inset-5 border border-dragon/15"
-            style={{ borderRadius: '1px' }}
-          />
-          {/* Logo mark */}
-          <div className="relative z-10 flex flex-col items-center select-none">
-            <span
-              className="font-agency text-dragon/60 tracking-widest"
-              style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)' }}
-            >
-              II
-            </span>
-            <span className="font-agency text-ash/35 text-xs tracking-[0.3em] mt-1">TCG</span>
-          </div>
         </div>
       </div>
     </div>

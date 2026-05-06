@@ -6,8 +6,9 @@ import {
   EDITION_LABELS,
   VARIANT_LABELS,
   LANGUAGE_LABELS,
+  PRODUCT_TYPE_LABELS,
 } from '@/lib/utils'
-import type { FilterState, Franchise, Condition, Rarity, Edition, Variant, Language } from '@/types'
+import type { FilterState, Franchise, Condition, Rarity, Edition, Variant, Language, ProductType } from '@/types'
 
 interface FilterPanelProps {
   filters: FilterState
@@ -91,9 +92,22 @@ export function FilterPanel({
         </button>
       </div>
 
+      <FilterSection title="Tipo de producto">
+        <CheckboxGroup<ProductType>
+          options={[
+            'single', 'graded', 'booster_pack', 'booster_box', 'booster_bundle',
+            'elite_trainer_box', 'starter_deck', 'build_and_battle', 'deck',
+            'sleeves', 'playmat', 'dice', 'deck_box', 'binder', 'tin', 'box_set', 'accessories',
+          ]}
+          labels={PRODUCT_TYPE_LABELS}
+          selected={filters.productType}
+          onChange={(v) => onUpdate('productType', v)}
+        />
+      </FilterSection>
+
       <FilterSection title="Franquicia">
         <CheckboxGroup<Franchise>
-          options={['pokemon', 'yugioh', 'lorcana']}
+          options={['pokemon', 'yugioh', 'lorcana', 'magic', 'accessories']}
           labels={FRANCHISE_LABELS}
           selected={filters.franchise}
           onChange={(v) => onUpdate('franchise', v)}

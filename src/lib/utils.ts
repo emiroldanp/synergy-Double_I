@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import type { Condition, Franchise, Rarity, Language, Variant, Edition, OrderStatus } from '@/types'
+import type { Condition, Franchise, ProductType, Rarity, Language, Variant, Edition, OrderStatus } from '@/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -27,12 +27,45 @@ export const FRANCHISE_LABELS: Record<Franchise, string> = {
   pokemon: 'Pokémon',
   yugioh: 'Yu-Gi-Oh!',
   lorcana: 'Lorcana',
+  magic: 'Magic: The Gathering',
+  accessories: 'Accesorios',
 }
 
 export const FRANCHISE_COLORS: Record<Franchise, string> = {
   pokemon: '#F5C400',
   yugioh: '#C8950A',
   lorcana: '#6B5ECD',
+  magic: '#A52A2A',
+  accessories: '#6BB8EC',
+}
+
+// PLACEHOLDER: reemplazar URLs placehold.co con imágenes reales de Irving
+export const CARD_BACK: Record<Franchise, string> = {
+  pokemon: 'https://placehold.co/300x420/CC0000/FFFFFF?text=Pokemon+Back',
+  yugioh: 'https://placehold.co/300x420/003366/FFD700?text=Yu-Gi-Oh!+Back',
+  lorcana: 'https://placehold.co/300x420/1E0E40/6BB8EC?text=Lorcana+Back',
+  magic: 'https://placehold.co/300x420/1A1A2E/C8950A?text=Magic+Back',
+  accessories: 'https://placehold.co/300x420/141E2E/6BB8EC?text=Double-I',
+}
+
+export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
+  single: 'Single',
+  graded: 'Carta Gradeada',
+  booster_pack: 'Booster Pack',
+  booster_box: 'Booster Box',
+  booster_bundle: 'Booster Bundle',
+  elite_trainer_box: 'Elite Trainer Box',
+  starter_deck: 'Starter / Theme Deck',
+  build_and_battle: 'Build & Battle Box',
+  deck: 'Deck',
+  sleeves: 'Sleeves / Protectores',
+  playmat: 'Playmat / Tapete',
+  dice: 'Dados',
+  deck_box: 'Deck Box / Case',
+  binder: 'Binder / Álbum',
+  tin: 'Tin',
+  box_set: 'Box Set / Collection Box',
+  accessories: 'Accesorios',
 }
 
 export const CONDITION_LABELS: Record<Condition, string> = {

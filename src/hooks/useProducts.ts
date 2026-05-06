@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { MOCK_PRODUCTS } from '@/lib/mockData'
 import type { FilterState, Product } from '@/types'
 
 const DEFAULT_FILTERS: FilterState = {
   franchise: [],
+  productType: [],
   rarity: [],
   edition: [],
   condition: [],
@@ -23,12 +24,16 @@ export function useProducts(initialFilters?: Partial<FilterState>) {
     ...DEFAULT_FILTERS,
     ...initialFilters,
   })
+  const [loadedCount, setLoadedCount] = useState(PAGE_SIZE)
 
   const filtered = useMemo(() => {
     let result = MOCK_PRODUCTS.filter((p) => p.isActive)
 
     if (filters.franchise.length) {
       result = result.filter((p) => filters.franchise.includes(p.franchise))
+    }
+    if (filters.productType.length) {
+      result = result.filter((p) => filters.productType.includes(p.productType))
     }
     if (filters.rarity.length) {
       result = result.filter((p) => filters.rarity.includes(p.rarity))
@@ -78,19 +83,29 @@ export function useProducts(initialFilters?: Partial<FilterState>) {
     return result
   }, [filters])
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paginated = filtered.slice((filters.page - 1) * PAGE_SIZE, filters.page * PAGE_SIZE)
+  const products = filtered.slice(0, loadedCount)
+  const hasMore = loadedCount < filtered.length
+  const totalProducts = filtered.length
 
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
-    setFilters((prev) => ({ ...prev, [key]: value, page: key !== 'page' ? 1 : prev.page }))
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setLoadedCount(PAGE_SIZE)
   }
 
-  const resetFilters = () => setFilters(DEFAULT_FILTERS)
+  const resetFilters = () => {
+    setFilters(DEFAULT_FILTERS)
+    setLoadedCount(PAGE_SIZE)
+  }
+
+  const loadMore = useCallback(() => {
+    setLoadedCount((prev) => prev + PAGE_SIZE)
+  }, [])
 
   return {
-    products: paginated,
-    totalProducts: filtered.length,
-    totalPages,
+    products,
+    totalProducts,
+    hasMore,
+    loadMore,
     filters,
     updateFilter,
     resetFilters,

@@ -4,9 +4,8 @@ const CATEGORIES = [
   {
     id: 'pokemon',
     label: 'Pokémon',
-    description: 'Base Set, Neo, EX, moderno',
+    description: 'Base Set, Neo, EX, moderno · Singles y productos sellados',
     color: '#F5C400',
-    colorDark: '#B8920A',
     emoji: '⚡',
     href: '/catalogo?franchise=pokemon',
     bg: 'from-yellow-900/30 to-yellow-950/60',
@@ -16,7 +15,6 @@ const CATEGORIES = [
     label: 'Yu-Gi-Oh!',
     description: 'LOB, SDK, moderno OCG/TCG',
     color: '#C8950A',
-    colorDark: '#8A6408',
     emoji: '⚔️',
     href: '/catalogo?franchise=yugioh',
     bg: 'from-amber-900/30 to-amber-950/60',
@@ -24,12 +22,29 @@ const CATEGORIES = [
   {
     id: 'lorcana',
     label: 'Lorcana',
-    description: 'The First Chapter, Rise of the Floodborn',
+    description: 'The First Chapter, Rise of the Floodborn, Inklands',
     color: '#6B5ECD',
-    colorDark: '#4A3FAD',
     emoji: '✨',
     href: '/catalogo?franchise=lorcana',
     bg: 'from-purple-900/30 to-purple-950/60',
+  },
+  {
+    id: 'magic',
+    label: 'Magic: TG',
+    description: 'Bloomburrow, MH3, Commander decks y más',
+    color: '#D4502A',
+    emoji: '🔮',
+    href: '/catalogo?franchise=magic',
+    bg: 'from-red-900/30 to-red-950/60',
+  },
+  {
+    id: 'accessories',
+    label: 'Accesorios',
+    description: 'Sleeves, playmats, deck boxes, binders, dados',
+    color: '#6BB8EC',
+    emoji: '🎲',
+    href: '/catalogo?franchise=accessories',
+    bg: 'from-cyan-900/30 to-cyan-950/60',
   },
 ]
 
@@ -42,56 +57,56 @@ export function CategoryCards() {
           <h2 className="section-title">¿Qué coleccionas?</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {CATEGORIES.map((cat, i) => (
             <Link
               key={cat.id}
               to={cat.href}
-              className="group relative block overflow-hidden border border-navy/40 hover:border-current transition-all duration-300"
+              className="group relative block overflow-hidden border transition-all duration-300"
               style={{
                 borderColor: `${cat.color}40`,
-                animation: `slideUp 0.6s ease-out ${i * 0.12}s both`,
+                animation: `slideUp 0.6s ease-out ${i * 0.08}s both`,
               }}
             >
-              {/* Background */}
+              {/* Background glow */}
               <div
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{
-                  background: `radial-gradient(ellipse at center, ${cat.color}15 0%, transparent 70%)`,
+                  background: `radial-gradient(ellipse at center, ${cat.color}18 0%, transparent 70%)`,
                 }}
               />
 
-              <div className="relative p-8 md:p-10 flex flex-col items-center text-center">
+              <div className="relative p-5 md:p-7 flex flex-col items-center text-center">
                 <span
-                  className="text-5xl mb-4 block transition-transform duration-300 group-hover:scale-110"
+                  className="text-4xl mb-3 block transition-transform duration-300 group-hover:scale-110"
                   aria-hidden="true"
                 >
                   {cat.emoji}
                 </span>
 
                 <h3
-                  className="font-agency text-2xl md:text-3xl uppercase tracking-wider mb-2 transition-colors duration-200"
+                  className="font-agency text-lg md:text-xl uppercase tracking-wider mb-1.5 transition-colors duration-200"
                   style={{ color: cat.color }}
                 >
                   {cat.label}
                 </h3>
 
-                <p className="font-exo text-ash text-sm mb-5">{cat.description}</p>
+                <p className="font-exo text-ash text-xs leading-relaxed mb-4 hidden sm:block">{cat.description}</p>
 
                 <span
-                  className="font-agency text-xs uppercase tracking-widest px-4 py-2 border transition-all duration-200 group-hover:text-white"
+                  className="font-agency text-xs uppercase tracking-widest px-3 py-1.5 border transition-all duration-200 group-hover:text-white"
                   style={{
                     borderColor: `${cat.color}60`,
                     color: cat.color,
                   }}
                 >
-                  Ver colección →
+                  Ver →
                 </span>
               </div>
 
               {/* Corner accent */}
               <div
-                className="absolute bottom-0 right-0 w-16 h-16 opacity-20 group-hover:opacity-40 transition-opacity"
+                className="absolute bottom-0 right-0 w-12 h-12 opacity-20 group-hover:opacity-40 transition-opacity"
                 style={{
                   background: `linear-gradient(135deg, transparent 50%, ${cat.color} 50%)`,
                 }}

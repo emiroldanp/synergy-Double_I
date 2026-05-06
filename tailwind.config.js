@@ -4,11 +4,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        void: '#060410',
-        night: '#0D0820',
-        abyss: '#160B30',
-        deep: '#1E0E40',
-        navy: '#2B1878',
+        void: '#080C14',
+        night: '#0F1520',
+        abyss: '#141E2E',
+        deep: '#1A2338',
+        navy: '#1E3054',
         royal: '#3040C4',
         dragon: '#6BB8EC',
         crimson: '#CC1515',

@@ -16,16 +16,20 @@ export function DeckIcon({ className, empty = false }: DeckIconProps) {
       className={className}
       aria-hidden="true"
     >
-      {/* Back card */}
-      <rect x="8" y="5" width="12" height="16" rx="2" strokeOpacity={empty ? '0.15' : '0.3'} />
-      {/* Middle card */}
-      <rect x="5.5" y="3.5" width="12" height="16" rx="2" strokeOpacity={empty ? '0.3' : '0.6'} />
-      {/* Front card */}
-      <rect x="3" y="2" width="12" height="16" rx="2" strokeOpacity={empty ? '0.5' : '1'} />
-      {/* Art area line — only on non-empty */}
-      {!empty && (
-        <line x1="5.5" y1="6.5" x2="12.5" y2="6.5" strokeWidth="1" strokeOpacity="0.6" />
-      )}
+      <g transform="rotate(-12, 12, 12)">
+        {/* Back card */}
+        <rect x="8" y="3" width="11" height="15" rx="1.5" strokeOpacity={empty ? '0.08' : '0.2'} />
+        {/* Card 3 */}
+        <rect x="6" y="5" width="11" height="15" rx="1.5" strokeOpacity={empty ? '0.15' : '0.4'} />
+        {/* Card 2 */}
+        <rect x="4" y="7" width="11" height="15" rx="1.5" strokeOpacity={empty ? '0.25' : '0.65'} />
+        {/* Front card */}
+        <rect x="2" y="9" width="11" height="15" rx="1.5" strokeOpacity={empty ? '0.45' : '1'} />
+        {/* Art/text separator at 1/3 height */}
+        {!empty && (
+          <line x1="4" y1="14" x2="11" y2="14" strokeWidth="1" strokeOpacity="0.7" />
+        )}
+      </g>
     </svg>
   )
 }

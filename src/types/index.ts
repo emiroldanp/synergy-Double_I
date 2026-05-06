@@ -1,4 +1,4 @@
-export type Franchise = 'pokemon' | 'yugioh' | 'lorcana'
+export type Franchise = 'pokemon' | 'yugioh' | 'lorcana' | 'magic' | 'accessories'
 
 export type Rarity =
   | 'comun'
@@ -9,6 +9,25 @@ export type Rarity =
   | 'full_art'
   | 'gold_rare'
   | 'prismatic'
+
+export type ProductType =
+  | 'single'
+  | 'graded'
+  | 'booster_pack'
+  | 'booster_box'
+  | 'booster_bundle'
+  | 'elite_trainer_box'
+  | 'starter_deck'
+  | 'build_and_battle'
+  | 'deck'
+  | 'sleeves'
+  | 'playmat'
+  | 'dice'
+  | 'deck_box'
+  | 'binder'
+  | 'tin'
+  | 'box_set'
+  | 'accessories'
 
 export type Edition = 'primera' | 'shadowless' | 'ilimitada'
 
@@ -31,6 +50,7 @@ export interface Product {
   slug: string
   name: string
   franchise: Franchise
+  productType: ProductType
   set: string
   rarity: Rarity
   edition: Edition
@@ -103,6 +123,16 @@ export interface Order {
   }
 }
 
+export interface Novedad {
+  id: string
+  title: string
+  image: string
+  productSlug?: string
+  text?: string
+  order: number
+  isActive: boolean
+}
+
 export interface BlogPost {
   id: string
   slug: string
@@ -132,6 +162,7 @@ export interface Promotion {
 
 export interface FilterState {
   franchise: Franchise[]
+  productType: ProductType[]
   rarity: Rarity[]
   edition: Edition[]
   condition: Condition[]

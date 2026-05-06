@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 
@@ -17,10 +18,26 @@ import AdminDashboard from '@/pages/admin/AdminDashboard'
 import ProductsManager from '@/pages/admin/ProductsManager'
 import OrdersManager from '@/pages/admin/OrdersManager'
 import BlogManager from '@/pages/admin/BlogManager'
+import NovedadesManager from '@/pages/admin/NovedadesManager'
+
+function ParallaxHandler() {
+  const location = useLocation()
+
+  useEffect(() => {
+    const onScroll = () => {
+      const offset = window.scrollY * 0.25
+      document.documentElement.style.setProperty('--logo-parallax', `${offset}px`)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [location.pathname])
+
+  return null
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen bg-night">
+    <div className="flex flex-col min-h-screen bg-night overflow-x-hidden">
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
@@ -31,6 +48,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <ParallaxHandler />
       <Routes>
         <Route path="/" element={<Layout><HomePage /></Layout>} />
         <Route path="/catalogo" element={<Layout><CatalogPage /></Layout>} />
@@ -44,6 +62,7 @@ export default function App() {
         <Route path="/contacto" element={<Layout><ContactPage /></Layout>} />
         <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
         <Route path="/admin/productos" element={<Layout><ProductsManager /></Layout>} />
+        <Route path="/admin/novedades" element={<Layout><NovedadesManager /></Layout>} />
         <Route path="/admin/pedidos" element={<Layout><OrdersManager /></Layout>} />
         <Route path="/admin/blog" element={<Layout><BlogManager /></Layout>} />
       </Routes>

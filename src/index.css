@@ -11,11 +11,11 @@
 }
 
 :root {
-  --color-void: #060410;
-  --color-night: #0D0820;
-  --color-abyss: #160B30;
-  --color-deep: #1E0E40;
-  --color-navy: #2B1878;
+  --color-void: #080C14;
+  --color-night: #0F1520;
+  --color-abyss: #141E2E;
+  --color-deep: #1A2338;
+  --color-navy: #1E3054;
   --color-royal: #3040C4;
   --color-dragon: #6BB8EC;
   --color-crimson: #CC1515;
@@ -26,6 +26,8 @@
 
   --font-agency: 'Agency Bold', Impact, sans-serif;
   --font-exo: 'Exo 2', sans-serif;
+
+  --logo-parallax: 0px;
 }
 
 * {
@@ -45,6 +47,29 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url('/logo-color.png');
+  background-size: 110px auto;
+  background-repeat: repeat;
+  transform: rotate(-12deg);
+  background-position: 0 var(--logo-parallax);
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: -1;
+  animation: logoDrift 120s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+  }
 }
 
 /* Selection */
@@ -216,4 +241,24 @@ h1, h2, h3 {
 
 .cart-badge-bump {
   animation: badgeBump 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes logoDrift {
+  0% { background-position: 0 var(--logo-parallax); }
+  100% { background-position: 110px calc(var(--logo-parallax) + 110px); }
+}
+
+@keyframes flyParabolic {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  45% {
+    transform: translate(calc(var(--tx) * 0.5), calc(var(--ty) * 0.35 - 90px)) rotate(-15deg) scale(0.5);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) rotate(20deg) scale(0.05);
+    opacity: 0;
+  }
 }

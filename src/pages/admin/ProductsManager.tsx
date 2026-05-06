@@ -11,6 +11,7 @@ import {
   CONDITION_LABELS,
   RARITY_LABELS,
   FRANCHISE_LABELS,
+  PRODUCT_TYPE_LABELS,
 } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
@@ -26,7 +27,7 @@ export default function ProductsManager() {
     formState: { errors },
   } = useForm<AdminProductoFormData>({
     resolver: zodResolver(adminProductoSchema),
-    defaultValues: { isActive: true, stock: 0, price: 0, edition: 'ilimitada', condition: 'near_mint', language: 'en', variant: 'standard', franchise: 'pokemon', rarity: 'comun' },
+    defaultValues: { isActive: true, stock: 0, price: 0, edition: 'ilimitada', condition: 'near_mint', language: 'en', variant: 'standard', franchise: 'pokemon', rarity: 'comun', productType: 'single' },
   })
 
   if (!isLoaded) return null
@@ -63,6 +64,7 @@ export default function ProductsManager() {
             {[
               { to: '/admin', label: 'Dashboard' },
               { to: '/admin/productos', label: 'Productos' },
+              { to: '/admin/novedades', label: 'Novedades' },
               { to: '/admin/pedidos', label: 'Pedidos' },
               { to: '/admin/blog', label: 'Blog' },
             ].map((link) => (
@@ -90,11 +92,18 @@ export default function ProductsManager() {
                       <input {...register('name')} className="input-dark" placeholder="Charizard Holo" />
                     </FormRow>
                   </div>
+                  <FormRow label="Tipo de producto" error={errors.productType?.message}>
+                    <select {...register('productType')} className="input-dark cursor-pointer">
+                      {Object.entries(PRODUCT_TYPE_LABELS).map(([v, l]) => (
+                        <option key={v} value={v}>{l}</option>
+                      ))}
+                    </select>
+                  </FormRow>
                   <FormRow label="Franquicia" error={errors.franchise?.message}>
                     <select {...register('franchise')} className="input-dark cursor-pointer">
-                      <option value="pokemon">Pokémon</option>
-                      <option value="yugioh">Yu-Gi-Oh!</option>
-                      <option value="lorcana">Lorcana</option>
+                      {Object.entries(FRANCHISE_LABELS).map(([v, l]) => (
+                        <option key={v} value={v}>{l}</option>
+                      ))}
                     </select>
                   </FormRow>
                   <FormRow label="Set" error={errors.set?.message}>

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useProducts } from '@/hooks/useProducts'
 import { FilterPanel } from '@/components/ui/FilterPanel'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { CardReveal } from '@/components/ui/CardReveal'
 import { ScrollRevealGrid } from '@/components/ui/ScrollRevealGrid'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -15,7 +16,29 @@ const SORT_OPTIONS = [
 
 export default function CatalogPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const { products, totalProducts, totalPages, filters, updateFilter, resetFilters } = useProducts()
+  const { products, totalProducts, hasMore, loadMore, filters, updateFilter, resetFilters } = useProducts()
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const hasMoreRef = useRef(hasMore)
+  const loadMoreRef = useRef(loadMore)
+  hasMoreRef.current = hasMore
+  loadMoreRef.current = loadMore
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMoreRef.current) {
+          loadMoreRef.current()
+        }
+      },
+      { rootMargin: '200px' }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <>
@@ -110,57 +133,36 @@ export default function CatalogPage() {
                 <>
                   <ScrollRevealGrid className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                     {products.map((product, i) => (
-                      <div
-                        key={product.id}
-                        style={{ animation: `fadeIn 0.3s ease-out ${i * 0.04}s both` }}
-                      >
+                      <CardReveal key={product.id} index={i}>
                         <ProductCard product={product} />
-                      </div>
+                      </CardReveal>
                     ))}
                   </ScrollRevealGrid>
 
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-10">
-                      <button
-                        onClick={() => updateFilter('page', Math.max(1, filters.page - 1))}
-                        disabled={filters.page === 1}
-                        className={cn(
-                          'w-9 h-9 border font-agency text-sm transition-colors',
-                          filters.page === 1
-                            ? 'border-navy/30 text-ash/30 cursor-not-allowed'
-                            : 'border-navy/60 text-ash hover:border-dragon/60 hover:text-dragon'
-                        )}
-                      >
-                        ‹
-                      </button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => updateFilter('page', page)}
+                  {/* Infinite scroll sentinel */}
+                  <div ref={sentinelRef} aria-hidden="true" className="h-1" />
+
+                  {/* Loading indicator */}
+                  {hasMore && (
+                    <div className="flex justify-center items-center gap-2 py-8">
+                      {[0, 1, 2].map((i) => (
+                        <div
+                          key={i}
                           className={cn(
-                            'w-9 h-9 border font-agency text-sm transition-colors',
-                            page === filters.page
-                              ? 'border-dragon bg-royal/20 text-dragon'
-                              : 'border-navy/60 text-ash hover:border-dragon/60 hover:text-dragon'
+                            'w-2 h-2 rounded-full animate-pulse',
+                            i === 0 ? 'bg-dragon' : i === 1 ? 'bg-royal' : 'bg-crimson'
                           )}
-                        >
-                          {page}
-                        </button>
+                          style={{ animationDelay: `${i * 150}ms` }}
+                        />
                       ))}
-                      <button
-                        onClick={() => updateFilter('page', Math.min(totalPages, filters.page + 1))}
-                        disabled={filters.page === totalPages}
-                        className={cn(
-                          'w-9 h-9 border font-agency text-sm transition-colors',
-                          filters.page === totalPages
-                            ? 'border-navy/30 text-ash/30 cursor-not-allowed'
-                            : 'border-navy/60 text-ash hover:border-dragon/60 hover:text-dragon'
-                        )}
-                      >
-                        ›
-                      </button>
                     </div>
+                  )}
+
+                  {/* End of catalog message */}
+                  {!hasMore && (
+                    <p className="font-agency text-ash/50 text-sm uppercase tracking-wider text-center py-8">
+                      Has llegado al final del catálogo
+                    </p>
                   )}
                 </>
               )}
