@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.DS_Store
+._*
+__MACOSX/
+Thumbs.db
+
+# QA screenshots (root level only)
+/*.png
+/*.jpg
+/*.jpeg
+
+# Logs
+*.log
+npm-debug.log*
+
+# Playwright artifacts
+.playwright-mcp/
+
+# Claude Code internal
+.claude/
+
+# Vite cache
+.vite/
