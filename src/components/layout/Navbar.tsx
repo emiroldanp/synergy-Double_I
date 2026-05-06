@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useCart } from '@/hooks/useCart'
 import { CartDrawer } from '@/components/ui/CartDrawer'
+import { DeckIcon } from '@/components/ui/DeckIcon'
 import { cn } from '@/lib/utils'
 
 export function Navbar() {
@@ -90,11 +91,12 @@ export function Navbar() {
                 aria-label={`Carrito (${totalItems} artículos)`}
                 className="relative text-ash hover:text-white transition-colors p-1"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+                <DeckIcon className="w-6 h-6" empty={totalItems === 0} />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-crimson text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  <span
+                    data-cart-badge
+                    className="absolute -top-1 -right-1 bg-crimson text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
+                  >
                     {totalItems > 9 ? '9+' : totalItems}
                   </span>
                 )}

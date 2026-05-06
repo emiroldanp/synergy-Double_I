@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { useProducts } from '@/hooks/useProducts'
 import { FilterPanel } from '@/components/ui/FilterPanel'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { ScrollRevealGrid } from '@/components/ui/ScrollRevealGrid'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 
@@ -107,7 +108,7 @@ export default function CatalogPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                  <ScrollRevealGrid className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                     {products.map((product, i) => (
                       <div
                         key={product.id}
@@ -116,7 +117,7 @@ export default function CatalogPage() {
                         <ProductCard product={product} />
                       </div>
                     ))}
-                  </div>
+                  </ScrollRevealGrid>
 
                   {/* Pagination */}
                   {totalPages > 1 && (

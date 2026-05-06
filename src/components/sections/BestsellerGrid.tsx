@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useBestsellers } from '@/hooks/useProducts'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { ScrollRevealGrid } from '@/components/ui/ScrollRevealGrid'
 
 export function BestsellerGrid() {
   const products = useBestsellers()
@@ -21,7 +22,7 @@ export function BestsellerGrid() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <ScrollRevealGrid className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {products.map((product, i) => (
             <div
               key={product.id}
@@ -30,7 +31,7 @@ export function BestsellerGrid() {
               <ProductCard product={product} />
             </div>
           ))}
-        </div>
+        </ScrollRevealGrid>
 
         <div className="sm:hidden mt-6 text-center">
           <Link
