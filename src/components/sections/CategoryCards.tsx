@@ -50,7 +50,7 @@ const CATEGORIES = [
 
 export function CategoryCards() {
   return (
-    <section className="bg-night py-16">
+    <section className="bg-brand-navy py-16">
       <div className="page-container">
         <div className="text-center mb-10">
           <p className="section-subtitle mb-2">Explora por franquicia</p>

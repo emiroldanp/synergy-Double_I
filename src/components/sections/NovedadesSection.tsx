@@ -100,7 +100,7 @@ export function NovedadesSection() {
 
   if (novedades.length === 0) {
     return (
-      <section className="bg-abyss py-16">
+      <section className="bg-brand-navy py-16">
         <div className="page-container">
           <div className="mb-8">
             <p className="section-subtitle mb-2">Recién llegado</p>
@@ -119,7 +119,7 @@ export function NovedadesSection() {
   const nov = novedades[current]
 
   return (
-    <section className="bg-abyss py-14">
+    <section className="bg-brand-navy py-14">
       <div className="page-container">
         {/* Header */}
         <div className="flex items-end justify-between mb-6">
@@ -167,7 +167,7 @@ export function NovedadesSection() {
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: 'linear-gradient(to right, rgba(10,13,20,0.88) 0%, rgba(10,13,20,0.5) 45%, rgba(10,13,20,0.1) 100%)',
+                    background: 'linear-gradient(to right, rgba(232,34,34,0.18) 0%, rgba(43,26,94,0.75) 20%, rgba(43,26,94,0.4) 55%, rgba(43,26,94,0.05) 100%)',
                   }}
                 />
 
@@ -208,7 +208,7 @@ export function NovedadesSection() {
               </div>
 
               {/* Bottom border accent */}
-              <div className="h-px bg-gradient-to-r from-dragon/60 via-royal/40 to-transparent" />
+              <div className="h-px bg-gradient-to-r from-brand-red/70 via-brand-navy/40 to-transparent" />
             </div>
           </div>
 
