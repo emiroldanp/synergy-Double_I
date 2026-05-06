@@ -265,3 +265,26 @@ h1, h2, h3 {
     opacity: 0;
   }
 }
+
+/* Micro-shuffle hover — tarjetas de categoría */
+@keyframes cardShuffle {
+  0%   { transform: rotate(0deg) translateY(0px); }
+  20%  { transform: rotate(-3deg) translateY(-3px); }
+  40%  { transform: rotate(2deg) translateY(-5px); }
+  60%  { transform: rotate(-1deg) translateY(-3px); }
+  80%  { transform: rotate(1deg) translateY(-1px); }
+  100% { transform: rotate(0deg) translateY(0px); }
+}
+
+/* Holographic rainbow sweep */
+@keyframes holoRainbow {
+  0%   { background-position: -200% 0; filter: hue-rotate(0deg); }
+  50%  { filter: hue-rotate(180deg); }
+  100% { background-position: 200% 0; filter: hue-rotate(360deg); }
+}
+
+/* Pack energy ripple */
+@keyframes energyRipple {
+  0%   { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}

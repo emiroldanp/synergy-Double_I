@@ -62,7 +62,7 @@ export function CategoryCards() {
             <Link
               key={cat.id}
               to={cat.href}
-              className="group relative block overflow-hidden border transition-all duration-300"
+              className="group relative block overflow-hidden border transition-all duration-300 hover:[animation:cardShuffle_0.5s_ease-in-out]"
               style={{
                 borderColor: `${cat.color}40`,
                 animation: `slideUp 0.6s ease-out ${i * 0.08}s both`,

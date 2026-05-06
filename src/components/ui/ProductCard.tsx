@@ -179,12 +179,16 @@ export function ProductCard({ product, className, light = false }: ProductCardPr
                   style={{
                     background: `linear-gradient(
                       ${105 + tilt.y * 2}deg,
-                      transparent 30%,
-                      rgba(107,184,236,0.25) 45%,
-                      rgba(48,64,196,0.2) 50%,
-                      rgba(204,21,21,0.1) 55%,
-                      transparent 65%
+                      transparent 20%,
+                      rgba(255,0,128,0.2) 30%,
+                      rgba(107,184,236,0.3) 40%,
+                      rgba(48,196,96,0.2) 50%,
+                      rgba(196,48,196,0.2) 60%,
+                      rgba(232,34,34,0.15) 70%,
+                      transparent 80%
                     )`,
+                    backgroundSize: '200% 100%',
+                    animation: 'holoRainbow 4s linear infinite',
                   }}
                 />
               )}
