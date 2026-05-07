@@ -31,8 +31,8 @@ if (process.env.NODE_ENV !== 'production') {
 // — debe registrarse ANTES de express.json()
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }))
 
-// Parseo de JSON para el resto de las rutas
-app.use(express.json())
+// Parseo de JSON para el resto de las rutas — límite 10mb para subida de imágenes en base64
+app.use(express.json({ limit: '10mb' }))
 
 // Rutas públicas
 app.use('/api/products', productsRoutes)

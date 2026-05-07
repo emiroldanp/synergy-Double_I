@@ -13,10 +13,14 @@ import BlogPage from '@/pages/BlogPage'
 import BlogPostPage from '@/pages/BlogPostPage'
 import ContactPage from '@/pages/ContactPage'
 
-import AdminDashboard from '@/pages/admin/AdminDashboard'
-import ProductsManager from '@/pages/admin/ProductsManager'
-import OrdersManager from '@/pages/admin/OrdersManager'
-import BlogManager from '@/pages/admin/BlogManager'
+import AdminLayout from '@/components/admin/AdminLayout'
+import DashboardPage from '@/pages/admin/DashboardPage'
+import ProductsPage from '@/pages/admin/ProductsPage'
+import ProductFormPage from '@/pages/admin/ProductFormPage'
+import OrdersPage from '@/pages/admin/OrdersPage'
+import InvoicesPage from '@/pages/admin/InvoicesPage'
+import SubscribersPage from '@/pages/admin/SubscribersPage'
+import LoginPage from '@/pages/admin/LoginPage'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -42,10 +46,17 @@ export default function App() {
         <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
         <Route path="/blog/:slug" element={<Layout><BlogPostPage /></Layout>} />
         <Route path="/contacto" element={<Layout><ContactPage /></Layout>} />
-        <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
-        <Route path="/admin/productos" element={<Layout><ProductsManager /></Layout>} />
-        <Route path="/admin/pedidos" element={<Layout><OrdersManager /></Layout>} />
-        <Route path="/admin/blog" element={<Layout><BlogManager /></Layout>} />
+        <Route path="/admin/login" element={<Layout><LoginPage /></Layout>} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="productos" element={<ProductsPage />} />
+          <Route path="productos/nuevo" element={<ProductFormPage />} />
+          <Route path="productos/:id/editar" element={<ProductFormPage />} />
+          <Route path="pedidos" element={<OrdersPage />} />
+          <Route path="facturas" element={<InvoicesPage />} />
+          <Route path="suscriptores" element={<SubscribersPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )

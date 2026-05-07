@@ -3,7 +3,7 @@ import { useAdminApi } from '../../hooks/useAdminApi'
 import StatsCard from '../../components/admin/StatsCard'
 import StatusBadge from '../../components/admin/StatusBadge'
 import { DashboardData } from '../../types/admin'
-import { formatMXN } from '../../lib/utils'
+import { formatPrice as formatMXN } from '../../lib/utils'
 
 export default function DashboardPage() {
   const { apiFetch } = useAdminApi()
@@ -12,8 +12,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    apiFetch<DashboardData>('/api/admin/dashboard')
-      .then(setData)
+    apiFetch<{ data: DashboardData }>('/api/admin/dashboard')
+      .then((res) => setData(res.data))
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
