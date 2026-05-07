@@ -82,7 +82,9 @@ export default function BlogPostForm({
   })
 
   const titleValue = watch('title')
-  const slugValue = watch('slug')
+
+  // Registro del campo slug extraído para combinar con handler personalizado
+  const slugRegistration = register('slug', { required: 'El slug es obligatorio' })
 
   // Auto-generar slug desde el título mientras no haya sido editado manualmente
   useEffect(() => {
@@ -191,12 +193,11 @@ export default function BlogPostForm({
               type="text"
               className={inputCls}
               placeholder="las-mejores-cartas-pokemon-2025"
-              {...register('slug', { required: 'El slug es obligatorio' })}
+              {...slugRegistration}
               onChange={(e) => {
-                slugTouched.current = e.target.value !== ''
-                setValue('slug', e.target.value)
+                slugTouched.current = true       // una vez tocado, nunca se auto-sobreescribe
+                slugRegistration.onChange(e)     // mantiene RHF sincronizado
               }}
-              value={slugValue}
             />
             {errors.slug && (
               <p className="text-xs text-red-500 mt-1">{errors.slug.message}</p>
