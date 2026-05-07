@@ -51,8 +51,10 @@ export const productsApi = {
 export const blogApi = {
   getAll: (params?: Record<string, unknown>) => api.get('/api/blog', { params }),
   getBySlug: (slug: string) => api.get(`/api/blog/${slug}`),
+  listAll: (params?: Record<string, unknown>) => api.get('/api/admin/blog', { params }),
   create: (data: unknown) => api.post('/api/admin/blog', data),
   update: (id: string, data: unknown) => api.patch(`/api/admin/blog/${id}`, data),
+  delete: (id: string) => api.delete(`/api/admin/blog/${id}`),
 }
 
 export const dashboardApi = {

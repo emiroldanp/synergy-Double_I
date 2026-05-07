@@ -107,15 +107,16 @@ export interface BlogPost {
   id: string
   slug: string
   title: string
-  excerpt: string
-  body: string
-  image: string
-  category: Franchise | 'general'
+  excerpt: string | null
+  body: string | null
+  featuredImageUrl: string | null
+  categorySlug: string | null
   tags: string[]
-  publishedAt: string
-  isDraft: boolean
-  metaTitle?: string
-  metaDescription?: string
+  isPublished: boolean
+  publishedAt: string | null
+  createdAt: string
+  metaTitle?: string | null
+  metaDescription?: string | null
 }
 
 export interface Promotion {
