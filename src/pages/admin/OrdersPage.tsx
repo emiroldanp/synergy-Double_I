@@ -45,7 +45,7 @@ export default function OrdersPage() {
     apiFetch<PaginatedResponse<OrderWithRelations>>(`/api/admin/orders?${params}`)
       .then((res) => {
         setOrders(res.data)
-        setTotal(res.total)
+        setTotal(res.meta.total)
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))

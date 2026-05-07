@@ -519,6 +519,40 @@ export async function listSubscribers(req: Request, res: Response, next: NextFun
 }
 
 /**
+ * GET /api/admin/subscribers/export-csv
+ * Exporta todos los suscriptores como archivo CSV.
+ */
+export async function exportSubscribersCsv(req: Request, res: Response, next: NextFunction) {
+  try {
+    const subscribers = await prisma.emailSubscriber.findMany({
+      orderBy: { subscribedAt: 'desc' },
+      select: { email: true, fullName: true, isBuyer: true, source: true, subscribedAt: true, unsubscribedAt: true },
+    })
+
+    const header = 'Email,Nombre,Comprador,Fuente,Suscrito el,Dado de baja'
+    const rows = subscribers.map((s) =>
+      [
+        s.email,
+        s.fullName ?? '',
+        s.isBuyer ? 'Sí' : 'No',
+        s.source,
+        new Date(s.subscribedAt).toLocaleDateString('es-MX'),
+        s.unsubscribedAt ? new Date(s.unsubscribedAt).toLocaleDateString('es-MX') : '',
+      ]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(',')
+    )
+
+    const csv = [header, ...rows].join('\n')
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition', 'attachment; filename="suscriptores.csv"')
+    res.send('﻿' + csv) // BOM para compatibilidad con Excel
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * DELETE /api/admin/subscribers/:id
  * Elimina el suscriptor de la tabla local.
  * La gestión en Brevo se hace desde su dashboard.

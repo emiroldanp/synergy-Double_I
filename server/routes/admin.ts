@@ -13,6 +13,7 @@ import {
   retryInvoice,
   getDashboard,
   listSubscribers,
+  exportSubscribersCsv,
   deleteSubscriber,
 } from '../controllers/adminController'
 
@@ -42,4 +43,5 @@ adminRoutes.get('/dashboard', getDashboard)
 
 // --- Suscriptores ---
 adminRoutes.get('/subscribers', listSubscribers)
+adminRoutes.get('/subscribers/export-csv', exportSubscribersCsv)
 adminRoutes.delete('/subscribers/:id', deleteSubscriber)

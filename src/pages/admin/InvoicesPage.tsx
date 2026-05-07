@@ -31,7 +31,7 @@ export default function InvoicesPage() {
     apiFetch<PaginatedResponse<Invoice>>(`/api/admin/invoices?${params}`)
       .then((res) => {
         setInvoices(res.data)
-        setTotal(res.total)
+        setTotal(res.meta.total)
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))

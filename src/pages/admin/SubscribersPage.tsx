@@ -1,26 +1,28 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useAuth } from '@clerk/clerk-react'
 import { useAdminApi } from '../../hooks/useAdminApi'
+import ConfirmModal from '../../components/admin/ConfirmModal'
 import { EmailSubscriber, PaginatedResponse } from '../../types/admin'
 
 export default function SubscribersPage() {
+  const { getToken } = useAuth()
   const { apiFetch } = useAdminApi()
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<EmailSubscriber | null>(null)
+  const [exporting, setExporting] = useState(false)
   const PAGE_SIZE = 20
 
   const fetchSubscribers = useCallback(() => {
     setLoading(true)
-    const params = new URLSearchParams({
-      page: String(page),
-      pageSize: String(PAGE_SIZE),
-    })
+    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
     apiFetch<PaginatedResponse<EmailSubscriber>>(`/api/admin/subscribers?${params}`)
       .then((res) => {
         setSubscribers(res.data)
-        setTotal(res.total)
+        setTotal(res.meta.total)
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
@@ -30,16 +32,38 @@ export default function SubscribersPage() {
     fetchSubscribers()
   }, [fetchSubscribers])
 
-  const handleDelete = async (subscriber: EmailSubscriber) => {
-    const confirmed = window.confirm(
-      `¿Eliminar al suscriptor ${subscriber.email}? Esta acción no se puede deshacer.`
-    )
-    if (!confirmed) return
+  const confirmDelete = async () => {
+    if (!confirmTarget) return
     try {
-      await apiFetch(`/api/admin/subscribers/${subscriber.id}`, { method: 'DELETE' })
+      await apiFetch(`/api/admin/subscribers/${confirmTarget.id}`, { method: 'DELETE' })
+      setConfirmTarget(null)
       fetchSubscribers()
     } catch (e: unknown) {
+      setConfirmTarget(null)
       alert(`Error: ${e instanceof Error ? e.message : 'Error desconocido'}`)
+    }
+  }
+
+  const handleExportCsv = async () => {
+    setExporting(true)
+    try {
+      const token = await getToken()
+      const base = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
+      const res = await fetch(`${base}/api/admin/subscribers/export-csv`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error(res.statusText)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'suscriptores.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e: unknown) {
+      alert(`Error al exportar: ${e instanceof Error ? e.message : 'Error desconocido'}`)
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -47,6 +71,17 @@ export default function SubscribersPage() {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500">{total} suscriptores</span>
+        <button
+          onClick={handleExportCsv}
+          disabled={exporting || loading}
+          className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+        >
+          {exporting ? 'Exportando...' : 'Exportar CSV'}
+        </button>
+      </div>
+
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
           Error al cargar suscriptores: {error}
@@ -83,7 +118,7 @@ export default function SubscribersPage() {
                 subscribers.map((sub) => (
                   <tr key={sub.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-900">{sub.email}</td>
-                    <td className="px-4 py-3 text-gray-700">{sub.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-700">{sub.fullName ?? '—'}</td>
                     <td className="px-4 py-3 text-gray-500">{sub.source}</td>
                     <td className="px-4 py-3">
                       {sub.isBuyer ? (
@@ -93,11 +128,11 @@ export default function SubscribersPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
-                      {new Date(sub.createdAt).toLocaleDateString('es-MX')}
+                      {new Date(sub.subscribedAt).toLocaleDateString('es-MX')}
                     </td>
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => handleDelete(sub)}
+                        onClick={() => setConfirmTarget(sub)}
                         className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                       >
                         Eliminar
@@ -133,6 +168,15 @@ export default function SubscribersPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={confirmTarget !== null}
+        title="Eliminar suscriptor"
+        message={`¿Eliminar a ${confirmTarget?.email}? Esta acción no se puede deshacer.`}
+        confirmLabel="Sí, eliminar"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   )
 }

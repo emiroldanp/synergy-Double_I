@@ -37,7 +37,7 @@ export default function ProductsPage() {
     apiFetch<PaginatedResponse<Product>>(`/api/admin/products?${params}`)
       .then((res) => {
         setProducts(res.data)
-        setTotal(res.total)
+        setTotal(res.meta.total)
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
