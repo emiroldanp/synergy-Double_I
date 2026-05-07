@@ -44,7 +44,7 @@ export default function BlogPostPage() {
       setShowForm(false)
       navigate(0) // recarga la página para reflejar cambios
     } catch (err) {
-      console.error('Error al guardar el post:', err)
+      // console.error('Error al guardar el post:', err)
     } finally {
       setSaving(false)
     }
@@ -57,7 +57,7 @@ export default function BlogPostPage() {
       await blogApi.update(post.id, { isPublished: !post.isPublished })
       navigate(0)
     } catch (err) {
-      console.error('Error al cambiar estado de publicación:', err)
+      // console.error('Error al cambiar estado de publicación:', err)
     }
   }
 
@@ -70,7 +70,7 @@ export default function BlogPostPage() {
       await blogApi.delete(post.id)
       navigate('/blog')
     } catch (err) {
-      console.error('Error al eliminar el post:', err)
+      // console.error('Error al eliminar el post:', err)
     }
   }
 
