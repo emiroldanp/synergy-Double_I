@@ -20,8 +20,8 @@ const productSchema = z.object({
   rarity: z.string().nullable().optional(),
   condition: z.enum(['mint', 'near_mint', 'lightly_played', '']).nullable().optional(),
   variant: z.enum(['standard', 'holo', 'reverse_holo', '']).nullable().optional(),
-  price: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
-  stock: z.coerce.number().int().min(0, 'El stock debe ser mayor o igual a 0'),
+  price: z.coerce.number().positive('El precio debe ser mayor a 0'),
+  stock: z.coerce.number().int().min(0, 'El stock debe ser 0 o más'),
   isActive: z.boolean(),
   description: z.string().nullable().optional(),
 })
@@ -80,8 +80,8 @@ export default function ProductFormPage() {
 
   // Cargar categorías
   useEffect(() => {
-    apiFetch<Category[]>('/api/products/categories')
-      .then(setCategories)
+    apiFetch<{ data: Category[] }>('/api/products/categories')
+      .then((res) => setCategories(res.data))
       .catch((err) => console.error('Error cargando categorías:', err))
   }, [])
 
@@ -89,8 +89,8 @@ export default function ProductFormPage() {
   useEffect(() => {
     if (!id) return
     setLoading(true)
-    apiFetch<Product>(`/api/admin/products/${id}`)
-      .then((product) => {
+    apiFetch<{ data: Product }>(`/api/admin/products/${id}`)
+      .then(({ data: product }) => {
         reset({
           name: product.name,
           slug: product.slug,
@@ -133,24 +133,43 @@ export default function ProductFormPage() {
         condition: values.condition || null,
         variant: values.variant || null,
         description: values.description || null,
-        images: images.map((img, idx) => ({
-          url: img.url,
-          isPrimary: img.isPrimary,
-          sortOrder: idx,
-        })),
       }
 
+      let productId: string
       if (isEdit) {
         await apiFetch(`/api/admin/products/${id}`, {
           method: 'PATCH',
           body: JSON.stringify(payload),
         })
+        productId = id!
       } else {
-        await apiFetch('/api/admin/products', {
+        const created = await apiFetch<{ data: { id: string } }>('/api/admin/products', {
           method: 'POST',
           body: JSON.stringify(payload),
         })
+        productId = created.data.id
       }
+
+      // Subir imágenes nuevas (base64 local) a R2 en secuencia
+      for (let idx = 0; idx < images.length; idx++) {
+        const img = images[idx]
+        // Las URLs que ya están en R2 o son externas no se re-suben
+        if (!img.url.startsWith('data:')) continue
+
+        const [meta, base64Data] = img.url.split(',')
+        const mimeType = meta.match(/:(.*?);/)?.[1] ?? 'image/jpeg'
+
+        await apiFetch(`/api/admin/products/${productId}/images`, {
+          method: 'POST',
+          body: JSON.stringify({
+            base64: base64Data,
+            mimeType,
+            isPrimary: img.isPrimary,
+            sortOrder: idx,
+          }),
+        })
+      }
+
       navigate('/admin/productos')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar')

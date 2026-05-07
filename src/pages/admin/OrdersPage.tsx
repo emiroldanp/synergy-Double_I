@@ -4,7 +4,7 @@ import StatusBadge from '../../components/admin/StatusBadge'
 import OrderDrawer from '../../components/admin/OrderDrawer'
 import { Order, OrderItem, Customer } from '../../types'
 import { PaginatedResponse } from '../../types/admin'
-import { formatMXN } from '../../lib/utils'
+import { formatPrice as formatMXN } from '../../lib/utils'
 
 // El backend puede devolver el pedido con relaciones incluidas
 type OrderWithRelations = Order & {
@@ -45,7 +45,7 @@ export default function OrdersPage() {
     apiFetch<PaginatedResponse<OrderWithRelations>>(`/api/admin/orders?${params}`)
       .then((res) => {
         setOrders(res.data)
-        setTotal(res.total)
+        setTotal(res.meta.total)
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import StatusBadge from './StatusBadge'
 import { Order, OrderItem, Customer } from '../../types'
-import { formatMXN } from '../../lib/utils'
+import { formatPrice as formatMXN } from '../../lib/utils'
 
 // El backend puede devolver el pedido con relaciones incluidas
 type OrderWithRelations = Order & {
@@ -31,11 +31,12 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
   const [trackingNumber, setTrackingNumber] = useState(order?.trackingNumber ?? '')
   const [saving, setSaving] = useState(false)
 
-  // Sincronizar estado cuando cambia el pedido seleccionado
-  if (order && order.orderStatus !== status && !saving) {
-    setStatus(order.orderStatus)
-    setTrackingNumber(order.trackingNumber ?? '')
-  }
+  useEffect(() => {
+    if (order) {
+      setStatus(order.orderStatus)
+      setTrackingNumber(order.trackingNumber ?? '')
+    }
+  }, [order?.id])
 
   const handleSave = async () => {
     if (!order) return
@@ -44,7 +45,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
       await apiFetch(`/api/admin/orders/${order.id}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          status,
+          orderStatus: status,
           trackingNumber: trackingNumber || undefined,
         }),
       })
