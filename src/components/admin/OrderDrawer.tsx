@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import StatusBadge from './StatusBadge'
-import { Order, OrderItem, Customer } from '../../types'
+import { Order } from '../../types'
 import { formatPrice as formatMXN } from '../../lib/utils'
 
-// El backend puede devolver el pedido con relaciones incluidas
-type OrderWithRelations = Order & {
-  customer?: Customer
-  items?: OrderItem[]
-}
+type OrderWithRelations = Order
 
 const ORDER_STATUSES = [
   { value: 'pending_payment', label: 'Pago pendiente' },
@@ -33,7 +29,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
 
   useEffect(() => {
     if (order) {
-      setStatus(order.orderStatus)
+      setStatus(order.orderStatus ?? '')
       setTrackingNumber(order.trackingNumber ?? '')
     }
   }, [order?.id])
@@ -109,7 +105,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Estado actual</span>
-              <StatusBadge type="order" value={order.orderStatus} />
+              <StatusBadge type="order" value={order.orderStatus ?? ''} />
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Pago</span>
@@ -146,7 +142,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
                     <span className="text-gray-700">
                       {item.product?.name ?? `Producto ${i + 1}`} × {item.quantity}
                     </span>
-                    <span className="text-gray-900">{formatMXN(item.subtotal)}</span>
+                    <span className="text-gray-900">{formatMXN(item.subtotal ?? item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>

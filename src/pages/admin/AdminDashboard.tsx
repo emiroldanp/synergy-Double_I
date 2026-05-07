@@ -134,18 +134,18 @@ export default function AdminDashboard() {
                   {MOCK_ORDERS.map((order) => (
                     <tr key={order.id} className="border-b border-navy/20 hover:bg-abyss/50 transition-colors">
                       <td className="py-3 pr-4 text-dragon font-agency">{order.orderNumber}</td>
-                      <td className="py-3 pr-4 text-frost">{order.customer.name}</td>
+                      <td className="py-3 pr-4 text-frost">{order.customer?.fullName ?? '—'}</td>
                       <td className="py-3 pr-4 text-white font-agency">{formatPrice(order.total)}</td>
                       <td className="py-3">
                         <span
                           className="badge-base text-xs"
                           style={{
-                            backgroundColor: ORDER_STATUS_COLORS[order.status] + '22',
-                            color: ORDER_STATUS_COLORS[order.status],
-                            border: `1px solid ${ORDER_STATUS_COLORS[order.status]}44`,
+                            backgroundColor: ORDER_STATUS_COLORS[order.status!] + '22',
+                            color: ORDER_STATUS_COLORS[order.status!],
+                            border: `1px solid ${ORDER_STATUS_COLORS[order.status!]}44`,
                           }}
                         >
-                          {ORDER_STATUS_LABELS[order.status]}
+                          {ORDER_STATUS_LABELS[order.status!]}
                         </span>
                       </td>
                     </tr>

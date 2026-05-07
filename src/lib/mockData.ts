@@ -316,7 +316,7 @@ export const MOCK_ORDERS: Order[] = [
     shippingOption: { id: 'dhl-1', carrier: 'dhl', service: 'DHL Express', price: 180, eta: '2-3 días' },
     trackingNumber: 'DHL12345678MX',
     createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    customer: { name: 'Carlos Ramírez', email: 'carlos@example.com', phone: '5512345678' },
+    customer: { id: 'cust-1', fullName: 'Carlos Ramírez', email: 'carlos@example.com', phone: '5512345678' },
     address: { street: 'Av. Insurgentes Sur', number: '123', colonia: 'Roma Norte', city: 'Ciudad de México', state: 'CDMX', zip: '06700' },
   },
 ]

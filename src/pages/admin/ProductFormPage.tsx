@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import { slugify } from '../../lib/utils'
 import ImageUploader, { type ImageEntry } from '../../components/admin/ImageUploader'
-import type { Category, Product } from '../../types'
+import type { Category, AdminProduct } from '../../types'
 
 // Esquema Zod para validar el formulario del producto
 const productSchema = z.object({
@@ -89,19 +89,19 @@ export default function ProductFormPage() {
   useEffect(() => {
     if (!id) return
     setLoading(true)
-    apiFetch<{ data: Product }>(`/api/admin/products/${id}`)
+    apiFetch<{ data: AdminProduct }>(`/api/admin/products/${id}`)
       .then(({ data: product }) => {
         reset({
           name: product.name,
           slug: product.slug,
-          categoryId: product.categoryId,
+          categoryId: product.categoryId ?? '',
           cardNumber: product.cardNumber ?? '',
           setName: product.setName ?? '',
-          edition: product.edition ?? '',
-          language: product.language ?? '',
-          rarity: product.rarity ?? '',
-          condition: product.condition ?? '',
-          variant: product.variant ?? '',
+          edition: (product.edition as '' | 'shadowless' | 'first_edition' | 'unlimited') ?? '',
+          language: (product.language as '' | 'es' | 'en' | 'jp') ?? '',
+          rarity: (product.rarity as '' | 'comun' | 'poco_comun' | 'rara' | 'ultra_rara' | 'secret_rare' | 'full_art' | 'gold_rare' | 'prismatic') ?? '',
+          condition: (product.condition as '' | 'mint' | 'near_mint' | 'lightly_played') ?? '',
+          variant: (product.variant as '' | 'holo' | 'reverse_holo' | 'standard') ?? '',
           price: product.price,
           stock: product.stock,
           isActive: product.isActive,

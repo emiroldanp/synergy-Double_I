@@ -52,7 +52,7 @@ export default function CartPage() {
                       </Link>
                       <p className="font-exo text-ash text-xs mt-0.5">{item.product.set}</p>
                       <p className="font-exo text-ash/60 text-xs">
-                        {item.product.franchise.toUpperCase()} · {item.product.condition}
+                        {(item.product.franchise ?? '').toUpperCase()} · {item.product.condition}
                       </p>
 
                       <div className="flex items-center justify-between mt-3">

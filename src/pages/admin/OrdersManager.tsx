@@ -91,7 +91,7 @@ export default function OrdersManager() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-agency text-sm text-dragon">{o.orderNumber}</p>
-                        <p className="font-exo text-xs text-frost mt-0.5">{o.customer.name}</p>
+                        <p className="font-exo text-xs text-frost mt-0.5">{o.customer?.fullName ?? '—'}</p>
                         <p className="font-exo text-xs text-ash">
                           {new Date(o.createdAt).toLocaleDateString('es-MX')}
                         </p>
@@ -100,12 +100,12 @@ export default function OrdersManager() {
                         <span
                           className="badge-base text-xs block mb-1"
                           style={{
-                            backgroundColor: ORDER_STATUS_COLORS[o.status] + '22',
-                            color: ORDER_STATUS_COLORS[o.status],
-                            border: `1px solid ${ORDER_STATUS_COLORS[o.status]}44`,
+                            backgroundColor: ORDER_STATUS_COLORS[o.status!] + '22',
+                            color: ORDER_STATUS_COLORS[o.status!],
+                            border: `1px solid ${ORDER_STATUS_COLORS[o.status!]}44`,
                           }}
                         >
-                          {ORDER_STATUS_LABELS[o.status]}
+                          {ORDER_STATUS_LABELS[o.status!]}
                         </span>
                         <p className="font-agency text-sm text-white">{formatPrice(o.total)}</p>
                       </div>
@@ -142,16 +142,16 @@ export default function OrdersManager() {
                   {/* Customer */}
                   <div className="border-t border-navy/40 pt-4 mb-4">
                     <p className="font-agency text-xs text-ash uppercase tracking-widest mb-2">Cliente</p>
-                    <p className="font-exo text-xs text-frost">{order.customer.name}</p>
-                    <p className="font-exo text-xs text-ash">{order.customer.email}</p>
-                    <p className="font-exo text-xs text-ash">{order.customer.phone}</p>
+                    <p className="font-exo text-xs text-frost">{order.customer?.fullName ?? '—'}</p>
+                    <p className="font-exo text-xs text-ash">{order.customer?.email ?? '—'}</p>
+                    <p className="font-exo text-xs text-ash">{order.customer?.phone ?? '—'}</p>
                   </div>
 
                   {/* Address */}
                   <div className="border-t border-navy/40 pt-4 mb-4">
                     <p className="font-agency text-xs text-ash uppercase tracking-widest mb-2">Dirección</p>
                     <p className="font-exo text-xs text-frost leading-relaxed">
-                      {order.address.street} {order.address.number}, {order.address.colonia}, {order.address.city}, {order.address.state} CP {order.address.zip}
+                      {order.address?.street ?? ''} {order.address?.number ?? ''}, {order.address?.colonia ?? ''}, {order.address?.city ?? ''}, {order.address?.state ?? ''} CP {order.address?.zip ?? ''}
                     </p>
                   </div>
 
@@ -159,7 +159,7 @@ export default function OrdersManager() {
                   <div className="border-t border-navy/40 pt-4 space-y-3">
                     <p className="font-agency text-xs text-ash uppercase tracking-widest">Actualizar estado</p>
                     <select
-                      defaultValue={order.status}
+                      defaultValue={order.status ?? ''}
                       className="input-dark text-xs cursor-pointer w-full"
                       onChange={(e) => console.info('Actualizar estado:', e.target.value)}
                     >

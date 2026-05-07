@@ -90,12 +90,12 @@ export default function AccountPage() {
                         <span
                           className="badge-base text-xs"
                           style={{
-                            backgroundColor: ORDER_STATUS_COLORS[order.status] + '22',
-                            border: `1px solid ${ORDER_STATUS_COLORS[order.status]}44`,
-                            color: ORDER_STATUS_COLORS[order.status],
+                            backgroundColor: ORDER_STATUS_COLORS[order.status!] + '22',
+                            border: `1px solid ${ORDER_STATUS_COLORS[order.status!]}44`,
+                            color: ORDER_STATUS_COLORS[order.status!],
                           }}
                         >
-                          {ORDER_STATUS_LABELS[order.status]}
+                          {ORDER_STATUS_LABELS[order.status!]}
                         </span>
                       </div>
                       <div className="flex gap-2 mb-3 overflow-x-auto pb-1">

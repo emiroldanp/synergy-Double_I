@@ -1,4 +1,4 @@
-import { HelmetProvider, Helmet } from 'react-helmet-async'
+import { Helmet } from 'react-helmet-async'
 import { Hero } from '@/components/sections/Hero'
 import { PromotionsSection } from '@/components/sections/PromotionsSection'
 import { FeaturedCarousel } from '@/components/sections/FeaturedCarousel'
