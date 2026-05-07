@@ -20,6 +20,7 @@ import ProductFormPage from '@/pages/admin/ProductFormPage'
 import OrdersPage from '@/pages/admin/OrdersPage'
 import InvoicesPage from '@/pages/admin/InvoicesPage'
 import SubscribersPage from '@/pages/admin/SubscribersPage'
+import BlogManager from '@/pages/admin/BlogManager'
 import LoginPage from '@/pages/admin/LoginPage'
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="pedidos" element={<OrdersPage />} />
           <Route path="facturas" element={<InvoicesPage />} />
           <Route path="suscriptores" element={<SubscribersPage />} />
+          <Route path="blog" element={<BlogManager />} />
         </Route>
       </Routes>
     </BrowserRouter>
