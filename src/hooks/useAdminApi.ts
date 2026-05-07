@@ -1,9 +1,10 @@
+import { useCallback } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 
 export function useAdminApi() {
   const { getToken } = useAuth()
 
-  async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const apiFetch = useCallback(async function<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = await getToken()
     const base = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
     const res = await fetch(`${base}${path}`, {
@@ -19,7 +20,7 @@ export function useAdminApi() {
       throw new Error(error.message ?? 'Error en la solicitud')
     }
     return res.json()
-  }
+  }, [getToken])
 
   return { apiFetch }
 }
