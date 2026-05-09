@@ -7,7 +7,8 @@ const CATEGORIES = [
     description: 'Base Set, Neo, EX, moderno',
     color: '#F5C400',
     colorDark: '#B8920A',
-    emoji: '⚡',
+    // [PLACEHOLDER — Irving proporcionará imagen representativa de Pokémon]
+    image: null as string | null,
     href: '/catalogo?franchise=pokemon',
     bg: 'from-yellow-900/30 to-yellow-950/60',
   },
@@ -17,7 +18,8 @@ const CATEGORIES = [
     description: 'LOB, SDK, moderno OCG/TCG',
     color: '#C8950A',
     colorDark: '#8A6408',
-    emoji: '⚔️',
+    // [PLACEHOLDER — Irving proporcionará imagen representativa de Yu-Gi-Oh!]
+    image: null as string | null,
     href: '/catalogo?franchise=yugioh',
     bg: 'from-amber-900/30 to-amber-950/60',
   },
@@ -27,7 +29,8 @@ const CATEGORIES = [
     description: 'The First Chapter, Rise of the Floodborn',
     color: '#6B5ECD',
     colorDark: '#4A3FAD',
-    emoji: '✨',
+    // [PLACEHOLDER — Irving proporcionará imagen representativa de Lorcana]
+    image: null as string | null,
     href: '/catalogo?franchise=lorcana',
     bg: 'from-purple-900/30 to-purple-950/60',
   },
@@ -62,12 +65,23 @@ export function CategoryCards() {
               />
 
               <div className="relative p-8 md:p-10 flex flex-col items-center text-center">
-                <span
-                  className="text-5xl mb-4 block transition-transform duration-300 group-hover:scale-110"
+                <div
+                  className="w-20 h-20 mb-4 flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
                   aria-hidden="true"
                 >
-                  {cat.emoji}
-                </span>
+                  {cat.image ? (
+                    <img src={cat.image} alt={cat.label} className="w-full h-full object-contain" />
+                  ) : (
+                    <div
+                      className="w-full h-full border flex items-center justify-center"
+                      style={{ borderColor: `${cat.color}40`, background: `${cat.color}10` }}
+                    >
+                      <span className="font-agency text-[10px] text-center opacity-50 px-1 leading-tight uppercase tracking-wide">
+                        Imagen<br />{cat.label}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 <h3
                   className="font-agency text-2xl md:text-3xl uppercase tracking-wider mb-2 transition-colors duration-200"

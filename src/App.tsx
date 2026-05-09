@@ -17,6 +17,7 @@ import AdminDashboard from '@/pages/admin/AdminDashboard'
 import ProductsManager from '@/pages/admin/ProductsManager'
 import OrdersManager from '@/pages/admin/OrdersManager'
 import BlogManager from '@/pages/admin/BlogManager'
+import { AdminGuard } from '@/components/auth/AdminGuard'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -42,10 +43,10 @@ export default function App() {
         <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
         <Route path="/blog/:slug" element={<Layout><BlogPostPage /></Layout>} />
         <Route path="/contacto" element={<Layout><ContactPage /></Layout>} />
-        <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
-        <Route path="/admin/productos" element={<Layout><ProductsManager /></Layout>} />
-        <Route path="/admin/pedidos" element={<Layout><OrdersManager /></Layout>} />
-        <Route path="/admin/blog" element={<Layout><BlogManager /></Layout>} />
+        <Route path="/admin" element={<Layout><AdminGuard><AdminDashboard /></AdminGuard></Layout>} />
+        <Route path="/admin/productos" element={<Layout><AdminGuard><ProductsManager /></AdminGuard></Layout>} />
+        <Route path="/admin/pedidos" element={<Layout><AdminGuard><OrdersManager /></AdminGuard></Layout>} />
+        <Route path="/admin/blog" element={<Layout><AdminGuard><BlogManager /></AdminGuard></Layout>} />
       </Routes>
     </BrowserRouter>
   )

@@ -1,12 +1,21 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react'
 import { AuthContext } from '@/hooks/useAuth'
+import { setAuthToken } from '@/lib/api'
 
 export function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { user, isLoaded, isSignedIn } = useUser()
   const { signOut, getToken } = useClerkAuth()
 
   const isAdmin = user?.publicMetadata?.role === 'admin'
+
+  useEffect(() => {
+    if (isSignedIn) {
+      getToken().then(setAuthToken)
+    } else {
+      setAuthToken(null)
+    }
+  }, [isSignedIn, getToken])
 
   return (
     <AuthContext.Provider

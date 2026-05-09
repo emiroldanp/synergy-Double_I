@@ -64,6 +64,17 @@ export function FeaturedCarousel() {
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseUp}
+          onTouchStart={(e) => {
+            setStartX(e.touches[0].pageX - (trackRef.current?.offsetLeft ?? 0))
+            setScrollLeft(trackRef.current?.scrollLeft ?? 0)
+            setIsDragging(true)
+          }}
+          onTouchMove={(e) => {
+            if (!isDragging || !trackRef.current) return
+            const x = e.touches[0].pageX - (trackRef.current.offsetLeft ?? 0)
+            trackRef.current.scrollLeft = scrollLeft - (x - startX) * 1.5
+          }}
+          onTouchEnd={() => setIsDragging(false)}
         >
           {products.map((product, i) => (
             <div

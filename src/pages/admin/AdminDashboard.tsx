@@ -1,6 +1,5 @@
-import { Navigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { useAuth } from '@/hooks/useAuth'
 import { formatPrice, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/utils'
 import { MOCK_ORDERS, MOCK_PRODUCTS } from '@/lib/mockData'
 import type { OrderStatus } from '@/types'
@@ -32,11 +31,6 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 }
 
 export default function AdminDashboard() {
-  const { isSignedIn, isAdmin, isLoaded } = useAuth()
-
-  if (!isLoaded) return null
-  if (!isSignedIn || !isAdmin) return <Navigate to="/mi-cuenta" replace />
-
   return (
     <>
       <Helmet>

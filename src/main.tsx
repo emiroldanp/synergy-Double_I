@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { HelmetProvider } from 'react-helmet-async'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { ClerkAuthProvider } from '@/components/auth/ClerkAuthProvider'
+import { CartProvider } from '@/context/CartContext'
 import './index.css'
 import App from './App'
 
@@ -12,19 +13,23 @@ const HAS_CLERK = Boolean(PUBLISHABLE_KEY && PUBLISHABLE_KEY !== 'pk_test_placeh
 function Root() {
   if (HAS_CLERK) {
     return (
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <ClerkAuthProvider>
-          <HelmetProvider>
-            <App />
-          </HelmetProvider>
-        </ClerkAuthProvider>
-      </ClerkProvider>
+      <CartProvider>
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+          <ClerkAuthProvider>
+            <HelmetProvider>
+              <App />
+            </HelmetProvider>
+          </ClerkAuthProvider>
+        </ClerkProvider>
+      </CartProvider>
     )
   }
   return (
-    <HelmetProvider>
-      <App />
-    </HelmetProvider>
+    <CartProvider>
+      <HelmetProvider>
+        <App />
+      </HelmetProvider>
+    </CartProvider>
   )
 }
 

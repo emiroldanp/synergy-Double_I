@@ -5,9 +5,14 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+let authToken: string | null = null
+
+export function setAuthToken(token: string | null) {
+  authToken = token
+}
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('clerk-token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (authToken) config.headers.Authorization = `Bearer ${authToken}`
   return config
 })
 

@@ -111,14 +111,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
               </div>
             )}
 
-            {/* Add to cart overlay */}
+            {/* Add to cart overlay — siempre visible en mobile, hover en desktop */}
             {!outOfStock && (
-              <div
-                className={cn(
-                  'absolute inset-x-0 bottom-0 bg-gradient-to-t from-abyss/95 to-transparent pt-8 pb-3 px-3 transition-all duration-300',
-                  isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                )}
-              >
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-abyss/95 to-transparent pt-8 pb-3 px-3 md:transition-all md:duration-300 md:opacity-0 md:translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0">
                 <button
                   onClick={(e) => {
                     e.preventDefault()

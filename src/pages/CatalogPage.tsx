@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { useSearchParams } from 'react-router-dom'
 import { useProducts } from '@/hooks/useProducts'
+import type { FilterState } from '@/types'
 import { FilterPanel } from '@/components/ui/FilterPanel'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { Button } from '@/components/ui/Button'
@@ -12,9 +14,27 @@ const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Precio: mayor a menor' },
 ] as const
 
+const VALID_FRANCHISES = ['pokemon', 'yugioh', 'lorcana'] as const
+const VALID_SORTS = ['newest', 'price_asc', 'price_desc'] as const
+
+function useInitialFiltersFromParams(): Partial<FilterState> {
+  const [params] = useSearchParams()
+  const franchise = params.get('franchise')
+  const sort = params.get('sort')
+  const filters: Partial<FilterState> = {}
+  if (franchise && VALID_FRANCHISES.includes(franchise as typeof VALID_FRANCHISES[number])) {
+    filters.franchise = [franchise as FilterState['franchise'][number]]
+  }
+  if (sort && VALID_SORTS.includes(sort as typeof VALID_SORTS[number])) {
+    filters.sortBy = sort as FilterState['sortBy']
+  }
+  return filters
+}
+
 export default function CatalogPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const { products, totalProducts, totalPages, filters, updateFilter, resetFilters } = useProducts()
+  const initialFilters = useInitialFiltersFromParams()
+  const { products, totalProducts, totalPages, filters, updateFilter, resetFilters } = useProducts(initialFilters)
 
   return (
     <>

@@ -1,4 +1,5 @@
-import { HelmetProvider, Helmet } from 'react-helmet-async'
+import { Helmet } from 'react-helmet-async'
+import { useLocation } from 'react-router-dom'
 import { Hero } from '@/components/sections/Hero'
 import { PromotionsSection } from '@/components/sections/PromotionsSection'
 import { FeaturedCarousel } from '@/components/sections/FeaturedCarousel'
@@ -8,6 +9,8 @@ import { NewsletterSignup } from '@/components/sections/NewsletterSignup'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
 
 export default function HomePage() {
+  const { pathname } = useLocation()
+
   return (
     <>
       <Helmet>
@@ -19,7 +22,7 @@ export default function HomePage() {
         <meta property="og:title" content="Double-I TCG — Trading Card Game Mexico" />
         <meta property="og:description" content="Tu tienda especialista en tarjetas coleccionables TCG" />
         <meta property="og:image" content="/logo-color.png" />
-        <link rel="canonical" href={window.location.href} />
+        <link rel="canonical" href={`[PLACEHOLDER — confirmar dominio con Irving]${pathname}`} />
       </Helmet>
 
       <Hero />
