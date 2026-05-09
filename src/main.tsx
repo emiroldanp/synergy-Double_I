@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { ClerkAuthProvider } from '@/components/auth/ClerkAuthProvider'
 import { CartProvider } from '@/context/CartContext'
+import { DeckAnimationProvider } from '@/context/DeckAnimationContext'
 import './index.css'
 import App from './App'
 
@@ -13,23 +14,27 @@ const HAS_CLERK = Boolean(PUBLISHABLE_KEY && PUBLISHABLE_KEY !== 'pk_test_placeh
 function Root() {
   if (HAS_CLERK) {
     return (
-      <CartProvider>
-        <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-          <ClerkAuthProvider>
-            <HelmetProvider>
-              <App />
-            </HelmetProvider>
-          </ClerkAuthProvider>
-        </ClerkProvider>
-      </CartProvider>
+      <DeckAnimationProvider>
+        <CartProvider>
+          <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+            <ClerkAuthProvider>
+              <HelmetProvider>
+                <App />
+              </HelmetProvider>
+            </ClerkAuthProvider>
+          </ClerkProvider>
+        </CartProvider>
+      </DeckAnimationProvider>
     )
   }
   return (
-    <CartProvider>
-      <HelmetProvider>
-        <App />
-      </HelmetProvider>
-    </CartProvider>
+    <DeckAnimationProvider>
+      <CartProvider>
+        <HelmetProvider>
+          <App />
+        </HelmetProvider>
+      </CartProvider>
+    </DeckAnimationProvider>
   )
 }
 

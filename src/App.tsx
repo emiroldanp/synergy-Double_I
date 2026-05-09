@@ -17,7 +17,9 @@ import AdminDashboard from '@/pages/admin/AdminDashboard'
 import ProductsManager from '@/pages/admin/ProductsManager'
 import OrdersManager from '@/pages/admin/OrdersManager'
 import BlogManager from '@/pages/admin/BlogManager'
+import BannerManager from '@/pages/admin/BannerManager'
 import { AdminGuard } from '@/components/auth/AdminGuard'
+import { CardFlipFlyPortal } from '@/components/ui/CardFlipFlyPortal'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -32,6 +34,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <CardFlipFlyPortal />
       <Routes>
         <Route path="/" element={<Layout><HomePage /></Layout>} />
         <Route path="/catalogo" element={<Layout><CatalogPage /></Layout>} />
@@ -47,6 +50,7 @@ export default function App() {
         <Route path="/admin/productos" element={<Layout><AdminGuard><ProductsManager /></AdminGuard></Layout>} />
         <Route path="/admin/pedidos" element={<Layout><AdminGuard><OrdersManager /></AdminGuard></Layout>} />
         <Route path="/admin/blog" element={<Layout><AdminGuard><BlogManager /></AdminGuard></Layout>} />
+        <Route path="/admin/banners" element={<Layout><AdminGuard><BannerManager /></AdminGuard></Layout>} />
       </Routes>
     </BrowserRouter>
   )

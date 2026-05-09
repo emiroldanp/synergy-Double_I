@@ -7,7 +7,17 @@ import {
   VARIANT_LABELS,
   LANGUAGE_LABELS,
 } from '@/lib/utils'
-import type { FilterState, Franchise, Condition, Rarity, Edition, Variant, Language } from '@/types'
+import type { FilterState, Franchise, Condition, Rarity, Edition, Variant, Language, ProductType } from '@/types'
+
+const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
+  carta: 'Carta individual',
+  sleeve: 'Sleeve / Protector',
+  playmat: 'Playmat',
+  etb: 'Elite Trainer Box',
+  display: 'Display / Caja',
+  dado: 'Dado',
+  binder: 'Binder / Álbum',
+}
 
 interface FilterPanelProps {
   filters: FilterState
@@ -97,6 +107,15 @@ export function FilterPanel({
           labels={FRANCHISE_LABELS}
           selected={filters.franchise}
           onChange={(v) => onUpdate('franchise', v)}
+        />
+      </FilterSection>
+
+      <FilterSection title="Tipo de producto">
+        <CheckboxGroup<ProductType>
+          options={['carta', 'sleeve', 'playmat', 'etb', 'display', 'dado', 'binder']}
+          labels={PRODUCT_TYPE_LABELS}
+          selected={filters.productType}
+          onChange={(v) => onUpdate('productType', v)}
         />
       </FilterSection>
 

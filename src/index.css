@@ -202,6 +202,17 @@ h1, h2, h3 {
   100% { opacity: 1; }
 }
 
+@keyframes holoShimmer {
+  0%, 100% {
+    background: linear-gradient(105deg, transparent 30%, rgba(107,184,236,0.2) 45%, rgba(48,64,196,0.15) 50%, rgba(204,21,21,0.1) 55%, transparent 65%);
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
 @keyframes scanline {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100vh); }

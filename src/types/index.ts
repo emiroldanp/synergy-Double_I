@@ -1,5 +1,7 @@
 export type Franchise = 'pokemon' | 'yugioh' | 'lorcana'
 
+export type ProductType = 'carta' | 'sleeve' | 'playmat' | 'etb' | 'display' | 'dado' | 'binder'
+
 export type Rarity =
   | 'comun'
   | 'poco_comun'
@@ -31,6 +33,7 @@ export interface Product {
   slug: string
   name: string
   franchise: Franchise
+  productType: ProductType
   set: string
   rarity: Rarity
   edition: Edition
@@ -43,6 +46,7 @@ export interface Product {
   description?: string
   cardNumber?: string
   isActive: boolean
+  isNew?: boolean
   createdAt: string
   salesCount?: number
 }
@@ -132,6 +136,7 @@ export interface Promotion {
 
 export interface FilterState {
   franchise: Franchise[]
+  productType: ProductType[]
   rarity: Rarity[]
   edition: Edition[]
   condition: Condition[]
@@ -142,6 +147,16 @@ export interface FilterState {
   search: string
   sortBy: 'price_asc' | 'price_desc' | 'newest'
   page: number
+}
+
+export interface BannerSlide {
+  id: string
+  imageUrl: string
+  title: string
+  subtitle: string
+  ctaLabel: string
+  ctaHref: string
+  isActive: boolean
 }
 
 export interface DashboardStats {
