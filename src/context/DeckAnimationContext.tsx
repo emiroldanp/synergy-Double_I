@@ -1,15 +1,16 @@
 import { createContext, useContext, useRef, useState, useCallback } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import type { Franchise } from '@/types'
 
 export interface FlipFlyPayload {
+  key: number
   sourceRect: DOMRect
   franchise: Franchise
 }
 
 interface DeckAnimationContextValue {
-  deckIconRef: React.RefObject<HTMLButtonElement | null>
-  triggerFlipFly: (payload: FlipFlyPayload) => void
+  deckIconRef: RefObject<HTMLButtonElement | null>
+  triggerFlipFly: (sourceRect: DOMRect, franchise: Franchise) => void
   activeAnimation: FlipFlyPayload | null
   clearAnimation: () => void
 }
@@ -19,9 +20,11 @@ const DeckAnimationContext = createContext<DeckAnimationContextValue | null>(nul
 export function DeckAnimationProvider({ children }: { children: ReactNode }) {
   const deckIconRef = useRef<HTMLButtonElement>(null)
   const [activeAnimation, setActiveAnimation] = useState<FlipFlyPayload | null>(null)
+  const keyRef = useRef(0)
 
-  const triggerFlipFly = useCallback((payload: FlipFlyPayload) => {
-    setActiveAnimation(payload)
+  const triggerFlipFly = useCallback((sourceRect: DOMRect, franchise: Franchise) => {
+    keyRef.current += 1
+    setActiveAnimation({ key: keyRef.current, sourceRect, franchise })
   }, [])
 
   const clearAnimation = useCallback(() => {

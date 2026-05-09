@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
@@ -11,56 +11,75 @@ const CATEGORIES = [
   { label: 'Pokémon', href: '/catalogo?franchise=pokemon', color: '#F5C400' },
   { label: 'Yu-Gi-Oh!', href: '/catalogo?franchise=yugioh', color: '#C8950A' },
   { label: 'Lorcana', href: '/catalogo?franchise=lorcana', color: '#6B5ECD' },
+  { label: 'Magic', href: '/catalogo?franchise=magic', color: '#A82FBB' },
   { label: 'Sleeves', href: '/catalogo?productType=sleeve', color: '#6BB8EC' },
   { label: 'Playmats', href: '/catalogo?productType=playmat', color: '#6BB8EC' },
   { label: 'ETBs', href: '/catalogo?productType=etb', color: '#6BB8EC' },
 ]
 
-function DeckIcon({ count, buttonRef, onClick }: {
+function DeckIconButton({
+  count,
+  deckRef,
+  onClick,
+}: {
   count: number
-  buttonRef: React.RefObject<HTMLButtonElement | null>
+  deckRef: React.RefObject<HTMLButtonElement | null>
   onClick: () => void
 }) {
+  const prevCount = useRef(count)
   const [bounce, setBounce] = useState(false)
 
   useEffect(() => {
-    if (count > 0) {
+    if (count > prevCount.current) {
       setBounce(true)
-      const t = setTimeout(() => setBounce(false), 400)
+      const t = setTimeout(() => setBounce(false), 450)
+      prevCount.current = count
       return () => clearTimeout(t)
     }
+    prevCount.current = count
   }, [count])
 
   return (
-    <motion.button
-      ref={buttonRef}
+    <button
+      ref={deckRef}
       onClick={onClick}
       aria-label={`Carrito (${count} artículos)`}
-      className="relative text-ash hover:text-white transition-colors p-1"
-      animate={bounce ? { y: [-4, 0, -2, 0] } : {}}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className={cn(
+        'relative text-ash hover:text-white transition-colors p-1',
+        bounce && 'animate-bounce-once'
+      )}
+      style={bounce ? { animation: 'deckBounce 0.4s ease-out' } : undefined}
     >
-      {/* Card deck SVG icon */}
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="6" width="13" height="17" rx="1.5" />
-        <rect x="6" y="3" width="13" height="17" rx="1.5" className="text-ash/60" />
-        <line x1="6" y1="10" x2="13" y2="10" />
-        <line x1="6" y1="13" x2="11" y2="13" />
+      {/* Card deck SVG */}
+      <svg
+        className="w-6 h-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="4" y="5" width="12" height="16" rx="1.5" />
+        <rect x="7" y="3" width="12" height="16" rx="1.5" className="stroke-current opacity-60" />
+        <line x1="7" y1="10" x2="13" y2="10" />
+        <line x1="7" y1="13" x2="11" y2="13" />
       </svg>
-      <AnimatePresence>
+      <AnimatePresence mode="popLayout">
         {count > 0 && (
           <motion.span
             key={count}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 20 }}
             className="absolute -top-1 -right-1 bg-crimson text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
           >
             {count > 9 ? '9+' : count}
           </motion.span>
         )}
       </AnimatePresence>
-    </motion.button>
+    </button>
   )
 }
 
@@ -96,19 +115,27 @@ export function Navbar() {
         className={cn(
           'fixed top-0 left-0 right-0 z-30 transition-all duration-300',
           scrolled
-            ? 'bg-void/95 backdrop-blur-md border-b border-navy/50 shadow-lg'
-            : 'bg-gradient-to-b from-void/90 to-transparent'
+            ? 'bg-void/95 backdrop-blur-md border-b border-navy/50 shadow-lg shadow-black/40'
+            : 'bg-gradient-to-b from-void/80 to-transparent'
         )}
       >
         <div className="page-container">
-          <div className="flex items-center justify-between h-16 md:h-18">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            {/* Logo — bigger and with glow */}
+            <Link
+              to="/"
+              className="flex items-center gap-3 flex-shrink-0 group"
+              aria-label="Double-I TCG — Inicio"
+            >
               <img
                 src="/logo-color.png"
-                alt="Double-I Trading Card Game"
-                className="h-10 md:h-12 w-auto"
+                alt="Double-I TCG"
+                className="h-12 md:h-16 w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300"
               />
+              <div className="hidden sm:flex flex-col leading-none">
+                <span className="font-agency text-xs text-dragon tracking-[0.3em] uppercase">Double-I</span>
+                <span className="font-agency text-[10px] text-ash/70 tracking-[0.2em] uppercase">Trading Card Game</span>
+              </div>
             </Link>
 
             {/* Desktop nav */}
@@ -144,9 +171,9 @@ export function Navbar() {
 
             {/* Right actions */}
             <div className="flex items-center gap-3">
-              <DeckIcon
+              <DeckIconButton
                 count={totalItems}
-                buttonRef={deckIconRef}
+                deckRef={deckIconRef}
                 onClick={() => setCartOpen(true)}
               />
 
@@ -177,7 +204,7 @@ export function Navbar() {
               {/* Mobile menu toggle */}
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label="Menú"
+                aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
                 className="md:hidden text-ash hover:text-white transition-colors p-1"
               >
                 {mobileOpen ? (
@@ -193,14 +220,14 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Categories bar — desktop only */}
-          <div className="hidden md:flex items-center gap-1 pb-1.5 -mt-0.5 overflow-x-auto scrollbar-none">
+          {/* Categories bar — desktop */}
+          <div className="hidden md:flex items-center gap-0.5 pb-2 overflow-x-auto scrollbar-none border-t border-navy/20 pt-1">
             {CATEGORIES.map((cat) => (
               <Link
                 key={cat.label}
                 to={cat.href}
-                className="font-agency text-[11px] uppercase tracking-widest text-ash/70 hover:text-white px-3 py-1 transition-colors whitespace-nowrap flex-shrink-0"
-                style={{ '--cat-color': cat.color } as React.CSSProperties}
+                className="font-agency text-[11px] uppercase tracking-widest px-3 py-0.5 transition-colors whitespace-nowrap flex-shrink-0 hover:text-white"
+                style={{ color: cat.color + 'CC' }}
               >
                 {cat.label}
               </Link>
@@ -232,14 +259,17 @@ export function Navbar() {
             ))}
 
             {/* Mobile categories */}
-            <div className="pt-2 pb-1">
-              <p className="font-agency text-[10px] text-ash/50 uppercase tracking-widest mb-2">Categorías</p>
+            <div className="pt-3 pb-1">
+              <p className="font-agency text-[10px] text-ash/50 uppercase tracking-widest mb-2">
+                Franquicias y accesorios
+              </p>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((cat) => (
                   <Link
                     key={cat.label}
                     to={cat.href}
-                    className="font-agency text-[11px] uppercase tracking-wider text-ash/70 hover:text-white border border-navy/40 px-2.5 py-1 transition-colors"
+                    className="font-agency text-[11px] uppercase tracking-wider border px-2.5 py-1 transition-colors hover:text-white"
+                    style={{ borderColor: cat.color + '60', color: cat.color + 'CC' }}
                   >
                     {cat.label}
                   </Link>

@@ -1,4 +1,4 @@
-export type Franchise = 'pokemon' | 'yugioh' | 'lorcana'
+export type Franchise = 'pokemon' | 'yugioh' | 'lorcana' | 'magic'
 
 export type ProductType = 'carta' | 'sleeve' | 'playmat' | 'etb' | 'display' | 'dado' | 'binder'
 

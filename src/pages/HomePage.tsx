@@ -31,10 +31,18 @@ const FRANCHISE_QUICKLINKS = [
   {
     id: 'lorcana',
     label: 'Disney Lorcana',
-    sub: 'The First Chapter · Floodborn',
+    sub: 'The First Chapter · Rise of the Floodborn',
     href: '/catalogo?franchise=lorcana',
     color: '#6B5ECD',
     accent: 'from-purple-900/20 to-purple-950/40',
+  },
+  {
+    id: 'magic',
+    label: 'Magic: TG',
+    sub: 'Alpha · Beta · Dual Lands · Modern',
+    href: '/catalogo?franchise=magic',
+    color: '#A82FBB',
+    accent: 'from-fuchsia-900/20 to-fuchsia-950/40',
   },
 ]
 
@@ -131,7 +139,7 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"

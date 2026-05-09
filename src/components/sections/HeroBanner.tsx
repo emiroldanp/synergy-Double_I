@@ -115,6 +115,15 @@ export function HeroBanner() {
           <div className="absolute inset-0 bg-gradient-to-r from-void/90 via-void/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-transparent" />
 
+          {/* Logo watermark top-right */}
+          <div className="absolute top-8 right-8 pointer-events-none" aria-hidden="true">
+            <img
+              src="/logo-color.png"
+              alt=""
+              className="h-16 md:h-20 w-auto opacity-10"
+            />
+          </div>
+
           {/* Content */}
           <div className="absolute inset-0 flex items-center">
             <div className="page-container">

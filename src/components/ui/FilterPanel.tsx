@@ -103,7 +103,7 @@ export function FilterPanel({
 
       <FilterSection title="Franquicia">
         <CheckboxGroup<Franchise>
-          options={['pokemon', 'yugioh', 'lorcana']}
+          options={['pokemon', 'yugioh', 'lorcana', 'magic']}
           labels={FRANCHISE_LABELS}
           selected={filters.franchise}
           onChange={(v) => onUpdate('franchise', v)}

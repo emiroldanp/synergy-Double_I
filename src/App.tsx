@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { ParticleCanvas } from '@/components/ui/ParticleCanvas'
 
 import HomePage from '@/pages/HomePage'
 import CatalogPage from '@/pages/CatalogPage'
@@ -23,12 +24,20 @@ import { CardFlipFlyPortal } from '@/components/ui/CardFlipFlyPortal'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen bg-night">
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
+    <div className="relative flex flex-col min-h-screen bg-night">
+      <ParticleCanvas />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
     </div>
   )
+}
+
+function CatalogPageWrapper() {
+  const { search } = useLocation()
+  return <CatalogPage key={search} />
 }
 
 export default function App() {
@@ -37,7 +46,7 @@ export default function App() {
       <CardFlipFlyPortal />
       <Routes>
         <Route path="/" element={<Layout><HomePage /></Layout>} />
-        <Route path="/catalogo" element={<Layout><CatalogPage /></Layout>} />
+        <Route path="/catalogo" element={<Layout><CatalogPageWrapper /></Layout>} />
         <Route path="/catalogo/:slug" element={<Layout><ProductDetailPage /></Layout>} />
         <Route path="/carrito" element={<Layout><CartPage /></Layout>} />
         <Route path="/checkout" element={<Layout><CheckoutPage /></Layout>} />

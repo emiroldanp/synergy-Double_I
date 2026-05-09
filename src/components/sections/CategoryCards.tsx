@@ -4,10 +4,8 @@ const CATEGORIES = [
   {
     id: 'pokemon',
     label: 'Pokémon',
-    description: 'Base Set, Neo, EX, moderno',
+    description: 'Base Set, Neo, EX, Scarlet & Violet',
     color: '#F5C400',
-    colorDark: '#B8920A',
-    // [PLACEHOLDER — Irving proporcionará imagen representativa de Pokémon]
     image: null as string | null,
     href: '/catalogo?franchise=pokemon',
     bg: 'from-yellow-900/30 to-yellow-950/60',
@@ -15,24 +13,29 @@ const CATEGORIES = [
   {
     id: 'yugioh',
     label: 'Yu-Gi-Oh!',
-    description: 'LOB, SDK, moderno OCG/TCG',
+    description: 'LOB, SDK, TCG/OCG moderno',
     color: '#C8950A',
-    colorDark: '#8A6408',
-    // [PLACEHOLDER — Irving proporcionará imagen representativa de Yu-Gi-Oh!]
     image: null as string | null,
     href: '/catalogo?franchise=yugioh',
     bg: 'from-amber-900/30 to-amber-950/60',
   },
   {
     id: 'lorcana',
-    label: 'Lorcana',
+    label: 'Disney Lorcana',
     description: 'The First Chapter, Rise of the Floodborn',
     color: '#6B5ECD',
-    colorDark: '#4A3FAD',
-    // [PLACEHOLDER — Irving proporcionará imagen representativa de Lorcana]
     image: null as string | null,
     href: '/catalogo?franchise=lorcana',
     bg: 'from-purple-900/30 to-purple-950/60',
+  },
+  {
+    id: 'magic',
+    label: 'Magic: TG',
+    description: 'Alpha, Beta, Dual Lands, Modern',
+    color: '#A82FBB',
+    image: null as string | null,
+    href: '/catalogo?franchise=magic',
+    bg: 'from-fuchsia-900/30 to-fuchsia-950/60',
   },
 ]
 
@@ -45,7 +48,7 @@ export function CategoryCards() {
           <h2 className="section-title">¿Qué coleccionas?</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {CATEGORIES.map((cat, i) => (
             <Link
               key={cat.id}

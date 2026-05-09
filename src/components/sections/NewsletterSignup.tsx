@@ -37,6 +37,18 @@ export function NewsletterSignup() {
         aria-hidden="true"
       />
 
+      {/* Watermark logo */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        aria-hidden="true"
+      >
+        <img
+          src="/logo-color.png"
+          alt=""
+          className="w-64 md:w-80 opacity-[0.04] select-none"
+        />
+      </div>
+
       <div className="page-container relative z-10">
         <div className="max-w-2xl mx-auto text-center">
           <p className="section-subtitle mb-3">Mantente al día</p>
@@ -49,9 +61,13 @@ export function NewsletterSignup() {
 
           {status === 'success' ? (
             <div className="flex items-center justify-center gap-3 py-6">
-              <span className="text-2xl">🎉</span>
+              <div className="w-8 h-8 bg-dragon/20 border border-dragon/40 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-dragon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
               <div className="text-left">
-                <p className="font-agency text-dragon uppercase tracking-wide text-sm">¡Suscripción exitosa!</p>
+                <p className="font-agency text-dragon uppercase tracking-wide text-sm">Suscripcion exitosa</p>
                 <p className="font-exo text-ash text-xs mt-0.5">Recibirás un correo de bienvenida pronto.</p>
               </div>
             </div>
