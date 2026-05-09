@@ -6,8 +6,19 @@ export function BestsellerGrid() {
   const products = useBestsellers()
 
   return (
-    <section className="bg-abyss py-16">
-      <div className="page-container">
+    <section className="bg-abyss py-16 relative overflow-hidden">
+      {/* Logo watermark */}
+      <div
+        className="absolute inset-0 flex items-center justify-end pr-0 pointer-events-none"
+        aria-hidden="true"
+      >
+        <img
+          src="/logo-color.png"
+          alt=""
+          className="h-72 w-auto opacity-[0.035] select-none"
+        />
+      </div>
+      <div className="page-container relative">
         <div className="flex items-end justify-between mb-8">
           <div>
             <p className="section-subtitle mb-2">Más vendidos últimos 30 días</p>

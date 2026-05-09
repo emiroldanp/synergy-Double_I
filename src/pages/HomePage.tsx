@@ -6,7 +6,6 @@ import { BenefitsBar } from '@/components/sections/BenefitsBar'
 import { PromotionsSection } from '@/components/sections/PromotionsSection'
 import { FeaturedCarousel } from '@/components/sections/FeaturedCarousel'
 import { BestsellerGrid } from '@/components/sections/BestsellerGrid'
-import { CategoryCards } from '@/components/sections/CategoryCards'
 import { NewsletterSignup } from '@/components/sections/NewsletterSignup'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
 import { fadeUp, staggerContainer } from '@/lib/animations'
@@ -149,22 +148,25 @@ export default function HomePage() {
               <motion.div key={fr.id} variants={fadeUp}>
                 <Link
                   to={fr.href}
-                  className={`group block relative overflow-hidden border p-8 transition-all duration-300 bg-gradient-to-br ${fr.accent}`}
-                  style={{ borderColor: `${fr.color}40` }}
+                  className={`group block relative overflow-hidden border p-8 transition-all duration-300 bg-gradient-to-br ${fr.accent} ${fr.id === 'magic' ? 'magic-card-glow' : ''}`}
+                  style={fr.id !== 'magic' ? { borderColor: `${fr.color}40` } : undefined}
                 >
+                  {/* Magic: animated border beam */}
+                  {fr.id === 'magic' && <div className="magic-beam-wrap" aria-hidden="true" />}
+
                   <div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{ background: `radial-gradient(ellipse at center, ${fr.color}15 0%, transparent 70%)` }}
                   />
                   <h3
-                    className="font-agency text-2xl uppercase tracking-wider mb-2"
+                    className="font-agency text-2xl uppercase tracking-wider mb-2 relative z-[1]"
                     style={{ color: fr.color }}
                   >
                     {fr.label}
                   </h3>
-                  <p className="font-exo text-ash text-sm mb-4">{fr.sub}</p>
+                  <p className="font-exo text-ash text-sm mb-4 relative z-[1]">{fr.sub}</p>
                   <span
-                    className="font-agency text-xs uppercase tracking-widest border px-4 py-1.5 transition-colors group-hover:text-white"
+                    className="font-agency text-xs uppercase tracking-widest border px-4 py-1.5 transition-colors group-hover:text-white relative z-[1]"
                     style={{ borderColor: `${fr.color}60`, color: fr.color }}
                   >
                     Ver colección →
@@ -181,7 +183,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <CategoryCards />
       <BestsellerGrid />
 
       {/* Why Double-I — meta features */}

@@ -71,16 +71,24 @@ export default function CatalogPage() {
         <div className="page-container py-8">
           {/* Header */}
           <motion.div
-            className="mb-6"
+            className="mb-6 flex items-end justify-between"
             variants={fadeUp}
             initial="hidden"
             animate="visible"
           >
-            <h1 className="section-title mb-1">Catálogo</h1>
-            <p className="font-exo text-ash text-sm">
-              {totalProducts} producto{totalProducts !== 1 ? 's' : ''} encontrado
-              {totalProducts !== 1 ? 's' : ''}
-            </p>
+            <div>
+              <h1 className="section-title mb-1">Catálogo</h1>
+              <p className="font-exo text-ash text-sm">
+                {totalProducts} producto{totalProducts !== 1 ? 's' : ''} encontrado
+                {totalProducts !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <img
+              src="/logo-color.png"
+              alt="Double-I TCG"
+              className="h-10 md:h-12 w-auto opacity-25 select-none pointer-events-none"
+              aria-hidden="true"
+            />
           </motion.div>
 
           {/* Search + Sort bar */}

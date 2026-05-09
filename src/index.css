@@ -224,3 +224,56 @@ h1, h2, h3 {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100vh); }
 }
+
+@keyframes magicCardGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(168,47,187,0.3), 0 0 20px rgba(168,47,187,0.1);
+    border-color: rgba(168,47,187,0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(168,47,187,0.75), 0 0 50px rgba(168,47,187,0.35), 0 0 70px rgba(107,184,236,0.15);
+    border-color: rgba(168,47,187,0.95);
+  }
+}
+
+@keyframes magicBeamSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.magic-card-glow {
+  animation: magicCardGlow 2.8s ease-in-out infinite;
+}
+
+.magic-beam-wrap {
+  /* Sits at the exact outer edge of the card (1px border) */
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  z-index: 0;
+  /* Mask: show only the 1px border ring, hide the interior */
+  padding: 1px;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  overflow: hidden;
+}
+.magic-beam-wrap::before {
+  content: '';
+  position: absolute;
+  /* Oversized so the conic-gradient covers all edges when rotating */
+  inset: -100%;
+  width: 300%;
+  height: 300%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(168, 47, 187, 0.9) 40deg,
+    rgba(107, 184, 236, 0.6) 60deg,
+    transparent 80deg,
+    transparent 360deg
+  );
+  animation: magicBeamSpin 3.5s linear infinite;
+}

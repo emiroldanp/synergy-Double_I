@@ -26,13 +26,13 @@ export function ParticleCanvas() {
     resize()
 
     const initParticles = () => {
-      particles = Array.from({ length: 70 }, () => ({
+      particles = Array.from({ length: 80 }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.35,
-        vy: (Math.random() - 0.5) * 0.35,
-        size: Math.random() * 1.8 + 0.4,
-        opacity: Math.random() * 0.45 + 0.05,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        size: Math.random() * 2.2 + 0.5,
+        opacity: Math.random() * 0.7 + 0.2,
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
       }))
     }
@@ -68,9 +68,19 @@ export function ParticleCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full pointer-events-none"
-      style={{ zIndex: 0 }}
       aria-hidden="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        // screen blend: pure black canvas pixels become transparent,
+        // colored particles glow through any dark section background
+        mixBlendMode: 'screen',
+        opacity: 0.55,
+        zIndex: 9997,
+      }}
     />
   )
 }
