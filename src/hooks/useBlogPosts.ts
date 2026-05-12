@@ -38,7 +38,7 @@ export function useBlogPosts(options: UseBlogPostsOptions = {}): UseBlogPostsRes
       const res = adminAll
         ? await blogApi.listAll(params)
         : await blogApi.getAll(params)
-      setPosts(res.data)
+      setPosts(res.data.data ?? res.data)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al cargar los posts'
       setError(msg)
@@ -77,7 +77,7 @@ export function useBlogPost(slug: string): UseBlogPostResult {
 
       try {
         const res = await blogApi.getBySlug(slug)
-        if (!cancelled) setPost(res.data)
+        if (!cancelled) setPost(res.data.data ?? res.data)
       } catch (err: unknown) {
         if (!cancelled) {
           const msg = err instanceof Error ? err.message : 'Error al cargar el post'
