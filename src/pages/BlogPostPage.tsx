@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { blogApi } from '@/lib/api'
 import BlogPostForm from '@/components/ui/BlogPostForm'
 import type { BlogPostFormData } from '@/components/ui/BlogPostForm'
+import ConfirmModal from '@/components/admin/ConfirmModal'
 
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -16,6 +17,7 @@ export default function BlogPostPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // ── Guardar edición ──────────────────────────────────────────────────────────
   const handleSave = async (data: BlogPostFormData) => {
@@ -70,8 +72,6 @@ export default function BlogPostPage() {
   // ── Eliminar post ────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!post) return
-    const confirmed = window.confirm('¿Eliminar este post permanentemente?')
-    if (!confirmed) return
     try {
       await blogApi.delete(post.id)
       navigate('/blog')
@@ -154,6 +154,15 @@ export default function BlogPostPage() {
         <link rel="canonical" href={window.location.href} />
       </Helmet>
 
+      <ConfirmModal
+        open={showDeleteConfirm}
+        title="Eliminar post"
+        message="Esta acción no se puede deshacer. ¿Seguro que deseas eliminar este artículo?"
+        confirmLabel="Eliminar"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+
       {/* Formulario de edición (modal) */}
       {showForm && (
         <BlogPostForm
@@ -192,7 +201,7 @@ export default function BlogPostPage() {
               </button>
 
               <button
-                onClick={handleDelete}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="px-3 py-1 text-xs font-medium bg-red-700 text-red-100 rounded hover:bg-red-600 transition-colors"
               >
                 Eliminar
