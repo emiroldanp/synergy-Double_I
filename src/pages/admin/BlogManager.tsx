@@ -76,104 +76,94 @@ export default function BlogManager() {
         <title>Blog — Admin Double-I TCG</title>
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20">
-        <div className="page-container py-8">
-
-          {/* Navegación admin */}
-          <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
-            {[
-              { to: '/admin', label: 'Dashboard' },
-              { to: '/admin/productos', label: 'Productos' },
-              { to: '/admin/pedidos', label: 'Pedidos' },
-              { to: '/admin/blog', label: 'Blog' },
-            ].map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="flex-shrink-0 font-agency text-xs uppercase tracking-wider px-4 py-2 border border-navy/40 hover:border-dragon/60 text-ash hover:text-dragon transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
+      <div className="space-y-4">
           {/* Encabezado de página */}
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="section-title">Blog</h1>
-            <button onClick={openCreate} className="btn-primary text-xs px-4 py-2">
+          <div className="flex items-center justify-between">
+            <div />
+            <button
+              onClick={openCreate}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors whitespace-nowrap"
+            >
               + Nuevo post
             </button>
           </div>
 
-          {/* Estados de carga / error */}
-          {loading && (
-            <p className="text-ash text-sm py-8 text-center">Cargando posts…</p>
-          )}
-
+          {/* Error */}
           {error && (
-            <p className="text-red-400 text-sm py-4 text-center">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+              Error al cargar posts: {error}
+            </div>
           )}
 
           {/* Tabla de posts */}
-          {!loading && !error && (
-            <div className="bg-deep border border-navy/40 overflow-x-auto">
-              {posts.length === 0 ? (
-                <p className="text-ash text-sm py-10 text-center">No hay posts aún.</p>
-              ) : (
-                <table className="w-full text-xs font-exo">
-                  <thead>
-                    <tr className="border-b border-navy/40">
-                      {['Imagen', 'Título', 'Categoría', 'Estado', 'Fecha', 'Acciones'].map((h) => (
-                        <th
-                          key={h}
-                          className="text-left text-ash uppercase tracking-wider p-3 whitespace-nowrap"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {posts.map((post) => (
-                      <tr
-                        key={post.id}
-                        className="border-b border-navy/20 hover:bg-abyss/50 transition-colors"
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    {['Imagen', 'Título', 'Categoría', 'Estado', 'Fecha', 'Acciones'].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap"
                       >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-12 text-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto" />
+                      </td>
+                    </tr>
+                  ) : posts.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
+                        No hay posts aún.
+                      </td>
+                    </tr>
+                  ) : (
+                    posts.map((post) => (
+                      <tr key={post.id} className="hover:bg-gray-50">
                         {/* Miniatura */}
-                        <td className="p-3">
-                          {post.featuredImageUrl ? (
-                            <img
-                              src={post.featuredImageUrl}
-                              alt={post.title}
-                              loading="lazy"
-                              className="w-12 h-12 object-cover rounded"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-navy/30 rounded flex items-center justify-center">
-                              <span className="text-ash/40 text-lg">📄</span>
-                            </div>
-                          )}
+                        <td className="px-4 py-3">
+                          <div className="w-10 h-10 rounded bg-gray-100 overflow-hidden flex-shrink-0">
+                            {post.featuredImageUrl ? (
+                              <img
+                                src={post.featuredImageUrl}
+                                alt={post.title}
+                                loading="lazy"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                                📄
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         {/* Título + slug */}
-                        <td className="p-3">
-                          <p className="text-frost font-medium">{post.title}</p>
-                          <p className="text-ash/50 text-xs">{post.slug}</p>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-900 leading-tight">{post.title}</p>
+                          <p className="text-xs text-gray-400 font-mono">{post.slug}</p>
                         </td>
 
                         {/* Categoría */}
-                        <td className="p-3 text-ash">
+                        <td className="px-4 py-3 text-gray-500">
                           {post.categorySlug ?? '—'}
                         </td>
 
                         {/* Estado */}
-                        <td className="p-3">
+                        <td className="px-4 py-3">
                           <span
                             className={cn(
-                              'badge-base text-xs',
+                              'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
                               post.isPublished
-                                ? 'bg-green-900/30 border border-green-700/50 text-green-400'
-                                : 'bg-yellow-900/30 border border-yellow-700/50 text-yellow-400',
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800',
                             )}
                           >
                             {post.isPublished ? 'Publicado' : 'Borrador'}
@@ -181,45 +171,46 @@ export default function BlogManager() {
                         </td>
 
                         {/* Fecha */}
-                        <td className="p-3 text-ash">
+                        <td className="px-4 py-3 text-gray-500">
                           {post.publishedAt
                             ? new Date(post.publishedAt).toLocaleDateString('es-MX')
                             : new Date(post.createdAt).toLocaleDateString('es-MX')}
                         </td>
 
                         {/* Acciones */}
-                        <td className="p-3 whitespace-nowrap">
-                          <button
-                            onClick={() => openEdit(post)}
-                            className="text-dragon hover:text-frost transition-colors mr-3"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(post.id)}
-                            className="text-red-500 hover:text-red-300 transition-colors mr-3"
-                          >
-                            Eliminar
-                          </button>
-                          {post.isPublished && (
-                            <Link
-                              to={`/blog/${post.slug}`}
-                              target="_blank"
-                              className="text-ash/60 hover:text-frost transition-colors"
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openEdit(post)}
+                              className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
                             >
-                              Ver →
-                            </Link>
-                          )}
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(post.id)}
+                              className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                            >
+                              Eliminar
+                            </button>
+                            {post.isPublished && (
+                              <Link
+                                to={`/blog/${post.slug}`}
+                                target="_blank"
+                                className="px-2 py-1 text-xs bg-gray-50 text-gray-600 rounded hover:bg-gray-100 transition-colors"
+                              >
+                                Ver →
+                              </Link>
+                            )}
+                          </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
         </div>
-      </div>
 
       {/* Modal de formulario (crear / editar) */}
       {showForm && (
