@@ -53,9 +53,15 @@ export default function BlogPostPage() {
   // ── Toggle publicar / despublicar ────────────────────────────────────────────
   const handleTogglePublish = async () => {
     if (!post) return
+    const publishing = !post.isPublished
     try {
-      await blogApi.update(post.id, { isPublished: !post.isPublished })
-      navigate(0)
+      await blogApi.update(post.id, { isPublished: publishing })
+      // Al despublicar, el post ya no es accesible públicamente → ir al panel admin
+      if (!publishing) {
+        navigate('/admin/blog')
+      } else {
+        navigate(0)
+      }
     } catch (err) {
       // console.error('Error al cambiar estado de publicación:', err)
     }
