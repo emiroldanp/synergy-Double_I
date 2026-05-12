@@ -33,7 +33,7 @@ export default function ProductsManager() {
   if (!isSignedIn || !isAdmin) return <Navigate to="/mi-cuenta" replace />
 
   const filtered = MOCK_PRODUCTS.filter((p) =>
-    search === '' || p.name.toLowerCase().includes(search.toLowerCase()) || p.set.toLowerCase().includes(search.toLowerCase())
+    search === '' || p.name.toLowerCase().includes(search.toLowerCase()) || (p.set ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
   const onSubmit = (data: AdminProductoFormData) => {
@@ -200,8 +200,8 @@ export default function ProductsManager() {
                       <p className="text-frost font-medium">{p.name}</p>
                       <p className="text-ash/60">{p.set}</p>
                     </td>
-                    <td className="p-3 text-ash">{FRANCHISE_LABELS[p.franchise]}</td>
-                    <td className="p-3 text-ash">{CONDITION_LABELS[p.condition]}</td>
+                    <td className="p-3 text-ash">{p.franchise ? FRANCHISE_LABELS[p.franchise] : '—'}</td>
+                    <td className="p-3 text-ash">{p.condition ? CONDITION_LABELS[p.condition as import('@/types').Condition] : '—'}</td>
                     <td className="p-3 font-agency text-white">{formatPrice(p.price)}</td>
                     <td className="p-3">
                       <span className={cn('font-agency', p.stock === 0 ? 'text-crimson' : p.stock <= 2 ? 'text-yellow-400' : 'text-green-400')}>

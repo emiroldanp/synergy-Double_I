@@ -28,22 +28,22 @@ export function useProducts(initialFilters?: Partial<FilterState>) {
     let result = MOCK_PRODUCTS.filter((p) => p.isActive)
 
     if (filters.franchise.length) {
-      result = result.filter((p) => filters.franchise.includes(p.franchise))
+      result = result.filter((p) => p.franchise && filters.franchise.includes(p.franchise))
     }
     if (filters.rarity.length) {
-      result = result.filter((p) => filters.rarity.includes(p.rarity))
+      result = result.filter((p) => p.rarity && filters.rarity.includes(p.rarity as import('@/types').Rarity))
     }
     if (filters.edition.length) {
-      result = result.filter((p) => filters.edition.includes(p.edition))
+      result = result.filter((p) => p.edition && filters.edition.includes(p.edition as import('@/types').Edition))
     }
     if (filters.condition.length) {
-      result = result.filter((p) => filters.condition.includes(p.condition))
+      result = result.filter((p) => p.condition && filters.condition.includes(p.condition as import('@/types').Condition))
     }
     if (filters.variant.length) {
-      result = result.filter((p) => filters.variant.includes(p.variant))
+      result = result.filter((p) => p.variant && filters.variant.includes(p.variant as import('@/types').Variant))
     }
     if (filters.language.length) {
-      result = result.filter((p) => filters.language.includes(p.language))
+      result = result.filter((p) => p.language && filters.language.includes(p.language as import('@/types').Language))
     }
     if (filters.priceMin !== null) {
       result = result.filter((p) => p.price >= filters.priceMin!)
@@ -56,7 +56,7 @@ export function useProducts(initialFilters?: Partial<FilterState>) {
       result = result.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
-          p.set.toLowerCase().includes(q) ||
+          (p.set ?? '').toLowerCase().includes(q) ||
           (p.cardNumber?.toLowerCase().includes(q) ?? false)
       )
     }

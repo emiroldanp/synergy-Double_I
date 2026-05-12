@@ -38,7 +38,7 @@ export default function ProductDetailPage() {
         <title>{product.name} — Double-I TCG</title>
         <meta
           name="description"
-          content={`${product.name} | ${product.set} | ${CONDITION_LABELS[product.condition]} | ${EDITION_LABELS[product.edition]} — ${formatPrice(product.price)}`}
+          content={`${product.name} | ${product.set} | ${product.condition ? CONDITION_LABELS[product.condition as import('@/types').Condition] : ''} | ${product.edition ? EDITION_LABELS[product.edition as import('@/types').Edition] : ''} — ${formatPrice(product.price)}`}
         />
         <meta property="og:title" content={`${product.name} — Double-I TCG`} />
         <meta property="og:image" content={product.images[0]} />
@@ -97,12 +97,12 @@ export default function ProductDetailPage() {
             <div>
               {/* Badges row */}
               <div className="flex flex-wrap gap-2 mb-4">
-                <FranchiseBadge franchise={product.franchise} />
-                <ConditionBadge condition={product.condition} />
-                <RarityBadge rarity={product.rarity} />
-                {product.edition !== 'ilimitada' && <EditionBadge edition={product.edition} />}
-                <VariantBadge variant={product.variant} />
-                <LanguageBadge language={product.language} />
+                {product.franchise && <FranchiseBadge franchise={product.franchise} />}
+                {product.condition && <ConditionBadge condition={product.condition as import('@/types').Condition} />}
+                {product.rarity && <RarityBadge rarity={product.rarity as import('@/types').Rarity} />}
+                {product.edition && product.edition !== 'ilimitada' && <EditionBadge edition={product.edition as import('@/types').Edition} />}
+                {product.variant && <VariantBadge variant={product.variant as import('@/types').Variant} />}
+                {product.language && <LanguageBadge language={product.language as import('@/types').Language} />}
               </div>
 
               <h1 className="font-agency text-3xl md:text-4xl text-white uppercase tracking-wide leading-tight mb-1">
@@ -170,10 +170,10 @@ export default function ProductDetailPage() {
               {/* Details table */}
               <div className="mt-8 border border-navy/40 divide-y divide-navy/30">
                 {[
-                  { label: 'Franquicia', value: product.franchise.toUpperCase() },
-                  { label: 'Set', value: product.set },
-                  { label: 'Condición', value: CONDITION_LABELS[product.condition] },
-                  { label: 'Edición', value: EDITION_LABELS[product.edition] },
+                  { label: 'Franquicia', value: (product.franchise ?? '').toUpperCase() },
+                  { label: 'Set', value: product.set ?? '' },
+                  { label: 'Condición', value: product.condition ? CONDITION_LABELS[product.condition as import('@/types').Condition] : '—' },
+                  { label: 'Edición', value: product.edition ? EDITION_LABELS[product.edition as import('@/types').Edition] : '—' },
                   { label: 'Idioma', value: product.language === 'en' ? 'Inglés' : product.language === 'jp' ? 'Japonés' : 'Español' },
                 ].map((row) => (
                   <div key={row.label} className="flex justify-between px-4 py-2.5">

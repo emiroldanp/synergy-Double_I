@@ -10,7 +10,7 @@ export type Rarity =
   | 'gold_rare'
   | 'prismatic'
 
-export type Edition = 'primera' | 'shadowless' | 'ilimitada'
+export type Edition = 'primera' | 'shadowless' | 'ilimitada' | 'first_edition' | 'unlimited'
 
 export type Condition = 'mint' | 'near_mint' | 'lightly_played'
 
@@ -26,25 +26,42 @@ export type OrderStatus =
   | 'entregado'
   | 'cancelado'
 
+export interface ProductImage {
+  url: string
+  isPrimary: boolean
+}
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+}
+
 export interface Product {
   id: string
   slug: string
   name: string
-  franchise: Franchise
-  set: string
-  rarity: Rarity
-  edition: Edition
-  condition: Condition
-  variant: Variant
-  language: Language
+  franchise?: Franchise
+  categoryId?: string
+  set?: string
+  setName?: string | null
+  rarity?: Rarity | string | null
+  edition?: Edition | string | null
+  condition?: Condition | string | null
+  variant?: Variant | string | null
+  language?: Language | string | null
   price: number
   stock: number
   images: string[]
-  description?: string
-  cardNumber?: string
+  description?: string | null
+  cardNumber?: string | null
   isActive: boolean
   createdAt: string
   salesCount?: number
+}
+
+export interface AdminProduct extends Omit<Product, 'images'> {
+  images: ProductImage[]
 }
 
 export interface CartItem {
@@ -64,31 +81,51 @@ export interface ShippingOption {
   eta: string
 }
 
+export interface Customer {
+  id: string
+  email: string
+  fullName?: string | null
+  phone?: string | null
+}
+
 export interface OrderItem {
+  id?: string
   productId: string
   name: string
   price: number
   quantity: number
-  image: string
+  subtotal?: number
+  image?: string
+  product?: { name: string; slug?: string } | null
+}
+
+export interface ShippingAddress {
+  street: string
+  number?: string
+  neighborhood?: string
+  city: string
+  state: string
+  zipCode: string
 }
 
 export interface Order {
   id: string
-  orderNumber: string
-  status: OrderStatus
+  orderNumber?: string
+  status?: OrderStatus
+  orderStatus?: string
   items: OrderItem[]
   subtotal: number
   shippingCost: number
   total: number
-  shippingOption: ShippingOption
-  trackingNumber?: string
+  shippingOption?: ShippingOption
+  trackingNumber?: string | null
+  paymentMethod?: string | null
+  guestEmail?: string | null
+  guestName?: string | null
+  shippingAddress?: ShippingAddress | null
   createdAt: string
-  customer: {
-    name: string
-    email: string
-    phone: string
-  }
-  address: {
+  customer?: Customer | null
+  address?: {
     street: string
     number: string
     colonia: string
@@ -107,15 +144,16 @@ export interface BlogPost {
   id: string
   slug: string
   title: string
-  excerpt: string
-  body: string
-  image: string
-  category: Franchise | 'general'
+  excerpt: string | null
+  body: string | null
+  featuredImageUrl: string | null
+  categorySlug: string | null
   tags: string[]
-  publishedAt: string
-  isDraft: boolean
-  metaTitle?: string
-  metaDescription?: string
+  isPublished: boolean
+  publishedAt: string | null
+  createdAt: string
+  metaTitle?: string | null
+  metaDescription?: string | null
 }
 
 export interface Promotion {

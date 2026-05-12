@@ -16,6 +16,12 @@ import {
   exportSubscribersCsv,
   deleteSubscriber,
 } from '../controllers/adminController'
+import {
+  listAllPosts,
+  createPost,
+  updatePost,
+  deletePost,
+} from '../controllers/blogController'
 
 export const adminRoutes = Router()
 
@@ -45,3 +51,9 @@ adminRoutes.get('/dashboard', getDashboard)
 adminRoutes.get('/subscribers', listSubscribers)
 adminRoutes.get('/subscribers/export-csv', exportSubscribersCsv)
 adminRoutes.delete('/subscribers/:id', deleteSubscriber)
+
+// --- Blog ---
+adminRoutes.get('/blog', listAllPosts)
+adminRoutes.post('/blog', createPost)
+adminRoutes.patch('/blog/:id', updatePost)
+adminRoutes.delete('/blog/:id', deletePost)

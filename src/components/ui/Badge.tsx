@@ -101,11 +101,13 @@ export function VariantBadge({ variant }: { variant: Variant }) {
 }
 
 export function EditionBadge({ edition }: { edition: Edition }) {
-  if (edition === 'ilimitada') return null
+  if (edition === 'ilimitada' || edition === 'unlimited') return null
   const editionColors = {
     primera: '#E02222',
     shadowless: '#6BB8EC',
     ilimitada: null,
+    first_edition: '#E02222',
+    unlimited: null,
   }
   const color = editionColors[edition]
   if (!color) return null

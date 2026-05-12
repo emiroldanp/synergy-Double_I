@@ -85,6 +85,8 @@ export const EDITION_LABELS: Record<Edition, string> = {
   primera: '1ª Edición',
   shadowless: 'Shadowless',
   ilimitada: 'Ilimitada',
+  first_edition: '1ª Edición',
+  unlimited: 'Ilimitada',
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

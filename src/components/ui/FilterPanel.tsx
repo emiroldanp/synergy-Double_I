@@ -43,7 +43,7 @@ function CheckboxGroup<T extends string>({
   return (
     <div className="space-y-2">
       {options.map((opt) => (
-        <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+        <label key={opt} className="flex items-center gap-2 cursor-pointer group" onClick={() => toggle(opt)}>
           <div
             className={cn(
               'w-4 h-4 border flex items-center justify-center flex-shrink-0 transition-colors',

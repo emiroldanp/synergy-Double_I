@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn, formatPrice } from '@/lib/utils'
-import type { Product } from '@/types'
+import type { Product, Edition } from '@/types'
 import { FranchiseBadge, ConditionBadge, RarityBadge, EditionBadge } from './Badge'
 import { useCart } from '@/hooks/useCart'
 
@@ -87,9 +87,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
             {/* Top badges */}
             <div className="absolute top-2 left-2 flex flex-col gap-1">
-              <FranchiseBadge franchise={product.franchise} />
-              {product.edition !== 'ilimitada' && (
-                <EditionBadge edition={product.edition} />
+              {product.franchise && <FranchiseBadge franchise={product.franchise} />}
+              {product.edition && product.edition !== 'ilimitada' && (
+                <EditionBadge edition={product.edition as Edition} />
               )}
             </div>
 
@@ -136,8 +136,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
         {/* Card info */}
         <div className="p-3 space-y-2">
           <div className="flex items-start gap-1 flex-wrap">
-            <ConditionBadge condition={product.condition} />
-            <RarityBadge rarity={product.rarity} />
+            {product.condition && <ConditionBadge condition={product.condition as import('@/types').Condition} />}
+            {product.rarity && <RarityBadge rarity={product.rarity as import('@/types').Rarity} />}
           </div>
 
           <Link to={`/catalogo/${product.slug}`}>

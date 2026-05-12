@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import StatusBadge from '../../components/admin/StatusBadge'
 import ConfirmModal from '../../components/admin/ConfirmModal'
-import { Product } from '../../types'
+import { AdminProduct } from '../../types'
 import { PaginatedResponse } from '../../types/admin'
 import { formatPrice as formatMXN } from '../../lib/utils'
 
@@ -11,14 +11,14 @@ export default function ProductsPage() {
   const { apiFetch } = useAdminApi()
   const navigate = useNavigate()
 
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<AdminProduct[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [confirmTarget, setConfirmTarget] = useState<Product | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<AdminProduct | null>(null)
   const PAGE_SIZE = 20
 
   // Debounce de búsqueda
@@ -34,7 +34,7 @@ export default function ProductsPage() {
       pageSize: String(PAGE_SIZE),
       ...(debouncedSearch && { search: debouncedSearch }),
     })
-    apiFetch<PaginatedResponse<Product>>(`/api/admin/products?${params}`)
+    apiFetch<PaginatedResponse<AdminProduct>>(`/api/admin/products?${params}`)
       .then((res) => {
         setProducts(res.data)
         setTotal(res.meta.total)
@@ -52,7 +52,7 @@ export default function ProductsPage() {
     setPage(1)
   }, [debouncedSearch])
 
-  const handleToggleActive = async (product: Product) => {
+  const handleToggleActive = async (product: AdminProduct) => {
     try {
       await apiFetch(`/api/admin/products/${product.id}`, {
         method: 'PATCH',
@@ -64,7 +64,7 @@ export default function ProductsPage() {
     }
   }
 
-  const handleDelete = async (product: Product) => {
+  const handleDelete = async (product: AdminProduct) => {
     setConfirmTarget(product)
   }
 
