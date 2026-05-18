@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '@/hooks/useAuth'
-import { MOCK_ORDERS } from '@/lib/mockData'
+import { ordersApi } from '@/lib/api'
 import { formatPrice, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/utils'
-import type { OrderStatus } from '@/types'
+import type { Order, OrderStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
 const STATUS_OPTIONS: OrderStatus[] = [
@@ -15,15 +15,42 @@ export default function OrdersManager() {
   const { isSignedIn, isAdmin, isLoaded } = useAuth()
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all')
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [pendingStatus, setPendingStatus] = useState<Record<string, string>>({})
+  const [pendingTracking, setPendingTracking] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !isAdmin) return
+    setLoading(true)
+    ordersApi.getAll()
+      .then((res) => setOrders(res.data.orders ?? res.data.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [isLoaded, isSignedIn, isAdmin])
 
   if (!isLoaded) return null
   if (!isSignedIn || !isAdmin) return <Navigate to="/mi-cuenta" replace />
 
   const filtered = filterStatus === 'all'
-    ? MOCK_ORDERS
-    : MOCK_ORDERS.filter((o) => o.status === filterStatus)
+    ? orders
+    : orders.filter((o) => o.status === filterStatus)
 
-  const order = selectedOrder ? MOCK_ORDERS.find((o) => o.id === selectedOrder) : null
+  const order = selectedOrder ? orders.find((o) => o.id === selectedOrder) : null
+
+  async function handleSaveOrder(orderId: string) {
+    setSavingId(orderId)
+    try {
+      await ordersApi.updateStatus(orderId, pendingStatus[orderId] ?? '', pendingTracking[orderId])
+      const res = await ordersApi.getAll()
+      setOrders(res.data.orders ?? res.data.data ?? [])
+    } catch {
+      // silenciar
+    } finally {
+      setSavingId(null)
+    }
+  }
 
   return (
     <>
@@ -55,10 +82,10 @@ export default function OrdersManager() {
               onClick={() => setFilterStatus('all')}
               className={cn('font-agency text-xs uppercase tracking-wider px-3 py-1.5 border transition-colors', filterStatus === 'all' ? 'border-dragon text-dragon' : 'border-navy/40 text-ash hover:border-navy/80')}
             >
-              Todos ({MOCK_ORDERS.length})
+              Todos ({orders.length})
             </button>
             {STATUS_OPTIONS.map((s) => {
-              const count = MOCK_ORDERS.filter((o) => o.status === s).length
+              const count = orders.filter((o) => o.status === s).length
               return (
                 <button
                   key={s}
@@ -74,7 +101,11 @@ export default function OrdersManager() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Orders list */}
             <div className="lg:col-span-2 space-y-3">
-              {filtered.length === 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-dragon" />
+                </div>
+              ) : filtered.length === 0 ? (
                 <div className="bg-deep border border-navy/40 p-10 text-center">
                   <p className="font-exo text-ash text-sm">Sin pedidos con este filtro.</p>
                 </div>
@@ -159,9 +190,9 @@ export default function OrdersManager() {
                   <div className="border-t border-navy/40 pt-4 space-y-3">
                     <p className="font-agency text-xs text-ash uppercase tracking-widest">Actualizar estado</p>
                     <select
-                      defaultValue={order.status ?? ''}
+                      value={pendingStatus[order.id] ?? order.status ?? ''}
                       className="input-dark text-xs cursor-pointer w-full"
-                      onChange={(e) => console.info('Actualizar estado:', e.target.value)}
+                      onChange={(e) => setPendingStatus((p) => ({ ...p, [order.id]: e.target.value }))}
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s} className="bg-abyss">{ORDER_STATUS_LABELS[s]}</option>
@@ -170,11 +201,16 @@ export default function OrdersManager() {
                     <input
                       type="text"
                       placeholder="Número de guía (opcional)"
-                      defaultValue={order.trackingNumber || ''}
+                      value={pendingTracking[order.id] ?? order.trackingNumber ?? ''}
+                      onChange={(e) => setPendingTracking((p) => ({ ...p, [order.id]: e.target.value }))}
                       className="input-dark text-xs w-full"
                     />
-                    <button className="btn-primary w-full text-xs py-2">
-                      Guardar cambios
+                    <button
+                      onClick={() => handleSaveOrder(order.id)}
+                      disabled={savingId === order.id}
+                      className="btn-primary w-full text-xs py-2 disabled:opacity-60"
+                    >
+                      {savingId === order.id ? 'Guardando...' : 'Guardar cambios'}
                     </button>
                   </div>
                 </div>

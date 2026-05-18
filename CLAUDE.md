@@ -23,6 +23,7 @@ Stack estándar Synergy **más** Express.js backend obligatorio en este proyecto
 |------|------------|
 | Frontend | React + Vite + TypeScript + Tailwind CSS |
 | Routing | React Router v6 |
+| Animaciones | **framer-motion** |
 | Formularios | React Hook Form + Zod |
 | SEO | react-helmet-async |
 | Backend | Express.js + Node.js |
@@ -36,6 +37,27 @@ Stack estándar Synergy **más** Express.js backend obligatorio en este proyecto
 | Pasarela de pagos | Mercado Pago |
 | Hosting | Hostinger |
 | CI/CD | GitHub Actions |
+
+---
+
+## Arquitectura frontend relevante (2026-05-18)
+
+Componentes y contextos clave que no son evidentes del árbol de archivos:
+
+| Archivo | Responsabilidad |
+|---------|----------------|
+| `src/context/CartContext.tsx` | Estado compartido del carrito (React Context). `CartProvider` envuelve toda la app en `main.tsx`. Siempre importar `useCart` desde `@/hooks/useCart` (re-exporta desde aquí). |
+| `src/context/DeckAnimationContext.tsx` | Coordina la animación de carta-volando-al-carrito. `DeckAnimationProvider` también está en `main.tsx`. |
+| `src/components/ui/CardFlipFlyPortal.tsx` | Portal que renderiza la animación framer-motion de carta volando al ícono del carrito. |
+| `src/components/sections/HeroBanner.tsx` | Hero animado con framer-motion en la homepage. |
+| `src/components/sections/BenefitsBar.tsx` | Barra de beneficios debajo del hero. |
+| `src/components/sections/FeaturedCarousel.tsx` | Carrusel de novedades (usa `useNovedades()`). |
+| `src/components/sections/BestsellerGrid.tsx` | Grid de bestsellers (usa `useBestsellers()`). |
+| `src/components/admin/BannerManager.tsx` | Gestión de banners desde panel admin. |
+| `src/hooks/useProducts.ts` | Expone `useProducts`, `useProductBySlug`, `useNovedades`, `useBestsellers` — todos conectados a la API real. |
+| `src/hooks/useInfiniteProducts.ts` | Paginación acumulada para el catálogo (`limit = page * PAGE_SIZE`). |
+
+**Regla de carrito:** nunca crear estado local de carrito. Siempre usar `useCart()` del CartContext.
 
 ---
 
@@ -63,12 +85,13 @@ Prisma 7 tiene cambios de arquitectura respecto a versiones anteriores:
 
 ---
 
-## Bloqueantes post-kickoff (estado 2026-05-02)
+## Bloqueantes (estado 2026-05-18)
 
 | Bloqueante | Estado | Impacta |
 |------------|--------|---------|
-| Pasarela de pagos | ✅ Mercado Pago | Webhook de pagos, checkout |
+| Pasarela de pagos | ✅ Mercado Pago seleccionado | Webhook de pagos, checkout |
 | Pickup en tienda | ✅ Eliminado — todo en línea | — |
+| Mercado Pago credentials prod | ⏳ Pendiente (Irving activa cuenta MP) | RF-025 bloqueado |
 | Dirección de origen (envíos) | ⏳ Pendiente | Cotización Skydropx |
 | RFC y CSD del SAT | ⏳ Pendiente | Facturapi, emisión CFDI |
 | Dominio | ⏳ Pendiente (Synergy envía opciones) | DNS, CI/CD, URLs SEO |

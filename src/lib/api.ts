@@ -38,6 +38,7 @@ export const ordersApi = {
   create: (order: unknown) => api.post('/api/orders', order),
   getByUser: () => api.get('/api/orders/me'),
   getById: (id: string) => api.get(`/api/orders/${id}`),
+  getAll: (params?: Record<string, unknown>) => api.get('/api/admin/orders', { params }),
   updateStatus: (id: string, status: string, trackingNumber?: string) =>
     api.patch(`/api/admin/orders/${id}`, { status, trackingNumber }),
 }

@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react'
-import { MOCK_PRODUCTS } from '@/lib/mockData'
+import { useState, useEffect, useCallback } from 'react'
+import { productsApi } from '@/lib/api'
 import type { FilterState, Product } from '@/types'
 
 const PAGE_SIZE = 12
@@ -19,66 +19,48 @@ const DEFAULT_FILTERS: FilterState = {
   page: 1,
 }
 
-function applyFilters(products: Product[], filters: FilterState): Product[] {
-  let result = products.filter((p) => p.isActive)
-
-  if (filters.franchise.length > 0) {
-    result = result.filter((p) => filters.franchise.includes(p.franchise))
-  }
-  if (filters.productType.length > 0) {
-    result = result.filter((p) => filters.productType.includes(p.productType))
-  }
-  if (filters.rarity.length > 0) {
-    result = result.filter((p) => filters.rarity.includes(p.rarity))
-  }
-  if (filters.edition.length > 0) {
-    result = result.filter((p) => filters.edition.includes(p.edition))
-  }
-  if (filters.condition.length > 0) {
-    result = result.filter((p) => filters.condition.includes(p.condition))
-  }
-  if (filters.variant.length > 0) {
-    result = result.filter((p) => filters.variant.includes(p.variant))
-  }
-  if (filters.language.length > 0) {
-    result = result.filter((p) => filters.language.includes(p.language))
-  }
-  if (filters.priceMin !== null) {
-    result = result.filter((p) => p.price >= filters.priceMin!)
-  }
-  if (filters.priceMax !== null) {
-    result = result.filter((p) => p.price <= filters.priceMax!)
-  }
-  if (filters.search.trim()) {
-    const q = filters.search.toLowerCase()
-    result = result.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.set.toLowerCase().includes(q) ||
-        (p.cardNumber?.toLowerCase().includes(q) ?? false)
-    )
-  }
-
-  if (filters.sortBy === 'price_asc') {
-    result.sort((a, b) => a.price - b.price)
-  } else if (filters.sortBy === 'price_desc') {
-    result.sort((a, b) => b.price - a.price)
-  } else {
-    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }
-
-  return result
-}
-
 export function useInfiniteProducts(initialFilters: Partial<FilterState> = {}) {
   const [filters, setFilters] = useState<FilterState>({ ...DEFAULT_FILTERS, ...initialFilters })
+  const [products, setProducts] = useState<Product[]>([])
+  const [totalProducts, setTotalProducts] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
   const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(true)
 
-  const allFiltered = useMemo(() => applyFilters(MOCK_PRODUCTS, filters), [filters])
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    const params: Record<string, unknown> = {
+      page: 1,
+      limit: page * PAGE_SIZE,
+      sortBy: filters.sortBy,
+    }
+    if (filters.search) params.search = filters.search
+    if (filters.franchise.length) params.franchise = filters.franchise.join(',')
+    if (filters.productType?.length) params.productType = filters.productType.join(',')
+    if (filters.rarity.length) params.rarity = filters.rarity.join(',')
+    if (filters.edition.length) params.edition = filters.edition.join(',')
+    if (filters.condition.length) params.condition = filters.condition.join(',')
+    if (filters.variant.length) params.variant = filters.variant.join(',')
+    if (filters.language.length) params.language = filters.language.join(',')
+    if (filters.priceMin !== null) params.priceMin = filters.priceMin
+    if (filters.priceMax !== null) params.priceMax = filters.priceMax
 
-  const products = useMemo(() => allFiltered.slice(0, page * PAGE_SIZE), [allFiltered, page])
-
-  const hasMore = products.length < allFiltered.length
+    productsApi.getAll(params).then((res) => {
+      if (cancelled) return
+      const data = res.data
+      const list: Product[] = data.products ?? data.data ?? []
+      const total: number = data.total ?? list.length
+      setProducts(list)
+      setTotalProducts(total)
+      setHasMore(list.length < total)
+    }).catch(() => {
+      if (!cancelled) setProducts([])
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [filters, page])
 
   const loadMore = useCallback(() => {
     if (hasMore) setPage((p) => p + 1)
@@ -94,13 +76,5 @@ export function useInfiniteProducts(initialFilters: Partial<FilterState> = {}) {
     setPage(1)
   }, [])
 
-  return {
-    products,
-    totalProducts: allFiltered.length,
-    hasMore,
-    loadMore,
-    filters,
-    updateFilter,
-    resetFilters,
-  }
+  return { products, totalProducts, hasMore, loadMore, loading, filters, updateFilter, resetFilters }
 }
