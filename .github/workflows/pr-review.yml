@@ -87,14 +87,11 @@ jobs:
 
       - name: Publicar review como comentario
         uses: actions/github-script@v7
+        env:
+          CLAUDE_REVIEW: ${{ steps.claude_review.outputs.review }}
         with:
           script: |
-            const review = `## 🤖 AI Code Review — Synergy
-
-            ${{ steps.claude_review.outputs.review }}
-
-            ---
-            *Generado automáticamente por Claude. Emiliano aprueba y hace merge.*`;
+            const review = `## 🤖 AI Code Review — Synergy\n\n${process.env.CLAUDE_REVIEW}\n\n---\n*Generado automáticamente por Claude. Emiliano aprueba y hace merge.*`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
