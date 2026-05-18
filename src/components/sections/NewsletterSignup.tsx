@@ -21,8 +21,7 @@ export function NewsletterSignup() {
       setStatus('success')
       reset()
     } catch {
-      setStatus('success')
-      reset()
+      setStatus('error')
     }
   }
 
@@ -58,6 +57,12 @@ export function NewsletterSignup() {
           <p className="font-exo text-ash text-sm mb-8 leading-relaxed">
             Entérate primero cuando lleguen nuevas cartas, promociones exclusivas y artículos de colección.
           </p>
+
+          {status === 'error' && (
+            <p className="font-exo text-crimson text-xs mb-4">
+              Ocurrió un error. Por favor intenta de nuevo.
+            </p>
+          )}
 
           {status === 'success' ? (
             <div className="flex items-center justify-center gap-3 py-6">

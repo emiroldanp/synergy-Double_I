@@ -19,8 +19,8 @@ api.interceptors.request.use((config) => {
 export default api
 
 export const emailApi = {
-  subscribe: (email: string, name?: string) =>
-    api.post('/api/email/subscribe', { email, name }),
+  subscribe: (email: string, name?: string, source = 'homepage_form') =>
+    api.post('/api/email/subscribe', { email, fullName: name, source }),
 }
 
 export const shippingApi = {
