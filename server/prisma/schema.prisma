@@ -180,6 +180,7 @@ model BlogPost {
   featuredImageUrl String?
   categoryId       String?
   category         Category? @relation(fields: [categoryId], references: [id])
+  categorySlug     String?
   tags             String[]
   isPublished      Boolean   @default(false)
   publishedAt      DateTime?

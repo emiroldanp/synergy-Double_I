@@ -2,15 +2,11 @@ import { useEffect, useState, useCallback } from 'react'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import StatusBadge from '../../components/admin/StatusBadge'
 import OrderDrawer from '../../components/admin/OrderDrawer'
-import { Order, OrderItem, Customer } from '../../types'
+import { Order } from '../../types'
 import { PaginatedResponse } from '../../types/admin'
-import { formatMXN } from '../../lib/utils'
+import { formatPrice as formatMXN } from '../../lib/utils'
 
-// El backend puede devolver el pedido con relaciones incluidas
-type OrderWithRelations = Order & {
-  customer?: Customer
-  items?: OrderItem[]
-}
+type OrderWithRelations = Order
 
 const ORDER_STATUSES = [
   { value: '', label: 'Todos los estados' },
@@ -45,7 +41,7 @@ export default function OrdersPage() {
     apiFetch<PaginatedResponse<OrderWithRelations>>(`/api/admin/orders?${params}`)
       .then((res) => {
         setOrders(res.data)
-        setTotal(res.total)
+        setTotal(res.meta.total)
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
@@ -148,7 +144,7 @@ export default function OrdersPage() {
                       {formatMXN(order.total)}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge type="order" value={order.orderStatus} />
+                      <StatusBadge type="order" value={order.orderStatus ?? ''} />
                     </td>
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">
                       {order.trackingNumber ?? '—'}

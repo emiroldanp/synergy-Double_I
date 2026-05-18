@@ -14,12 +14,16 @@ import BlogPage from '@/pages/BlogPage'
 import BlogPostPage from '@/pages/BlogPostPage'
 import ContactPage from '@/pages/ContactPage'
 
-import AdminDashboard from '@/pages/admin/AdminDashboard'
-import ProductsManager from '@/pages/admin/ProductsManager'
-import OrdersManager from '@/pages/admin/OrdersManager'
+import AdminLayout from '@/components/admin/AdminLayout'
+import DashboardPage from '@/pages/admin/DashboardPage'
+import ProductsPage from '@/pages/admin/ProductsPage'
+import ProductFormPage from '@/pages/admin/ProductFormPage'
+import OrdersPage from '@/pages/admin/OrdersPage'
+import InvoicesPage from '@/pages/admin/InvoicesPage'
+import SubscribersPage from '@/pages/admin/SubscribersPage'
 import BlogManager from '@/pages/admin/BlogManager'
 import BannerManager from '@/pages/admin/BannerManager'
-import { AdminGuard } from '@/components/auth/AdminGuard'
+import LoginPage from '@/pages/admin/LoginPage'
 import { CardFlipFlyPortal } from '@/components/ui/CardFlipFlyPortal'
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -55,11 +59,19 @@ export default function App() {
         <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
         <Route path="/blog/:slug" element={<Layout><BlogPostPage /></Layout>} />
         <Route path="/contacto" element={<Layout><ContactPage /></Layout>} />
-        <Route path="/admin" element={<Layout><AdminGuard><AdminDashboard /></AdminGuard></Layout>} />
-        <Route path="/admin/productos" element={<Layout><AdminGuard><ProductsManager /></AdminGuard></Layout>} />
-        <Route path="/admin/pedidos" element={<Layout><AdminGuard><OrdersManager /></AdminGuard></Layout>} />
-        <Route path="/admin/blog" element={<Layout><AdminGuard><BlogManager /></AdminGuard></Layout>} />
-        <Route path="/admin/banners" element={<Layout><AdminGuard><BannerManager /></AdminGuard></Layout>} />
+        <Route path="/admin/login" element={<Layout><LoginPage /></Layout>} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="productos" element={<ProductsPage />} />
+          <Route path="productos/nuevo" element={<ProductFormPage />} />
+          <Route path="productos/:id/editar" element={<ProductFormPage />} />
+          <Route path="pedidos" element={<OrdersPage />} />
+          <Route path="facturas" element={<InvoicesPage />} />
+          <Route path="suscriptores" element={<SubscribersPage />} />
+          <Route path="blog" element={<BlogManager />} />
+          <Route path="banners" element={<BannerManager />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )

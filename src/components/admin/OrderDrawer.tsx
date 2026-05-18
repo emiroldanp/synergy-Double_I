@@ -1,14 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import StatusBadge from './StatusBadge'
-import { Order, OrderItem, Customer } from '../../types'
-import { formatMXN } from '../../lib/utils'
+import { Order } from '../../types'
+import { formatPrice as formatMXN } from '../../lib/utils'
 
-// El backend puede devolver el pedido con relaciones incluidas
-type OrderWithRelations = Order & {
-  customer?: Customer
-  items?: OrderItem[]
-}
+type OrderWithRelations = Order
 
 const ORDER_STATUSES = [
   { value: 'pending_payment', label: 'Pago pendiente' },
@@ -31,11 +27,12 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
   const [trackingNumber, setTrackingNumber] = useState(order?.trackingNumber ?? '')
   const [saving, setSaving] = useState(false)
 
-  // Sincronizar estado cuando cambia el pedido seleccionado
-  if (order && order.orderStatus !== status && !saving) {
-    setStatus(order.orderStatus)
-    setTrackingNumber(order.trackingNumber ?? '')
-  }
+  useEffect(() => {
+    if (order) {
+      setStatus(order.orderStatus ?? '')
+      setTrackingNumber(order.trackingNumber ?? '')
+    }
+  }, [order?.id])
 
   const handleSave = async () => {
     if (!order) return
@@ -44,7 +41,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
       await apiFetch(`/api/admin/orders/${order.id}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          status,
+          orderStatus: status,
           trackingNumber: trackingNumber || undefined,
         }),
       })
@@ -108,7 +105,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Estado actual</span>
-              <StatusBadge type="order" value={order.orderStatus} />
+              <StatusBadge type="order" value={order.orderStatus ?? ''} />
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Pago</span>
@@ -145,7 +142,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
                     <span className="text-gray-700">
                       {item.product?.name ?? `Producto ${i + 1}`} × {item.quantity}
                     </span>
-                    <span className="text-gray-900">{formatMXN(item.subtotal)}</span>
+                    <span className="text-gray-900">{formatMXN(item.subtotal ?? item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
