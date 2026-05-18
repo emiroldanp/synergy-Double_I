@@ -9,6 +9,7 @@ import ProductDetailPage from '@/pages/ProductDetailPage'
 import CartPage from '@/pages/CartPage'
 import CheckoutPage from '@/pages/CheckoutPage'
 import OrderConfirmationPage from '@/pages/OrderConfirmationPage'
+import OrderPendingPage from '@/pages/OrderPendingPage'
 import AccountPage from '@/pages/AccountPage'
 import BlogPage from '@/pages/BlogPage'
 import BlogPostPage from '@/pages/BlogPostPage'
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/carrito" element={<Layout><CartPage /></Layout>} />
         <Route path="/checkout" element={<Layout><CheckoutPage /></Layout>} />
         <Route path="/pedido/confirmacion" element={<Layout><OrderConfirmationPage /></Layout>} />
+        <Route path="/pedido/pendiente" element={<Layout><OrderPendingPage /></Layout>} />
         <Route path="/mi-cuenta" element={<Layout><AccountPage /></Layout>} />
         <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
         <Route path="/blog/:slug" element={<Layout><BlogPostPage /></Layout>} />

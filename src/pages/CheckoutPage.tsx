@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '@/hooks/useCart'
 import { useShippingQuote } from '@/hooks/useShippingQuote'
+import { useAuth } from '@/hooks/useAuth'
+import { ordersApi } from '@/lib/api'
 import { contactSchema, addressSchema, cfdiSchema } from '@/lib/schemas/checkout'
 import type { ContactFormData, AddressFormData, CfdiFormData } from '@/lib/schemas/checkout'
 import { formatPrice, CFDI_USES } from '@/lib/utils'
@@ -54,8 +56,11 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0)
   const [contact, setContact] = useState<ContactFormData | null>(null)
   const [address, setAddress] = useState<AddressFormData | null>(null)
+  const [paying, setPaying] = useState(false)
+  const [payError, setPayError] = useState<string | null>(null)
   const { items, subtotal, clearCart } = useCart()
   const shipping = useShippingQuote()
+  const { user, isSignedIn } = useAuth()
   const navigate = useNavigate()
 
   const contactForm = useForm<ContactFormData>({ resolver: zodResolver(contactSchema) })
@@ -89,11 +94,45 @@ export default function CheckoutPage() {
     setStep(4)
   })
 
-  const handlePay = () => {
-    clearCart()
-    navigate('/pedido/confirmacion', {
-      state: { contact, address, shipping: shipping.selected, subtotal },
-    })
+  const handlePay = async () => {
+    if (!contact || !address || !shipping.selected) return
+    setPaying(true)
+    setPayError(null)
+
+    const cfdiValues = cfdiForm.getValues()
+
+    try {
+      const orderPayload = {
+        customerId: isSignedIn ? (user as any)?.id ?? null : null,
+        guestName: contact.name,
+        guestEmail: contact.email,
+        guestPhone: contact.phone,
+        shippingAddress: address,
+        shippingMethod: shipping.selected.service,
+        shippingCost: shipping.selected.price,
+        items: items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+          unitPrice: item.price,
+        })),
+        requiresInvoice: cfdiValues.requestCfdi,
+        invoiceData: cfdiValues.requestCfdi
+          ? { rfc: cfdiValues.rfc!, razonSocial: cfdiValues.razonSocial!, cfdiUse: cfdiValues.usoCfdi! }
+          : null,
+      }
+
+      const res = await ordersApi.create(orderPayload)
+      const orderId: string = res.data?.data?.orderId ?? res.data?.orderId
+
+      clearCart()
+      navigate('/pedido/confirmacion', {
+        state: { orderId, contact, shipping: shipping.selected, subtotal },
+      })
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? 'Error al crear el pedido. Intenta de nuevo.'
+      setPayError(msg)
+      setPaying(false)
+    }
   }
 
   return (
@@ -324,10 +363,13 @@ export default function CheckoutPage() {
                       </span>
                     </div>
                   </div>
+                  {payError && (
+                    <p className="font-exo text-xs text-crimson mb-3">{payError}</p>
+                  )}
                   <div className="flex gap-3">
-                    <button onClick={() => setStep(3)} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
-                    <button onClick={handlePay} className="btn-primary flex-1">
-                      Confirmar pedido
+                    <button onClick={() => setStep(3)} className="btn-ghost text-sm px-4 py-3" disabled={paying}>← Atrás</button>
+                    <button onClick={handlePay} className="btn-primary flex-1 disabled:opacity-60" disabled={paying}>
+                      {paying ? 'Creando pedido...' : 'Confirmar pedido'}
                     </button>
                   </div>
                 </div>
