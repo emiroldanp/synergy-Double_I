@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useProductBySlug } from '@/hooks/useProducts'
 import { useCart } from '@/hooks/useCart'
+import { useDeckAnimation } from '@/context/DeckAnimationContext'
 import {
   FranchiseBadge,
   ConditionBadge,
@@ -18,6 +19,8 @@ export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const product = useProductBySlug(slug ?? '')
   const { addItem } = useCart()
+  const { triggerFlipFly } = useDeckAnimation()
+  const mainImgRef = useRef<HTMLDivElement>(null)
   const [quantity, setQuantity] = useState(1)
   const [activeImg, setActiveImg] = useState(0)
   const [added, setAdded] = useState(false)
@@ -30,6 +33,11 @@ export default function ProductDetailPage() {
     addItem(product, quantity)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
+
+    if (mainImgRef.current) {
+      const rect = mainImgRef.current.getBoundingClientRect()
+      triggerFlipFly(rect, product.franchise)
+    }
   }
 
   return (
@@ -58,7 +66,7 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
             {/* Images */}
             <div>
-              <div className="relative aspect-[3/4] bg-abyss border border-navy/50 overflow-hidden mb-3 group">
+              <div ref={mainImgRef} className="relative aspect-[3/4] bg-abyss border border-navy/50 overflow-hidden mb-3 group">
                 <img
                   src={product.images[activeImg]}
                   alt={product.name}
