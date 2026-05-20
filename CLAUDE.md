@@ -94,7 +94,7 @@ Prisma 7 tiene cambios de arquitectura respecto a versiones anteriores:
 | Mercado Pago credentials prod | ⏳ Pendiente (Irving activa cuenta MP) | RF-025 bloqueado |
 | Dirección de origen (envíos) | ⏳ Pendiente | Cotización Skydropx |
 | RFC y CSD del SAT | ⏳ Pendiente | Facturapi, emisión CFDI |
-| Dominio | ⏳ Pendiente (Synergy envía opciones) | DNS, CI/CD, URLs SEO |
+| Dominio | ✅ doubleicards.com | DNS, CI/CD, URLs SEO |
 | Logo e identidad visual | ⏳ Pendiente (Irving lo comparte) | Frontend completo |
 | Redes sociales del footer | ⏳ Pendiente | Footer |
 | Número de WhatsApp de Irving | ⏳ Pendiente | Botón flotante |
