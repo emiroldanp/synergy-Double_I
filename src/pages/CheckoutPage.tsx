@@ -111,9 +111,9 @@ export default function CheckoutPage() {
         shippingMethod: shipping.selected.service,
         shippingCost: shipping.selected.price,
         items: items.map((item) => ({
-          productId: item.id,
+          productId: item.product.id,
           quantity: item.quantity,
-          unitPrice: item.price,
+          unitPrice: item.product.price,
         })),
         requiresInvoice: cfdiValues.requestCfdi,
         invoiceData: cfdiValues.requestCfdi

@@ -54,7 +54,14 @@ export default function OrderPendingPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-dragon mt-0.5">→</span>
-                  <span>Si tienes dudas, contáctanos por WhatsApp.</span>
+                  <span>Si tienes dudas, escríbenos por{' '}
+                    <a
+                      href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=Hola, tengo una pregunta sobre mi pedido${orderId ? ` ${orderId}` : ''}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-frost hover:underline"
+                    >WhatsApp</a>.
+                  </span>
                 </li>
               </ul>
             </div>

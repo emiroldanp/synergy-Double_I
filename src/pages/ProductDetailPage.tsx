@@ -17,7 +17,7 @@ import { formatPrice, CONDITION_LABELS, EDITION_LABELS } from '@/lib/utils'
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
-  const product = useProductBySlug(slug ?? '')
+  const { product } = useProductBySlug(slug ?? '')
   const { addItem } = useCart()
   const { triggerFlipFly } = useDeckAnimation()
   const mainImgRef = useRef<HTMLDivElement>(null)
@@ -34,7 +34,7 @@ export default function ProductDetailPage() {
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
 
-    if (mainImgRef.current) {
+    if (mainImgRef.current && product.franchise) {
       const rect = mainImgRef.current.getBoundingClientRect()
       triggerFlipFly(rect, product.franchise)
     }

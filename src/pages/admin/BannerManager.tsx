@@ -195,7 +195,7 @@ export default function BannerManager() {
                   </label>
                   <input
                     type="text"
-                    value={(editing as Record<string, string>)[field]}
+                    value={(editing as unknown as Record<string, string>)[field]}
                     onChange={(e) =>
                       setEditing((prev) => prev && ({ ...prev, [field]: e.target.value }))
                     }

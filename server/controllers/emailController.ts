@@ -146,13 +146,16 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
       params: {
         ORDER_ID: orderId,
         CUSTOMER_NAME: recipientName,
-        ITEMS: order.items.map((item) => ({
-          name: item.product.name,
-          quantity: item.quantity,
-          price: Number(item.unitPrice),
-        })),
-        TOTAL: Number(order.total),
-        SHIPPING_METHOD: order.shippingMethod || '',
+        ITEMS_HTML: order.items
+          .map(
+            (item) =>
+              `<tr><td style="padding:10px 12px;font-size:14px;border-bottom:1px solid #1e1e1e;">${item.product.name}</td>` +
+              `<td style="padding:10px 12px;text-align:center;font-size:14px;color:#b0b0b0;border-bottom:1px solid #1e1e1e;">${item.quantity}</td>` +
+              `<td style="padding:10px 12px;text-align:right;font-size:14px;border-bottom:1px solid #1e1e1e;">$${Number(item.unitPrice).toFixed(2)}</td></tr>`
+          )
+          .join(''),
+        TOTAL: Number(order.total).toFixed(2),
+        SHIPPING_METHOD: order.shippingMethod || 'Por confirmar',
       },
     },
     { headers: brevoHeaders() }

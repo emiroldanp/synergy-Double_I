@@ -4,6 +4,7 @@ import type { FilterState, Product } from '@/types'
 
 const DEFAULT_FILTERS: FilterState = {
   franchise: [],
+  productType: [],
   rarity: [],
   edition: [],
   condition: [],

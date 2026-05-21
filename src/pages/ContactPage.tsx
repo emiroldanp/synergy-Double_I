@@ -45,8 +45,11 @@ export default function ContactPage() {
                 </div>
               </a>
 
-              {/* Email placeholder */}
-              <div className="bg-deep border border-navy/40 p-6">
+              {/* Email */}
+              <a
+                href="mailto:hola@doubleicards.com"
+                className="group bg-deep border border-navy/40 hover:border-dragon/40 p-6 transition-all duration-300 block"
+              >
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 flex items-center justify-center bg-dragon/10 flex-shrink-0">
                     <svg className="w-6 h-6 text-dragon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -54,20 +57,25 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h2 className="font-agency text-base text-white uppercase tracking-wide">Email</h2>
+                    <h2 className="font-agency text-base text-white uppercase tracking-wide group-hover:text-dragon transition-colors">
+                      Email
+                    </h2>
                     <p className="font-exo text-ash text-xs mt-1">
-                      [PLACEHOLDER — confirmar correo con Irving en kickoff]
+                      Para consultas detalladas o cotizaciones de lotes.
+                    </p>
+                    <p className="font-agency text-xs text-dragon mt-2 uppercase tracking-wider">
+                      hola@doubleicards.com
                     </p>
                   </div>
                 </div>
-              </div>
+              </a>
             </div>
 
-            {/* Redes sociales placeholder */}
+            {/* Redes sociales — pendientes de configurar */}
             <div className="bg-deep border border-navy/40 p-6">
-              <h2 className="font-agency text-sm text-ash uppercase tracking-widest mb-4">Redes sociales</h2>
-              <p className="font-exo text-ash/60 text-xs italic">
-                [PLACEHOLDER — confirmar redes sociales con Irving en kickoff]
+              <h2 className="font-agency text-sm text-ash uppercase tracking-widest mb-4">Síguenos</h2>
+              <p className="font-exo text-ash/60 text-xs">
+                Próximamente en redes sociales. Suscríbete al newsletter para ser el primero en enterarte.
               </p>
             </div>
           </div>

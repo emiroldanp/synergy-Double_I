@@ -40,7 +40,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       if (cardRef.current) {
         const imageEl = cardRef.current.querySelector('[data-card-image]')
         const rect = (imageEl ?? cardRef.current).getBoundingClientRect()
-        triggerFlipFly(rect, product.franchise)
+        if (product.franchise) triggerFlipFly(rect, product.franchise)
       }
     },
     [addItem, product, triggerFlipFly]

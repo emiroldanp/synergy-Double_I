@@ -41,7 +41,7 @@ function DeckIconButton({
 
   return (
     <button
-      ref={deckRef}
+      ref={deckRef as React.RefObject<HTMLButtonElement>}
       onClick={onClick}
       aria-label={`Carrito (${count} artículos)`}
       className={cn(
