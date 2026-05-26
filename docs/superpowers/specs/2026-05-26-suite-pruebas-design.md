@@ -167,6 +167,7 @@ Verificar en cada screenshot: navbar visible, sin overflow horizontal, footer co
 | F11 | Modificar cantidad en `/carrito` | Subtotal se actualiza en tiempo real |
 | F12 | Eliminar producto del carrito | Carrito queda vacío, contador en navbar = 0 |
 | F13 | Recargar página con carrito no vacío | Carrito persiste (localStorage) |
+| F13b | Producto en carrito se agota mientras el usuario navega | En DB poner stock = 0 de un producto que ya está en el carrito de otro tab → al intentar hacer checkout, el sistema debe mostrar aviso "producto agotado, retíralo del carrito" y bloquear el avance |
 
 **Checkout:**
 
@@ -176,10 +177,13 @@ Verificar en cada screenshot: navbar visible, sin overflow horizontal, footer co
 | F15 | Email con formato inválido | Error específico "Email inválido" |
 | F16 | CP con menos de 5 dígitos | Error de validación en campo CP |
 | F17 | Llegar a paso 3 | Spinner visible → opciones de envío aparecen |
+| F17b | Error de Skydropx en paso 3 (key inválida temporalmente) | Mensaje de error controlado visible, opción "Recoger en tienda" sigue activa, no pantalla en blanco ni error 500 |
 | F18 | Seleccionar carrier | Total se actualiza: subtotal + costo del carrier |
 | F19 | Toggle CFDI ON | Formulario RFC/razón social/uso aparece |
 | F20 | RFC con formato inválido | Error de validación Zod en campo RFC |
 | F21 | Toggle CFDI OFF | Formulario RFC desaparece |
+| F21b | Navegar a `/checkout` con carrito vacío (URL directa) | Redirige al catálogo o muestra aviso "tu carrito está vacío", no pantalla en blanco |
+| F21c | Regresar al paso anterior en checkout | Los datos del paso anterior persisten en el formulario, no se borran |
 
 **Seguridad y acceso:**
 
@@ -203,7 +207,15 @@ Verificar en cada screenshot: navbar visible, sin overflow horizontal, footer co
 | F27 | Pedido con `invoice.status = 'draft'` en lista | Badge "Factura pendiente" visible en la fila |
 | F28 | Clic en "Reintentar factura" (con Facturapi disponible) | Badge cambia a "Factura emitida", botón desaparece |
 
-**Total flujos funcionales: 28**
+**Panel admin — casos negativos:**
+
+| # | Flujo | Verificación |
+|---|-------|-------------|
+| F29 | Crear producto sin campos requeridos (nombre, precio, stock) | Errores de validación inline — formulario no se envía |
+| F30 | Cargar imagen de producto con formato no permitido (ej. `.pdf`) | Error "formato no soportado", imagen no se sube |
+| F31 | Actualizar estado de pedido a un estado inválido (ej. de `delivered` a `pending_payment`) | El sistema debe rechazar la transición inválida o mostrar advertencia |
+
+**Total flujos funcionales: 31**
 
 ---
 
@@ -294,6 +306,82 @@ Verificar en cada screenshot: navbar visible, sin overflow horizontal, footer co
 
 ---
 
+### Flujo E2E 6: Tarjeta rechazada (Mercado Pago sandbox)
+
+```
+1. Agregar producto al carrito → iniciar checkout completo
+2. En paso de pago: usar tarjeta de rechazo sandbox MP: 4000 0000 0000 0002
+3. Verificar: mensaje de error visible en UI "Pago rechazado, intenta con otro método"
+4. Verificar en DB: order.payment_status = 'failed'
+5. Verificar en DB: stock del producto NO fue decrementado
+6. Verificar: el usuario puede reintentar el pago sin iniciar un nuevo pedido
+```
+
+**Criterio de paso:** pago fallido no descuenta stock, UI informa al usuario, reintento posible.
+
+---
+
+### Flujo E2E 7: Pago por OXXO (confirmación diferida)
+
+```
+1. Agregar producto al carrito → iniciar checkout completo
+2. En paso de pago: seleccionar método OXXO Pay
+3. Verificar: MP genera referencia OXXO y la muestra en pantalla
+4. Verificar en DB: order.payment_status = 'pending', order_status = 'pending_payment'
+5. Verificar en DB: stock NO decrementado aún (pago no confirmado)
+6. Simular confirmación de pago OXXO vía webhook sandbox de MP
+7. Verificar en DB: order.payment_status = 'confirmed', stock decrementado
+8. Verificar que email de confirmación llegó al correo de prueba
+```
+
+**Criterio de paso:** pedido OXXO queda en pending correctamente, confirma solo al recibir webhook.
+
+---
+
+### Flujo E2E 8: Webhook de pago duplicado (idempotencia)
+
+```
+1. Completar una compra exitosa (Flujo E2E 1) — anotar el payment_reference
+2. Reenviar el mismo payload del webhook de MP al backend (mismo payment_reference)
+3. Verificar en DB: stock del producto NO se decrementó dos veces
+4. Verificar en DB: solo existe 1 registro de confirmación, no duplicados en orders
+5. Verificar: el backend devuelve 200 (no error) — procesó idempotentemente
+```
+
+**Criterio de paso:** el mismo webhook dos veces no genera doble descuento de stock ni pedido duplicado.
+
+---
+
+### Flujo E2E 9: Sesión de Clerk expira durante el checkout
+
+```
+1. Iniciar sesión con cuenta de usuario
+2. Agregar producto al carrito → llegar al paso 3 del checkout
+3. Forzar expiración del token de Clerk (modificar manualmente en DevTools → Application → Cookies)
+4. Intentar avanzar al paso 4
+5. Verificar: el sistema detecta la sesión inválida y muestra aviso
+   "Tu sesión expiró. Inicia sesión de nuevo para continuar."
+6. Verificar: al re-autenticarse, el carrito persiste (no se pierde el progreso)
+```
+
+**Criterio de paso:** sesión expirada no causa error silencioso, carrito sobrevive la re-autenticación.
+
+---
+
+### Flujo E2E 10: Checkout con carrito vacío por manipulación de URL
+
+```
+1. Sin productos en el carrito, navegar directamente a /checkout
+2. Verificar: redirige a /catalogo o muestra página "tu carrito está vacío"
+3. No debe aparecer pantalla en blanco ni error 500
+4. Intentar hacer POST directo a /api/payments/create-preference sin order_id válido
+5. Verificar: backend devuelve 400 con mensaje de error, no 500
+```
+
+**Criterio de paso:** manipulación de URL no genera comportamiento inesperado ni errores no manejados.
+
+---
+
 ### Flujo E2E 5: Arrival notification agrupada (Brevo)
 
 ```
@@ -367,8 +455,8 @@ Ejecutar manualmente antes de hacer merge a `main`. Marcar cada ítem como ✅ o
 El proyecto está listo para merge a `main` cuando:
 
 - [ ] Capa 1: todos los ~22 casos de API pasan al 100%
-- [ ] Capa 2: 34 screenshots sin overflow + 28 flujos funcionales sin fallos
-- [ ] Capa 3: los 5 flujos E2E pasan en staging con APIs sandbox
+- [ ] Capa 2: 34 screenshots sin overflow + 31 flujos funcionales sin fallos (incluyendo negativos)
+- [ ] Capa 3: los 10 flujos E2E pasan en staging con APIs sandbox (5 happy path + 5 negativos)
 - [ ] Capa 4: los 18 ítems del checklist manual marcados como ✅
 - [ ] El requisito de gestión de facturas fallidas está implementado en backend y admin
 - [ ] Emiliano aprueba en staging antes del merge a `main`
@@ -381,7 +469,8 @@ El proyecto está listo para merge a `main` cuando:
 |------|------|---------|
 | Capa 1 | Casos de prueba API (Jest + Supertest) | 22 |
 | Capa 2 | Screenshots (Playwright MCP) | 34 |
-| Capa 2 | Flujos funcionales UI | 28 |
-| Capa 3 | Flujos E2E completos en staging | 5 (~35 pasos) |
+| Capa 2 | Flujos funcionales UI (happy path + negativos) | 31 |
+| Capa 3 | Flujos E2E en staging — happy path | 5 (~35 pasos) |
+| Capa 3 | Flujos E2E en staging — casos negativos | 5 (~30 pasos) |
 | Capa 4 | Verificaciones manuales de seguridad | 18 |
-| **Total** | | **~137 verificaciones** |
+| **Total** | | **~160 verificaciones** |
