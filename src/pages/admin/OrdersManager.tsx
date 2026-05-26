@@ -7,6 +7,10 @@ import { formatPrice, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/uti
 import type { Order, OrderStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
+function hasInvoicePending(order: Order): boolean {
+  return Boolean(order.requiresInvoice && (!order.invoice || order.invoice.status === 'draft'))
+}
+
 const STATUS_OPTIONS: OrderStatus[] = [
   'pendiente_pago', 'pago_confirmado', 'en_preparacion', 'enviado', 'entregado', 'cancelado'
 ]
@@ -18,6 +22,8 @@ export default function OrdersManager() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
+  const [retryingInvoiceId, setRetryingInvoiceId] = useState<string | null>(null)
+  const [retrySuccess, setRetrySuccess] = useState<string | null>(null)
   const [pendingStatus, setPendingStatus] = useState<Record<string, string>>({})
   const [pendingTracking, setPendingTracking] = useState<Record<string, string>>({})
 
@@ -49,6 +55,22 @@ export default function OrdersManager() {
       // silenciar
     } finally {
       setSavingId(null)
+    }
+  }
+
+  async function handleRetryInvoice(orderId: string) {
+    setRetryingInvoiceId(orderId)
+    setRetrySuccess(null)
+    try {
+      await ordersApi.retryInvoice(orderId)
+      setRetrySuccess(orderId)
+      // Refrescar lista para actualizar el estado de la factura
+      const res = await ordersApi.getAll()
+      setOrders(res.data.orders ?? res.data.data ?? [])
+    } catch {
+      // silenciar — el backend ya loguea el error
+    } finally {
+      setRetryingInvoiceId(null)
     }
   }
 
@@ -138,6 +160,11 @@ export default function OrdersManager() {
                         >
                           {ORDER_STATUS_LABELS[o.status!]}
                         </span>
+                        {hasInvoicePending(o) && (
+                          <span className="badge-base text-xs block mb-1 bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                            Factura pendiente
+                          </span>
+                        )}
                         <p className="font-agency text-sm text-white">{formatPrice(o.total)}</p>
                       </div>
                     </div>
@@ -185,6 +212,31 @@ export default function OrdersManager() {
                       {order.address?.street ?? ''} {order.address?.number ?? ''}, {order.address?.colonia ?? ''}, {order.address?.city ?? ''}, {order.address?.state ?? ''} CP {order.address?.zip ?? ''}
                     </p>
                   </div>
+
+                  {/* Reintento de factura */}
+                  {hasInvoicePending(order) && (
+                    <div className="border-t border-navy/40 pt-4 space-y-2">
+                      <p className="font-agency text-xs text-amber-400 uppercase tracking-widest">
+                        ⚠ Factura pendiente
+                      </p>
+                      <p className="font-exo text-xs text-ash">
+                        La emisión del CFDI falló. Verifica las credenciales de Facturapi y el RFC del cliente antes de reintentar.
+                      </p>
+                      {retrySuccess === order.id ? (
+                        <p className="font-exo text-xs text-green-400">
+                          ✓ Reintento iniciado — la factura se actualizará en unos segundos.
+                        </p>
+                      ) : (
+                        <button
+                          onClick={() => handleRetryInvoice(order.id)}
+                          disabled={retryingInvoiceId === order.id}
+                          className="w-full text-xs py-2 font-agency uppercase tracking-wider border border-amber-500/60 text-amber-400 hover:bg-amber-500/10 transition-colors disabled:opacity-60"
+                        >
+                          {retryingInvoiceId === order.id ? 'Reintentando...' : 'Reintentar factura'}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   {/* Update status */}
                   <div className="border-t border-navy/40 pt-4 space-y-3">

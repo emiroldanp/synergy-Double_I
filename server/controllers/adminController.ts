@@ -280,6 +280,9 @@ export async function listOrders(req: Request, res: Response, next: NextFunction
             include: { product: { select: { name: true, price: true } } },
           },
           customer: true,
+          invoice: {
+            select: { status: true, pdfUrl: true, xmlUrl: true },
+          },
         },
       }),
       prisma.order.count({ where }),
