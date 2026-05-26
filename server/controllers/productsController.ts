@@ -11,6 +11,7 @@ import { Prisma } from '@prisma/client'
 export async function getProducts(req: Request, res: Response, next: NextFunction) {
   try {
     const {
+      franchise,
       categorySlug,
       rarity,
       edition,
@@ -19,51 +20,77 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
       language,
       minPrice,
       maxPrice,
+      priceMin,
+      priceMax,
       search,
       orderBy,
+      sortBy,
+      page,
+      limit,
     } = req.query
 
     // Solo productos activos
     const where: Prisma.ProductWhereInput = { isActive: true }
 
-    if (categorySlug) {
+    // franchise toma precedencia sobre categorySlug (valores: pokemon, yugioh, lorcana)
+    if (franchise) {
+      const slugs = (franchise as string).split(',').map((s) => s.trim()).filter(Boolean)
+      where.category = { slug: { in: slugs } }
+    } else if (categorySlug) {
       where.category = { slug: categorySlug as string }
     }
+
     if (rarity) where.rarity = rarity as string
     if (edition) where.edition = edition as any
     if (condition) where.condition = condition as any
     if (variant) where.variant = variant as any
     if (language) where.language = language as any
 
-    if (minPrice || maxPrice) {
+    // Acepta tanto minPrice/maxPrice como priceMin/priceMax
+    const effectiveMin = (minPrice || priceMin) as string | undefined
+    const effectiveMax = (maxPrice || priceMax) as string | undefined
+    if (effectiveMin || effectiveMax) {
       where.price = {}
-      if (minPrice) where.price.gte = new Prisma.Decimal(minPrice as string)
-      if (maxPrice) where.price.lte = new Prisma.Decimal(maxPrice as string)
+      if (effectiveMin) where.price.gte = new Prisma.Decimal(effectiveMin)
+      if (effectiveMax) where.price.lte = new Prisma.Decimal(effectiveMax)
     }
 
     if (search) {
       where.name = { contains: search as string, mode: 'insensitive' }
     }
 
-    // Orden
+    // Acepta tanto orderBy como sortBy
+    const sort = (orderBy || sortBy) as string | undefined
     let orderByClause: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' }
-    if (orderBy === 'price_asc') orderByClause = { price: 'asc' }
-    else if (orderBy === 'price_desc') orderByClause = { price: 'desc' }
-    else if (orderBy === 'newest') orderByClause = { createdAt: 'desc' }
+    if (sort === 'price_asc') orderByClause = { price: 'asc' }
+    else if (sort === 'price_desc') orderByClause = { price: 'desc' }
+    else if (sort === 'newest') orderByClause = { createdAt: 'desc' }
+    else if (sort === 'bestsellers') orderByClause = { createdAt: 'desc' }
 
-    const products = await prisma.product.findMany({
-      where,
-      orderBy: orderByClause,
-      include: {
-        category: true,
-        images: {
-          where: { isPrimary: true },
-          take: 1,
+    const pageNum = Math.max(1, parseInt((page as string) || '1', 10))
+    const pageSize = Math.min(100, Math.max(1, parseInt((limit as string) || '12', 10)))
+    const skip = (pageNum - 1) * pageSize
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: orderByClause,
+        skip,
+        take: pageSize,
+        include: {
+          category: true,
+          images: {
+            where: { isPrimary: true },
+            take: 1,
+          },
         },
-      },
-    })
+      }),
+      prisma.product.count({ where }),
+    ])
 
-    res.json({ data: products })
+    const totalPages = Math.ceil(total / pageSize)
+
+    res.json({ data: { products, total, totalPages, page: pageNum } })
   } catch (error) {
     next(error)
   }
