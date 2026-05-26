@@ -41,6 +41,8 @@ export const ordersApi = {
   getAll: (params?: Record<string, unknown>) => api.get('/api/admin/orders', { params }),
   updateStatus: (id: string, status: string, trackingNumber?: string) =>
     api.patch(`/api/admin/orders/${id}`, { status, trackingNumber }),
+  retryInvoice: (orderId: string) =>
+    api.post(`/api/admin/invoices/${orderId}/retry`),
 }
 
 export const productsApi = {

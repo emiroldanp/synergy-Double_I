@@ -142,6 +142,12 @@ export interface Order {
     razonSocial: string
     usoCfdi: string
   }
+  requiresInvoice?: boolean
+  invoice?: {
+    status: 'draft' | 'valid' | 'cancelled'
+    pdfUrl?: string | null
+    xmlUrl?: string | null
+  } | null
 }
 
 export interface BlogPost {
