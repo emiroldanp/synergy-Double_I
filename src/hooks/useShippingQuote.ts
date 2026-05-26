@@ -3,11 +3,13 @@ import type { ShippingOption } from '@/types'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
-const MOCK_SHIPPING_OPTIONS: ShippingOption[] = [
-  { id: 'estafeta-express', carrier: 'estafeta', service: 'Estafeta Express', price: 120, eta: '2-3 días hábiles' },
-  { id: 'dhl-express', carrier: 'dhl', service: 'DHL Express', price: 185, eta: '1-2 días hábiles' },
-  { id: 'fedex-economy', carrier: 'fedex', service: 'FedEx Economy', price: 145, eta: '3-5 días hábiles' },
-]
+// Dimensiones estándar para tarjetas TCG selladas (ETB, booster bundle, etc.)
+const DEFAULT_PARCEL = {
+  weight: 0.5,
+  length: 30,
+  width: 22,
+  height: 8,
+}
 
 export function useShippingQuote() {
   const [status, setStatus] = useState<Status>('idle')
@@ -26,24 +28,47 @@ export function useShippingQuote() {
     setOptions([])
     setSelected(null)
 
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), 5000)
-    )
-
     try {
-      const result = await Promise.race([
-        fetch(`${import.meta.env.VITE_API_URL}/api/shipping/quote`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address }),
-        }).then((r) => r.json()),
-        timeout,
-      ])
-      setOptions(result.options || MOCK_SHIPPING_OPTIONS)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shipping/quote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          destination: {
+            street: address.street,
+            number: address.number,
+            neighborhood: address.colonia,
+            city: address.city,
+            state: address.state,
+            zip_code: address.zip,
+          },
+          parcel: DEFAULT_PARCEL,
+          sessionId: crypto.randomUUID(),
+        }),
+      })
+
+      if (!res.ok) {
+        setStatus('error')
+        return
+      }
+
+      const json = await res.json()
+      const quotes: ShippingOption[] = (json.data ?? []).map((q: any, i: number) => ({
+        id: `${q.carrier}-${i}`,
+        carrier: (q.carrier ?? 'estafeta').toLowerCase() as ShippingOption['carrier'],
+        service: q.service ?? q.carrier,
+        price: Number(q.price ?? 0),
+        eta: q.eta ? `${q.eta} días hábiles` : 'A confirmar',
+      }))
+
+      if (quotes.length === 0) {
+        setStatus('error')
+        return
+      }
+
+      setOptions(quotes)
       setStatus('success')
     } catch {
-      setOptions(MOCK_SHIPPING_OPTIONS)
-      setStatus('success')
+      setStatus('error')
     }
   }
 
