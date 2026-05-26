@@ -26,6 +26,7 @@ import BlogManager from '@/pages/admin/BlogManager'
 import BannerManager from '@/pages/admin/BannerManager'
 import LoginPage from '@/pages/admin/LoginPage'
 import { CardFlipFlyPortal } from '@/components/ui/CardFlipFlyPortal'
+import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -45,10 +46,13 @@ function CatalogPageWrapper() {
   return <CatalogPage key={search} />
 }
 
-export default function App() {
+function AppContent() {
+  const { pathname } = useLocation()
+  const isAdmin = pathname.startsWith('/admin')
   return (
-    <BrowserRouter>
+    <>
       <CardFlipFlyPortal />
+      {!isAdmin && <WhatsAppButton />}
       <Routes>
         <Route path="/" element={<Layout><HomePage /></Layout>} />
         <Route path="/catalogo" element={<Layout><CatalogPageWrapper /></Layout>} />
@@ -75,6 +79,14 @@ export default function App() {
           <Route path="banners" element={<BannerManager />} />
         </Route>
       </Routes>
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   )
 }
