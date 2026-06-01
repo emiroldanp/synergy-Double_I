@@ -34,7 +34,7 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: 185.162.54.215
-          username: u526996567.synergy-mx.tech
+          username: u526996567.doubleicards.com
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: /public_html/
@@ -44,7 +44,7 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: 185.162.54.215
-          username: u526996567.synergy-mx.tech
+          username: u526996567.doubleicards.com
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: /staging.doubleicards.com/public_html/
+          server-dir: /public_html/staging/
