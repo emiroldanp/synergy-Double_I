@@ -32,3 +32,10 @@ npm-debug.log*
 
 # Vite cache
 .vite/
+
+# Imágenes locales de catálogo — ya subidas a Cloudflare R2, no van al repo
+public/Imagenes tienda/
+
+# TypeScript build info
+tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo

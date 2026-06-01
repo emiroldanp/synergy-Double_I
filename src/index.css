@@ -177,6 +177,23 @@ h1, h2, h3 {
   }
 }
 
+@keyframes skeletonShimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-box {
+  background: linear-gradient(
+    90deg,
+    #2B1878 0%,
+    #3040C4 40%,
+    #2B1878 60%,
+    #2B1878 100%
+  );
+  background-size: 800px 100%;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+
 @keyframes cardShimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { productsApi } from '@/lib/api'
 import type { FilterState, Product } from '@/types'
+import { normalizeProduct, normalizeProductList } from '@/lib/normalizeProduct'
 
 const DEFAULT_FILTERS: FilterState = {
   franchise: [],
@@ -49,8 +50,8 @@ export function useProducts(initialFilters?: Partial<FilterState>) {
 
     productsApi.getAll(params).then((res) => {
       if (cancelled) return
-      const data = res.data
-      setProducts(data.products ?? data.data ?? [])
+      const data = res.data?.data ?? res.data
+      setProducts(normalizeProductList(res.data))
       setTotalProducts(data.total ?? 0)
       setTotalPages(data.totalPages ?? Math.ceil((data.total ?? 0) / PAGE_SIZE))
     }).catch(() => {
@@ -79,7 +80,10 @@ export function useProductBySlug(slug: string) {
     if (!slug) return
     setLoading(true)
     productsApi.getBySlug(slug)
-      .then((res) => setProduct(res.data?.product ?? res.data))
+      .then((res) => {
+        const raw = res.data?.data?.product ?? res.data?.data ?? res.data?.product ?? res.data
+        setProduct(normalizeProduct(raw))
+      })
       .catch(() => setError('Producto no encontrado'))
       .finally(() => setLoading(false))
   }, [slug])
@@ -92,7 +96,7 @@ export function useNovedades() {
 
   useEffect(() => {
     productsApi.getAll({ sortBy: 'newest', limit: 8 })
-      .then((res) => setProducts(res.data.products ?? res.data.data ?? []))
+      .then((res) => setProducts(normalizeProductList(res.data)))
       .catch(() => {})
   }, [])
 
@@ -104,7 +108,7 @@ export function useBestsellers() {
 
   useEffect(() => {
     productsApi.getAll({ sortBy: 'bestsellers', limit: 8 })
-      .then((res) => setProducts(res.data.products ?? res.data.data ?? []))
+      .then((res) => setProducts(normalizeProductList(res.data)))
       .catch(() => {})
   }, [])
 

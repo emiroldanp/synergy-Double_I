@@ -39,7 +39,7 @@ function useInitialFiltersFromParams(): Partial<FilterState> {
 export default function CatalogPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const initialFilters = useInitialFiltersFromParams()
-  const { products, totalProducts, hasMore, loadMore, filters, updateFilter, resetFilters } =
+  const { products, totalProducts, hasMore, loadMore, loading, filters, updateFilter, resetFilters } =
     useInfiniteProducts(initialFilters)
 
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -78,10 +78,12 @@ export default function CatalogPage() {
           >
             <div>
               <h1 className="section-title mb-1">Catálogo</h1>
-              <p className="font-exo text-ash text-sm">
-                {totalProducts} producto{totalProducts !== 1 ? 's' : ''} encontrado
-                {totalProducts !== 1 ? 's' : ''}
-              </p>
+              {!loading && (
+                <p className="font-exo text-ash text-sm">
+                  {totalProducts} producto{totalProducts !== 1 ? 's' : ''} encontrado
+                  {totalProducts !== 1 ? 's' : ''}
+                </p>
+              )}
             </div>
             <img
               src="/logo-color.png"
@@ -168,7 +170,20 @@ export default function CatalogPage() {
             />
 
             <div className="flex-1 min-w-0">
-              {products.length === 0 ? (
+              {loading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={i}>
+                      <div className="skeleton-box aspect-[3/4]" />
+                      <div className="p-3 space-y-2 bg-deep border border-navy/20 border-t-0">
+                        <div className="skeleton-box h-3 w-3/4 rounded" />
+                        <div className="skeleton-box h-3 w-1/2 rounded" />
+                        <div className="skeleton-box h-5 w-1/3 rounded mt-1" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : products.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <svg
                     className="w-16 h-16 text-navy mb-4"
