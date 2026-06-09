@@ -31,7 +31,12 @@ function useInitialFiltersFromParams(): Partial<FilterState> {
     filters.sortBy = sort as FilterState['sortBy']
   }
   if (productType) {
-    filters.productType = [productType as FilterState['productType'][number]]
+    // 'accessory' agrupa sleeve + playmat en la UI pero no existe en BD — expandir a ambos tipos
+    if (productType === 'accessory') {
+      filters.productType = ['sleeve', 'playmat']
+    } else {
+      filters.productType = [productType as FilterState['productType'][number]]
+    }
   }
   return filters
 }

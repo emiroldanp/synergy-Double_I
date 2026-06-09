@@ -12,9 +12,7 @@ const CATEGORIES = [
   { label: 'Yu-Gi-Oh!', href: '/catalogo?franchise=yugioh', color: '#C8950A' },
   { label: 'Lorcana', href: '/catalogo?franchise=lorcana', color: '#6B5ECD' },
   { label: 'Magic', href: '/catalogo?franchise=magic', color: '#A82FBB' },
-  { label: 'Sleeves', href: '/catalogo?productType=sleeve', color: '#6BB8EC' },
-  { label: 'Playmats', href: '/catalogo?productType=playmat', color: '#6BB8EC' },
-  { label: 'ETBs', href: '/catalogo?productType=etb', color: '#6BB8EC' },
+  { label: 'Accesorios', href: '/catalogo?productType=accessory', color: '#6BB8EC' },
 ]
 
 function DeckIconButton({

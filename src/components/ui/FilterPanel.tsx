@@ -17,6 +17,7 @@ const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   display: 'Display / Caja',
   dado: 'Dado',
   binder: 'Binder / Álbum',
+  accessory: 'Accesorios',
 }
 
 interface FilterPanelProps {
@@ -112,7 +113,7 @@ export function FilterPanel({
 
       <FilterSection title="Tipo de producto">
         <CheckboxGroup<ProductType>
-          options={['carta', 'sleeve', 'playmat', 'etb', 'display', 'dado', 'binder']}
+          options={['carta', 'display', 'dado', 'binder', 'accessory']}
           labels={PRODUCT_TYPE_LABELS}
           selected={filters.productType}
           onChange={(v) => onUpdate('productType', v)}

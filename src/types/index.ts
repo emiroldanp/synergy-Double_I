@@ -1,6 +1,6 @@
 export type Franchise = 'pokemon' | 'yugioh' | 'lorcana' | 'magic'
 
-export type ProductType = 'carta' | 'sleeve' | 'playmat' | 'etb' | 'display' | 'dado' | 'binder'
+export type ProductType = 'carta' | 'sleeve' | 'playmat' | 'etb' | 'display' | 'dado' | 'binder' | 'accessory'
 
 export type Rarity =
   | 'comun'
