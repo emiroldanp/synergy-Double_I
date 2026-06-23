@@ -78,7 +78,7 @@ Prisma 7 tiene cambios de arquitectura respecto a versiones anteriores:
 
 1. **Nunca inventar datos del cliente.** Si un dato no está definido (WhatsApp, dirección de tienda, RFC, paleta de colores, dominio), usar `[PLACEHOLDER — confirmar con Irving en kickoff]`.
 2. **MadeBy siempre en el footer** de todas las páginas — obligatorio según estándar Synergy.
-3. **API keys solo en backend** — `SKYDROPX_API_KEY`, `FACTURAPI_API_KEY`, `BREVO_API_KEY`, `PAYMENT_ACCESS_TOKEN`, `CLERK_SECRET_KEY`, `CLOUDFLARE_R2_*` nunca en el frontend.
+3. **API keys solo en backend** — `SKYDROPX_API_KEY`, `FACTURAPI_API_KEY_LIVE`, `FACTURAPI_API_KEY_TEST`, `BREVO_API_KEY`, `PAYMENT_ACCESS_TOKEN`, `CLERK_SECRET_KEY`, `CLOUDFLARE_R2_*` nunca en el frontend.
 4. **Prisma es el único punto de acceso a la base de datos** — no escribir SQL crudo salvo en migraciones. El schema vive en `server/prisma/schema.prisma`.
 5. **Commits en español** con formato Synergy: `feat:`, `fix:`, `style:`, `refactor:`, `docs:`, `chore:`.
 6. **El agente `database` debe completarse antes de despachar `backend` y `frontend`.**

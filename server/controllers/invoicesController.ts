@@ -2,11 +2,25 @@ import { prisma } from '../lib/prisma'
 import { uploadToR2 } from '../lib/r2'
 import axios from 'axios'
 
-// Lazy init de Facturapi para evitar error si la key no está en dev
+// Lazy init de Facturapi.
+// Elige automáticamente entre la key Live y la Test según NODE_ENV
+// para evitar que un ambiente de desarrollo emita CFDIs reales al SAT.
 function getFacturapi() {
+  const isProd = process.env.NODE_ENV === 'production'
+  const key = isProd
+    ? process.env.FACTURAPI_API_KEY_LIVE
+    : process.env.FACTURAPI_API_KEY_TEST
+
+  if (!key) {
+    const varName = isProd ? 'FACTURAPI_API_KEY_LIVE' : 'FACTURAPI_API_KEY_TEST'
+    throw new Error(
+      `${varName} no está configurada. Revisa server/.env (ambiente actual: ${process.env.NODE_ENV || 'undefined'}).`
+    )
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Facturapi = require('facturapi').default || require('facturapi')
-  return new Facturapi(process.env.FACTURAPI_API_KEY!)
+  return new Facturapi(key)
 }
 
 /**
