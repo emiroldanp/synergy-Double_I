@@ -20,8 +20,12 @@ const PORT = process.env.PORT || 3001
 // Seguridad de cabeceras HTTP
 app.use(helmet())
 
-// CORS: solo permite el frontend configurado
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }))
+// CORS: en dev acepta cualquier puerto de localhost; en prod usa FRONTEND_URL
+const corsOrigin = process.env.NODE_ENV === 'production'
+  ? process.env.FRONTEND_URL!
+  : (origin: string | undefined, cb: (e: Error | null, ok?: boolean) => void) =>
+      cb(null, !origin || origin.startsWith('http://localhost') || origin === process.env.FRONTEND_URL)
+app.use(cors({ origin: corsOrigin }))
 
 // Logging de requests (solo activo en desarrollo)
 if (process.env.NODE_ENV !== 'production') {

@@ -69,10 +69,17 @@ export async function quoteShipping(req: Request, res: Response, next: NextFunct
       })
       skydropxData = response.data
     } catch (axiosError: any) {
-      // Timeout o error de Skydropx — respuesta amigable sin lanzar 500
+      console.error('[Skydropx] status:', axiosError?.response?.status)
+      console.error('[Skydropx] data:', JSON.stringify(axiosError?.response?.data))
+      console.error('[Skydropx] message:', axiosError?.message)
       return res.status(503).json({
         error: 'shipping_timeout',
         message: 'No pudimos cotizar envíos en este momento. Intenta de nuevo.',
+        _debug: {
+          status: axiosError?.response?.status,
+          data: axiosError?.response?.data,
+          message: axiosError?.message,
+        },
       })
     }
 
