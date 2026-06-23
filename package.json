@@ -8,8 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build:server": "cd server && npm install && npm run build && npx prisma generate",
-    "start": "cd server && npm start"
+    "build:server": "cd server && npm install --include=dev && npm run build && npx prisma generate",
+    "start": "cd server && npm start",
+    "postinstall": "cd server && npm install --include=dev && npm run build && npx prisma generate"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.8.0",
