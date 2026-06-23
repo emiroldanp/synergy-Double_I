@@ -2,21 +2,23 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import StatusBadge from '../../components/admin/StatusBadge'
-import { Product } from '../../types'
+import ConfirmModal from '../../components/admin/ConfirmModal'
+import { AdminProduct } from '../../types'
 import { PaginatedResponse } from '../../types/admin'
-import { formatMXN } from '../../lib/utils'
+import { formatPrice as formatMXN } from '../../lib/utils'
 
 export default function ProductsPage() {
   const { apiFetch } = useAdminApi()
   const navigate = useNavigate()
 
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<AdminProduct[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<AdminProduct | null>(null)
   const PAGE_SIZE = 20
 
   // Debounce de búsqueda
@@ -32,10 +34,10 @@ export default function ProductsPage() {
       pageSize: String(PAGE_SIZE),
       ...(debouncedSearch && { search: debouncedSearch }),
     })
-    apiFetch<PaginatedResponse<Product>>(`/api/admin/products?${params}`)
+    apiFetch<PaginatedResponse<AdminProduct>>(`/api/admin/products?${params}`)
       .then((res) => {
         setProducts(res.data)
-        setTotal(res.total)
+        setTotal(res.meta.total)
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
@@ -50,14 +52,30 @@ export default function ProductsPage() {
     setPage(1)
   }, [debouncedSearch])
 
-  const handleToggleActive = async (product: Product) => {
+  const handleToggleActive = async (product: AdminProduct) => {
     try {
       await apiFetch(`/api/admin/products/${product.id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ active: !product.isActive }),
+        body: JSON.stringify({ isActive: !product.isActive }),
       })
       fetchProducts()
     } catch (e: unknown) {
+      alert(`Error: ${e instanceof Error ? e.message : 'Error desconocido'}`)
+    }
+  }
+
+  const handleDelete = async (product: AdminProduct) => {
+    setConfirmTarget(product)
+  }
+
+  const confirmDelete = async () => {
+    if (!confirmTarget) return
+    try {
+      await apiFetch(`/api/admin/products/${confirmTarget.id}`, { method: 'DELETE' })
+      setConfirmTarget(null)
+      fetchProducts()
+    } catch (e: unknown) {
+      setConfirmTarget(null)
       alert(`Error: ${e instanceof Error ? e.message : 'Error desconocido'}`)
     }
   }
@@ -159,7 +177,7 @@ export default function ProductsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => navigate(`/admin/productos/${product.id}`)}
+                          onClick={() => navigate(`/admin/productos/${product.id}/editar`)}
                           className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
                           title="Editar"
                         >
@@ -175,6 +193,13 @@ export default function ProductsPage() {
                           title={product.isActive ? 'Desactivar' : 'Activar'}
                         >
                           {product.isActive ? 'Desactivar' : 'Activar'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product)}
+                          className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                          title="Eliminar"
+                        >
+                          Eliminar
                         </button>
                       </div>
                     </td>
@@ -211,6 +236,14 @@ export default function ProductsPage() {
           </div>
         )}
       </div>
+      <ConfirmModal
+        open={confirmTarget !== null}
+        title="Eliminar producto"
+        message={`¿Eliminar "${confirmTarget?.name}"? Se borrarán también sus imágenes del bucket. Esta acción no se puede deshacer.`}
+        confirmLabel="Sí, eliminar"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   )
 }

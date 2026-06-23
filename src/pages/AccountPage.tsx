@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAuth } from '@/hooks/useAuth'
-import { MOCK_ORDERS } from '@/lib/mockData'
+import { ordersApi } from '@/lib/api'
 import { formatPrice, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/utils'
 import { Link } from 'react-router-dom'
+import type { Order } from '@/types'
 
 const HAS_CLERK = Boolean(
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY &&
@@ -20,6 +21,17 @@ const ClerkUserProfile = HAS_CLERK
 
 export default function AccountPage() {
   const { isSignedIn, isLoaded, user } = useAuth()
+  const [orders, setOrders] = useState<Order[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
+
+  useEffect(() => {
+    if (!isSignedIn) return
+    setOrdersLoading(true)
+    ordersApi.getByUser()
+      .then((res) => setOrders(res.data.orders ?? res.data.data ?? res.data ?? []))
+      .catch(() => {})
+      .finally(() => setOrdersLoading(false))
+  }, [isSignedIn])
 
   if (!isLoaded) {
     return (
@@ -70,13 +82,17 @@ export default function AccountPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <h2 className="font-agency text-sm text-ash uppercase tracking-widest mb-4">Historial de pedidos</h2>
-              {MOCK_ORDERS.length === 0 ? (
+              {ordersLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-dragon" />
+                </div>
+              ) : orders.length === 0 ? (
                 <div className="bg-deep border border-navy/40 p-10 text-center">
                   <p className="font-exo text-ash text-sm">Aún no tienes pedidos.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {MOCK_ORDERS.map((order) => (
+                  {orders.map((order) => (
                     <div key={order.id} className="bg-deep border border-navy/40 p-5">
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div>
@@ -90,12 +106,12 @@ export default function AccountPage() {
                         <span
                           className="badge-base text-xs"
                           style={{
-                            backgroundColor: ORDER_STATUS_COLORS[order.status] + '22',
-                            border: `1px solid ${ORDER_STATUS_COLORS[order.status]}44`,
-                            color: ORDER_STATUS_COLORS[order.status],
+                            backgroundColor: ORDER_STATUS_COLORS[order.status!] + '22',
+                            border: `1px solid ${ORDER_STATUS_COLORS[order.status!]}44`,
+                            color: ORDER_STATUS_COLORS[order.status!],
                           }}
                         >
-                          {ORDER_STATUS_LABELS[order.status]}
+                          {ORDER_STATUS_LABELS[order.status!]}
                         </span>
                       </div>
                       <div className="flex gap-2 mb-3 overflow-x-auto pb-1">

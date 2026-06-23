@@ -15,6 +15,8 @@ export function Hero() {
 
     const colors = ['#6BB8EC', '#3040C4', '#CC1515', '#2B1878']
 
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
     const resize = () => {
       canvas.width = canvas.offsetWidth
       canvas.height = canvas.offsetHeight

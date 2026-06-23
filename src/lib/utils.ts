@@ -27,12 +27,14 @@ export const FRANCHISE_LABELS: Record<Franchise, string> = {
   pokemon: 'Pokémon',
   yugioh: 'Yu-Gi-Oh!',
   lorcana: 'Lorcana',
+  magic: 'Magic: The Gathering',
 }
 
 export const FRANCHISE_COLORS: Record<Franchise, string> = {
   pokemon: '#F5C400',
   yugioh: '#C8950A',
   lorcana: '#6B5ECD',
+  magic: '#A82FBB',
 }
 
 export const CONDITION_LABELS: Record<Condition, string> = {
@@ -85,6 +87,8 @@ export const EDITION_LABELS: Record<Edition, string> = {
   primera: '1ª Edición',
   shadowless: 'Shadowless',
   ilimitada: 'Ilimitada',
+  first_edition: '1ª Edición',
+  unlimited: 'Ilimitada',
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

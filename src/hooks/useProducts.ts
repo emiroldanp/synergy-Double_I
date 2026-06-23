@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react'
-import { MOCK_PRODUCTS } from '@/lib/mockData'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { productsApi } from '@/lib/api'
 import type { FilterState, Product } from '@/types'
+import { normalizeProduct, normalizeProductList } from '@/lib/normalizeProduct'
 
 const DEFAULT_FILTERS: FilterState = {
   franchise: [],
+  productType: [],
   rarity: [],
   edition: [],
   condition: [],
@@ -23,94 +25,103 @@ export function useProducts(initialFilters?: Partial<FilterState>) {
     ...DEFAULT_FILTERS,
     ...initialFilters,
   })
+  const [products, setProducts] = useState<Product[]>([])
+  const [totalProducts, setTotalProducts] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(true)
 
-  const filtered = useMemo(() => {
-    let result = MOCK_PRODUCTS.filter((p) => p.isActive)
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    const params: Record<string, unknown> = {
+      page: filters.page,
+      limit: PAGE_SIZE,
+      sortBy: filters.sortBy,
+    }
+    if (filters.search) params.search = filters.search
+    if (filters.franchise.length) params.franchise = filters.franchise.join(',')
+    if (filters.rarity.length) params.rarity = filters.rarity.join(',')
+    if (filters.edition.length) params.edition = filters.edition.join(',')
+    if (filters.condition.length) params.condition = filters.condition.join(',')
+    if (filters.variant.length) params.variant = filters.variant.join(',')
+    if (filters.language.length) params.language = filters.language.join(',')
+    if (filters.priceMin !== null) params.priceMin = filters.priceMin
+    if (filters.priceMax !== null) params.priceMax = filters.priceMax
 
-    if (filters.franchise.length) {
-      result = result.filter((p) => filters.franchise.includes(p.franchise))
-    }
-    if (filters.rarity.length) {
-      result = result.filter((p) => filters.rarity.includes(p.rarity))
-    }
-    if (filters.edition.length) {
-      result = result.filter((p) => filters.edition.includes(p.edition))
-    }
-    if (filters.condition.length) {
-      result = result.filter((p) => filters.condition.includes(p.condition))
-    }
-    if (filters.variant.length) {
-      result = result.filter((p) => filters.variant.includes(p.variant))
-    }
-    if (filters.language.length) {
-      result = result.filter((p) => filters.language.includes(p.language))
-    }
-    if (filters.priceMin !== null) {
-      result = result.filter((p) => p.price >= filters.priceMin!)
-    }
-    if (filters.priceMax !== null) {
-      result = result.filter((p) => p.price <= filters.priceMax!)
-    }
-    if (filters.search) {
-      const q = filters.search.toLowerCase()
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.set.toLowerCase().includes(q) ||
-          (p.cardNumber?.toLowerCase().includes(q) ?? false)
-      )
-    }
-
-    switch (filters.sortBy) {
-      case 'price_asc':
-        result = [...result].sort((a, b) => a.price - b.price)
-        break
-      case 'price_desc':
-        result = [...result].sort((a, b) => b.price - a.price)
-        break
-      case 'newest':
-        result = [...result].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-        break
-    }
-
-    return result
+    productsApi.getAll(params).then((res) => {
+      if (cancelled) return
+      const data = res.data?.data ?? res.data
+      setProducts(normalizeProductList(res.data))
+      setTotalProducts(data.total ?? 0)
+      setTotalPages(data.totalPages ?? Math.ceil((data.total ?? 0) / PAGE_SIZE))
+    }).catch(() => {
+      if (!cancelled) setProducts([])
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [filters])
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const paginated = filtered.slice((filters.page - 1) * PAGE_SIZE, filters.page * PAGE_SIZE)
+  const updateFilter = useCallback(<K extends keyof FilterState>(key: K, value: FilterState[K]) => {
+    setFilters((prev) => ({ ...prev, [key]: value, page: key !== 'page' ? 1 : (value as number) }))
+  }, [])
 
-  const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
-    setFilters((prev) => ({ ...prev, [key]: value, page: key !== 'page' ? 1 : prev.page }))
-  }
+  const resetFilters = useCallback(() => setFilters(DEFAULT_FILTERS), [])
 
-  const resetFilters = () => setFilters(DEFAULT_FILTERS)
-
-  return {
-    products: paginated,
-    totalProducts: filtered.length,
-    totalPages,
-    filters,
-    updateFilter,
-    resetFilters,
-  }
+  return { products, totalProducts, totalPages, loading, filters, updateFilter, resetFilters }
 }
 
-export function useProductBySlug(slug: string): Product | undefined {
-  return MOCK_PRODUCTS.find((p) => p.slug === slug && p.isActive)
+export function useProductBySlug(slug: string) {
+  const [product, setProduct] = useState<Product | undefined>(undefined)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!slug) return
+    setLoading(true)
+    productsApi.getBySlug(slug)
+      .then((res) => {
+        const raw = res.data?.data?.product ?? res.data?.data ?? res.data?.product ?? res.data
+        setProduct(normalizeProduct(raw))
+      })
+      .catch(() => setError('Producto no encontrado'))
+      .finally(() => setLoading(false))
+  }, [slug])
+
+  return { product, loading, error }
 }
 
-export function useNovedades(): Product[] {
-  return [...MOCK_PRODUCTS]
-    .filter((p) => p.isActive)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 8)
+export function useNovedades() {
+  const [products, setProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    productsApi.getAll({ sortBy: 'newest', limit: 8 })
+      .then((res) => setProducts(normalizeProductList(res.data)))
+      .catch(() => {})
+  }, [])
+
+  return products
 }
 
-export function useBestsellers(): Product[] {
-  return [...MOCK_PRODUCTS]
-    .filter((p) => p.isActive && (p.salesCount ?? 0) > 0)
-    .sort((a, b) => (b.salesCount ?? 0) - (a.salesCount ?? 0))
-    .slice(0, 8)
+export function useBestsellers() {
+  const [products, setProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    productsApi.getAll({ sortBy: 'bestsellers', limit: 8 })
+      .then((res) => setProducts(normalizeProductList(res.data)))
+      .catch(() => {})
+  }, [])
+
+  return products
 }
+
+export function useInfiniteProductsLegacy(initialFilters?: Partial<FilterState>) {
+  return useProducts(initialFilters)
+}
+
+export { DEFAULT_FILTERS }
+
+export type { FilterState }
+
+export const useMemoFiltered = (products: Product[], filters: FilterState) =>
+  useMemo(() => products, [products, filters])

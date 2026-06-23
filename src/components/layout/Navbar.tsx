@@ -1,9 +1,85 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
 import { useCart } from '@/hooks/useCart'
+import { useDeckAnimation } from '@/context/DeckAnimationContext'
 import { CartDrawer } from '@/components/ui/CartDrawer'
 import { cn } from '@/lib/utils'
+
+const CATEGORIES = [
+  { label: 'Pokémon', href: '/catalogo?franchise=pokemon', color: '#F5C400' },
+  { label: 'Yu-Gi-Oh!', href: '/catalogo?franchise=yugioh', color: '#C8950A' },
+  { label: 'Lorcana', href: '/catalogo?franchise=lorcana', color: '#6B5ECD' },
+  { label: 'Magic', href: '/catalogo?franchise=magic', color: '#A82FBB' },
+  { label: 'Accesorios', href: '/catalogo?productType=accessory', color: '#6BB8EC' },
+]
+
+function DeckIconButton({
+  count,
+  deckRef,
+  onClick,
+}: {
+  count: number
+  deckRef: React.RefObject<HTMLButtonElement | null>
+  onClick: () => void
+}) {
+  const prevCount = useRef(count)
+  const [bounce, setBounce] = useState(false)
+
+  useEffect(() => {
+    if (count > prevCount.current) {
+      setBounce(true)
+      const t = setTimeout(() => setBounce(false), 450)
+      prevCount.current = count
+      return () => clearTimeout(t)
+    }
+    prevCount.current = count
+  }, [count])
+
+  return (
+    <button
+      ref={deckRef as React.RefObject<HTMLButtonElement>}
+      onClick={onClick}
+      aria-label={`Carrito (${count} artículos)`}
+      className={cn(
+        'relative text-ash hover:text-white transition-colors p-1',
+        bounce && 'animate-bounce-once'
+      )}
+      style={bounce ? { animation: 'deckBounce 0.4s ease-out' } : undefined}
+    >
+      {/* Card deck SVG */}
+      <svg
+        className="w-6 h-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="4" y="5" width="12" height="16" rx="1.5" />
+        <rect x="7" y="3" width="12" height="16" rx="1.5" className="stroke-current opacity-60" />
+        <line x1="7" y1="10" x2="13" y2="10" />
+        <line x1="7" y1="13" x2="11" y2="13" />
+      </svg>
+      <AnimatePresence mode="popLayout">
+        {count > 0 && (
+          <motion.span
+            key={count}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+            className="absolute -top-1 -right-1 bg-crimson text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
+          >
+            {count > 9 ? '9+' : count}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </button>
+  )
+}
 
 export function Navbar() {
   const [cartOpen, setCartOpen] = useState(false)
@@ -11,6 +87,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const { isSignedIn, isAdmin, signOut } = useAuth()
   const { totalItems } = useCart()
+  const { deckIconRef } = useDeckAnimation()
   const location = useLocation()
 
   useEffect(() => {
@@ -36,19 +113,27 @@ export function Navbar() {
         className={cn(
           'fixed top-0 left-0 right-0 z-30 transition-all duration-300',
           scrolled
-            ? 'bg-void/95 backdrop-blur-md border-b border-navy/50 shadow-lg'
-            : 'bg-gradient-to-b from-void/90 to-transparent'
+            ? 'bg-void/95 backdrop-blur-md border-b border-navy/50 shadow-lg shadow-black/40'
+            : 'bg-gradient-to-b from-void/80 to-transparent'
         )}
       >
         <div className="page-container">
-          <div className="flex items-center justify-between h-16 md:h-18">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            {/* Logo — bigger and with glow */}
+            <Link
+              to="/"
+              className="flex items-center gap-3 flex-shrink-0 group"
+              aria-label="Double-I TCG — Inicio"
+            >
               <img
                 src="/logo-color.png"
-                alt="Double-I Trading Card Game"
-                className="h-10 md:h-12 w-auto"
+                alt="Double-I TCG"
+                className="h-12 md:h-16 w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300"
               />
+              <div className="hidden sm:flex flex-col leading-none">
+                <span className="font-agency text-xs text-dragon tracking-[0.3em] uppercase">Double-I</span>
+                <span className="font-agency text-[10px] text-ash/70 tracking-[0.2em] uppercase">Trading Card Game</span>
+              </div>
             </Link>
 
             {/* Desktop nav */}
@@ -84,23 +169,12 @@ export function Navbar() {
 
             {/* Right actions */}
             <div className="flex items-center gap-3">
-              {/* Cart button */}
-              <button
+              <DeckIconButton
+                count={totalItems}
+                deckRef={deckIconRef}
                 onClick={() => setCartOpen(true)}
-                aria-label={`Carrito (${totalItems} artículos)`}
-                className="relative text-ash hover:text-white transition-colors p-1"
-              >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-crimson text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {totalItems > 9 ? '9+' : totalItems}
-                  </span>
-                )}
-              </button>
+              />
 
-              {/* Auth */}
               {isSignedIn ? (
                 <div className="hidden md:flex items-center gap-2">
                   <Link
@@ -128,7 +202,7 @@ export function Navbar() {
               {/* Mobile menu toggle */}
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label="Menú"
+                aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
                 className="md:hidden text-ash hover:text-white transition-colors p-1"
               >
                 {mobileOpen ? (
@@ -143,13 +217,27 @@ export function Navbar() {
               </button>
             </div>
           </div>
+
+          {/* Categories bar — desktop */}
+          <div className="hidden md:flex items-center gap-0.5 pb-2 overflow-x-auto scrollbar-none border-t border-navy/20 pt-1">
+            {CATEGORIES.map((cat) => (
+              <Link
+                key={cat.label}
+                to={cat.href}
+                className="font-agency text-[11px] uppercase tracking-widest px-3 py-0.5 transition-colors whitespace-nowrap flex-shrink-0 hover:text-white"
+                style={{ color: cat.color + 'CC' }}
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* Mobile menu */}
         <div
           className={cn(
             'md:hidden bg-void/98 border-b border-navy/50 overflow-hidden transition-all duration-300 ease-in-out',
-            mobileOpen ? 'max-h-96' : 'max-h-0'
+            mobileOpen ? 'max-h-screen' : 'max-h-0'
           )}
         >
           <div className="page-container py-4 space-y-1">
@@ -167,6 +255,26 @@ export function Navbar() {
                 {link.label}
               </NavLink>
             ))}
+
+            {/* Mobile categories */}
+            <div className="pt-3 pb-1">
+              <p className="font-agency text-[10px] text-ash/50 uppercase tracking-widest mb-2">
+                Franquicias y accesorios
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((cat) => (
+                  <Link
+                    key={cat.label}
+                    to={cat.href}
+                    className="font-agency text-[11px] uppercase tracking-wider border px-2.5 py-1 transition-colors hover:text-white"
+                    style={{ borderColor: cat.color + '60', color: cat.color + 'CC' }}
+                  >
+                    {cat.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             {isAdmin && (
               <NavLink
                 to="/admin"

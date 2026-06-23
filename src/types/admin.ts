@@ -14,10 +14,10 @@ export interface Invoice {
 export interface EmailSubscriber {
   id: string
   email: string
-  name?: string
+  fullName?: string
   source: string
   isBuyer: boolean
-  createdAt: string
+  subscribedAt: string
 }
 
 // Datos del dashboard
@@ -37,10 +37,12 @@ export interface RecentOrder {
   createdAt: string
 }
 
-// Respuesta paginada genérica
+// Respuesta paginada genérica — coincide con { data, meta } del backend
 export interface PaginatedResponse<T> {
   data: T[]
-  total: number
-  page: number
-  pageSize: number
+  meta: {
+    total: number
+    page: number
+    limit: number
+  }
 }

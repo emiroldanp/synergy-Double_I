@@ -11,6 +11,7 @@ import { invoicesRoutes } from './routes/invoices'
 import { emailRoutes } from './routes/email'
 import { adminRoutes } from './routes/admin'
 import { productsRoutes } from './routes/products'
+import { blogRoutes } from './routes/blog'
 import { errorHandler } from './middleware/errorHandler'
 
 const app = express()
@@ -19,8 +20,12 @@ const PORT = process.env.PORT || 3001
 // Seguridad de cabeceras HTTP
 app.use(helmet())
 
-// CORS: solo permite el frontend configurado
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }))
+// CORS: en dev acepta cualquier puerto de localhost; en prod usa FRONTEND_URL
+const corsOrigin = process.env.NODE_ENV === 'production'
+  ? process.env.FRONTEND_URL!
+  : (origin: string | undefined, cb: (e: Error | null, ok?: boolean) => void) =>
+      cb(null, !origin || origin.startsWith('http://localhost') || origin === process.env.FRONTEND_URL)
+app.use(cors({ origin: corsOrigin }))
 
 // Logging de requests (solo activo en desarrollo)
 if (process.env.NODE_ENV !== 'production') {
@@ -31,11 +36,12 @@ if (process.env.NODE_ENV !== 'production') {
 // — debe registrarse ANTES de express.json()
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }))
 
-// Parseo de JSON para el resto de las rutas
-app.use(express.json())
+// Parseo de JSON para el resto de las rutas — límite 10mb para subida de imágenes en base64
+app.use(express.json({ limit: '10mb' }))
 
 // Rutas públicas
 app.use('/api/products', productsRoutes)
+app.use('/api/blog', blogRoutes)
 app.use('/api/shipping', shippingRoutes)
 app.use('/api/orders', ordersRoutes)
 app.use('/api/payments', paymentsRoutes)

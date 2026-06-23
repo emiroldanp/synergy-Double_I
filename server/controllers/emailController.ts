@@ -146,13 +146,16 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
       params: {
         ORDER_ID: orderId,
         CUSTOMER_NAME: recipientName,
-        ITEMS: order.items.map((item) => ({
-          name: item.product.name,
-          quantity: item.quantity,
-          price: Number(item.unitPrice),
-        })),
-        TOTAL: Number(order.total),
-        SHIPPING_METHOD: order.shippingMethod || '',
+        ITEMS_HTML: order.items
+          .map(
+            (item) =>
+              `<tr><td style="padding:10px 12px;font-size:14px;border-bottom:1px solid #1e1e1e;">${item.product.name}</td>` +
+              `<td style="padding:10px 12px;text-align:center;font-size:14px;color:#b0b0b0;border-bottom:1px solid #1e1e1e;">${item.quantity}</td>` +
+              `<td style="padding:10px 12px;text-align:right;font-size:14px;border-bottom:1px solid #1e1e1e;">$${Number(item.unitPrice).toFixed(2)}</td></tr>`
+          )
+          .join(''),
+        TOTAL: Number(order.total).toFixed(2),
+        SHIPPING_METHOD: order.shippingMethod || 'Por confirmar',
       },
     },
     { headers: brevoHeaders() }
@@ -167,6 +170,109 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
     .catch(() => {
       // Si no está en la lista de suscriptores, no es error
     })
+}
+
+/**
+ * POST /api/email/transactional
+ * Dispara un correo transaccional con cualquier template de Brevo.
+ * Body: { to: string, name?: string, templateId: number, params?: Record<string, string> }
+ */
+export async function sendTransactionalEmail(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { to, name, templateId, params } = req.body
+
+    if (!to || !templateId) {
+      return res.status(400).json({ error: 'to y templateId son requeridos' })
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(to)) {
+      return res.status(400).json({ error: 'Formato de email inválido' })
+    }
+
+    const tid = parseInt(String(templateId), 10)
+    if (isNaN(tid) || tid <= 0) {
+      return res.status(400).json({ error: 'templateId debe ser un número entero positivo' })
+    }
+
+    await axios.post(
+      `${BREVO_API}/smtp/email`,
+      {
+        to: [{ email: to, name: name || to }],
+        sender: {
+          email: process.env.BREVO_SENDER_EMAIL,
+          name: process.env.BREVO_SENDER_NAME,
+        },
+        templateId: tid,
+        params: params || {},
+      },
+      { headers: brevoHeaders() }
+    )
+
+    res.json({ success: true })
+  } catch (error: any) {
+    if (error?.response?.status === 400) {
+      return res.status(400).json({ error: error.response.data?.message || 'Error de Brevo' })
+    }
+    next(error)
+  }
+}
+
+/**
+ * POST /api/email/add-to-list
+ * Agrega un contacto existente (o lo crea) a una lista específica de Brevo.
+ * Body: { email: string, listId: number, fullName?: string }
+ */
+export async function addContactToList(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { email, listId, fullName } = req.body
+
+    if (!email || !listId) {
+      return res.status(400).json({ error: 'email y listId son requeridos' })
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Formato de email inválido' })
+    }
+
+    const lid = parseInt(String(listId), 10)
+    if (isNaN(lid) || lid <= 0) {
+      return res.status(400).json({ error: 'listId debe ser un número entero positivo' })
+    }
+
+    // Crear o actualizar contacto con la lista
+    await axios.post(
+      `${BREVO_API}/contacts`,
+      {
+        email,
+        firstName: fullName ? fullName.split(' ')[0] : undefined,
+        lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
+        listIds: [lid],
+        updateEnabled: true,
+      },
+      { headers: brevoHeaders() }
+    )
+
+    res.json({ success: true })
+  } catch (error: any) {
+    if (error?.response?.data?.code === 'duplicate_parameter') {
+      // Contacto ya existe — intentar solo agregar a la lista
+      try {
+        const { email, listId } = req.body
+        await axios.post(
+          `${BREVO_API}/contacts/lists/${listId}/contacts/add`,
+          { emails: [email] },
+          { headers: brevoHeaders() }
+        )
+        return res.json({ success: true })
+      } catch {
+        // Si ya estaba en la lista, es OK
+        return res.json({ success: true })
+      }
+    }
+    next(error)
+  }
 }
 
 /** Genera HTML simple de confirmación si no hay template configurado */

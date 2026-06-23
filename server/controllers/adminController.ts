@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../lib/prisma'
-import { uploadToR2 } from '../lib/r2'
+import { uploadToR2, deleteFromR2ByUrl } from '../lib/r2'
 import { Prisma } from '@prisma/client'
 import axios from 'axios'
 import { createInvoice } from './invoicesController'
@@ -103,9 +103,13 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
 
     // Construir el objeto de update excluyendo campos que se manejan por separado
     const updateData: Prisma.ProductUpdateInput = {}
-    const allowedFields = ['name', 'description', 'slug', 'cardNumber', 'setName', 'rarity', 'stock', 'edition', 'language', 'condition', 'variant', 'categoryId']
+    const allowedFields = ['name', 'description', 'slug', 'cardNumber', 'setName', 'rarity', 'stock', 'edition', 'language', 'condition', 'variant']
     for (const field of allowedFields) {
       if (rest[field] !== undefined) (updateData as any)[field] = rest[field]
+    }
+    if (rest.categoryId !== undefined) {
+      if (!rest.categoryId) return res.status(400).json({ error: 'categoryId es requerido' })
+      updateData.category = { connect: { id: rest.categoryId } }
     }
     if (price !== undefined) updateData.price = new Prisma.Decimal(price)
     if (isActive !== undefined) updateData.isActive = Boolean(isActive)
@@ -122,6 +126,34 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
 
     res.json({ data: product })
   } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * DELETE /api/admin/products/:id
+ * Elimina un producto y sus imágenes asociadas.
+ */
+export async function deleteProduct(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = String(req.params.id)
+
+    // Obtener URLs antes de que el cascade las elimine de la DB
+    const images = await prisma.productImage.findMany({
+      where: { productId: id },
+      select: { url: true },
+    })
+
+    await prisma.product.delete({ where: { id } })
+
+    // Borrar del bucket en paralelo — errores de R2 no bloquean la respuesta
+    await Promise.allSettled(images.map((img) => deleteFromR2ByUrl(img.url)))
+
+    res.json({ success: true })
+  } catch (error: any) {
+    if (error?.code === 'P2025') {
+      return res.status(404).json({ error: 'Producto no encontrado' })
+    }
     next(error)
   }
 }
@@ -165,7 +197,14 @@ export async function uploadProductImage(req: Request, res: Response, next: Next
       const buffer = Buffer.from(base64, 'base64')
       const ext = mimeType.split('/')[1] || 'jpg'
       const filename = `${Date.now()}.${ext}`
-      finalUrl = await uploadToR2(`products/${id}/${filename}`, buffer, mimeType)
+      console.log('[R2 upload] iniciando subida a R2 — bucket:', process.env.CLOUDFLARE_R2_BUCKET_NAME, 'key:', `products/${id}/${filename}`)
+      try {
+        finalUrl = await uploadToR2(`products/${id}/${filename}`, buffer, mimeType)
+        console.log('[R2 upload] éxito — url:', finalUrl)
+      } catch (r2Err: any) {
+        console.error('[R2 upload] error al subir a R2:', r2Err?.message, r2Err?.Code, r2Err?.$metadata)
+        return res.status(500).json({ error: 'Error al subir imagen a R2', detail: r2Err?.message, code: r2Err?.Code })
+      }
     } else if (imageUrl) {
       // Validar que imageUrl es HTTPS y no apunta a red interna (prevenir SSRF)
       const parsedUrl = new URL(imageUrl) // lanza si mal formada
@@ -241,6 +280,9 @@ export async function listOrders(req: Request, res: Response, next: NextFunction
             include: { product: { select: { name: true, price: true } } },
           },
           customer: true,
+          invoice: {
+            select: { status: true, pdfUrl: true, xmlUrl: true },
+          },
         },
       }),
       prisma.order.count({ where }),
@@ -378,7 +420,7 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
       createdAt: { gte: from },
     })
 
-    const [today, week, month, byStatus] = await Promise.all([
+    const [today, week, month, byStatus, recentOrders, pendingOrders] = await Promise.all([
       prisma.order.aggregate({
         where: confirmedFilter(startOfDay),
         _sum: { total: true },
@@ -395,6 +437,17 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
         by: ['orderStatus'],
         _count: { id: true },
       }),
+      prisma.order.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          guestEmail: true,
+          total: true,
+          orderStatus: true,
+        },
+      }),
+      prisma.order.count({ where: { orderStatus: 'pending_payment' } }),
     ])
 
     // Construir mapa de conteo por status con todos los valores del enum
@@ -416,6 +469,13 @@ export async function getDashboard(req: Request, res: Response, next: NextFuncti
         revenueWeek: Number(week._sum.total || 0),
         revenueMonth: Number(month._sum.total || 0),
         ordersByStatus: orderStatusMap,
+        pendingOrders,
+        recentOrders: recentOrders.map((o) => ({
+          id: o.id,
+          customerEmail: o.guestEmail ?? '—',
+          total: Number(o.total),
+          status: o.orderStatus,
+        })),
       },
     })
   } catch (error) {
@@ -456,6 +516,40 @@ export async function listSubscribers(req: Request, res: Response, next: NextFun
     ])
 
     res.json({ data: subscribers, meta: { page, limit, total } })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * GET /api/admin/subscribers/export-csv
+ * Exporta todos los suscriptores como archivo CSV.
+ */
+export async function exportSubscribersCsv(req: Request, res: Response, next: NextFunction) {
+  try {
+    const subscribers = await prisma.emailSubscriber.findMany({
+      orderBy: { subscribedAt: 'desc' },
+      select: { email: true, fullName: true, isBuyer: true, source: true, subscribedAt: true, unsubscribedAt: true },
+    })
+
+    const header = 'Email,Nombre,Comprador,Fuente,Suscrito el,Dado de baja'
+    const rows = subscribers.map((s) =>
+      [
+        s.email,
+        s.fullName ?? '',
+        s.isBuyer ? 'Sí' : 'No',
+        s.source,
+        new Date(s.subscribedAt).toLocaleDateString('es-MX'),
+        s.unsubscribedAt ? new Date(s.unsubscribedAt).toLocaleDateString('es-MX') : '',
+      ]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(',')
+    )
+
+    const csv = [header, ...rows].join('\n')
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition', 'attachment; filename="suscriptores.csv"')
+    res.send('﻿' + csv) // BOM para compatibilidad con Excel
   } catch (error) {
     next(error)
   }

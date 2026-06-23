@@ -2,11 +2,25 @@ import { prisma } from '../lib/prisma'
 import { uploadToR2 } from '../lib/r2'
 import axios from 'axios'
 
-// Lazy init de Facturapi para evitar error si la key no está en dev
+// Lazy init de Facturapi.
+// Elige automáticamente entre la key Live y la Test según NODE_ENV
+// para evitar que un ambiente de desarrollo emita CFDIs reales al SAT.
 function getFacturapi() {
+  const isProd = process.env.NODE_ENV === 'production'
+  const key = isProd
+    ? process.env.FACTURAPI_API_KEY_LIVE
+    : process.env.FACTURAPI_API_KEY_TEST
+
+  if (!key) {
+    const varName = isProd ? 'FACTURAPI_API_KEY_LIVE' : 'FACTURAPI_API_KEY_TEST'
+    throw new Error(
+      `${varName} no está configurada. Revisa server/.env (ambiente actual: ${process.env.NODE_ENV || 'undefined'}).`
+    )
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Facturapi = require('facturapi').default || require('facturapi')
-  return new Facturapi(process.env.FACTURAPI_API_KEY!)
+  return new Facturapi(key)
 }
 
 /**
@@ -99,8 +113,11 @@ export async function createInvoice(orderId: string): Promise<void> {
       console.error(`Error enviando email de factura para orden ${orderId}:`, err)
     )
   } catch (error) {
-    // Dejar en draft para reintento manual
+    // Dejar en draft para reintento manual y notificar a Irving
     console.error(`Facturapi error para orden ${orderId}:`, error)
+    await sendInvoiceFailureAlert(orderId, buyerEmail).catch((err) =>
+      console.error(`Error enviando alerta de factura fallida para orden ${orderId}:`, err)
+    )
   }
 }
 
@@ -132,6 +149,46 @@ async function sendInvoiceEmail(
           <li><a href="${xmlUrl}">Descargar XML</a></li>
         </ul>
         <p>Gracias por tu compra.</p>
+      `,
+    },
+    {
+      headers: {
+        'api-key': process.env.BREVO_API_KEY!,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+}
+
+/**
+ * Envía email de alerta a Irving cuando un CFDI queda en estado 'draft'
+ * porque Facturapi falló. Le indica el pedido afectado y el email del comprador.
+ */
+async function sendInvoiceFailureAlert(orderId: string, buyerEmail: string): Promise<void> {
+  const adminEmail = process.env.BREVO_SENDER_EMAIL
+  if (!adminEmail) return
+
+  await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: {
+        email: process.env.BREVO_SENDER_EMAIL,
+        name: process.env.BREVO_SENDER_NAME,
+      },
+      to: [{ email: adminEmail }],
+      subject: `⚠️ Factura pendiente — Pedido ${orderId}`,
+      htmlContent: `
+        <p>Hola Irving,</p>
+        <p>La emisión automática del CFDI para el siguiente pedido <strong>falló</strong>:</p>
+        <ul>
+          <li><strong>Pedido:</strong> ${orderId}</li>
+          <li><strong>Email del comprador:</strong> ${buyerEmail || '(invitado sin email)'}</li>
+        </ul>
+        <p>La factura quedó en estado <strong>borrador</strong>. Para reintentarla, ve al
+        <a href="${process.env.FRONTEND_URL}/admin/pedidos">panel de pedidos</a>,
+        abre este pedido y haz clic en <strong>"Reintentar factura"</strong>.</p>
+        <p>Si el problema persiste, verifica que las credenciales de Facturapi estén
+        correctas y que el RFC del cliente sea válido.</p>
       `,
     },
     {

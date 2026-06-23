@@ -7,7 +7,18 @@ import {
   VARIANT_LABELS,
   LANGUAGE_LABELS,
 } from '@/lib/utils'
-import type { FilterState, Franchise, Condition, Rarity, Edition, Variant, Language } from '@/types'
+import type { FilterState, Franchise, Condition, Rarity, Edition, Variant, Language, ProductType } from '@/types'
+
+const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
+  carta: 'Carta individual',
+  sleeve: 'Sleeve / Protector',
+  playmat: 'Playmat',
+  etb: 'Elite Trainer Box',
+  display: 'Display / Caja',
+  dado: 'Dado',
+  binder: 'Binder / Álbum',
+  accessory: 'Accesorios',
+}
 
 interface FilterPanelProps {
   filters: FilterState
@@ -43,7 +54,7 @@ function CheckboxGroup<T extends string>({
   return (
     <div className="space-y-2">
       {options.map((opt) => (
-        <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+        <label key={opt} className="flex items-center gap-2 cursor-pointer group" onClick={() => toggle(opt)}>
           <div
             className={cn(
               'w-4 h-4 border flex items-center justify-center flex-shrink-0 transition-colors',
@@ -93,10 +104,19 @@ export function FilterPanel({
 
       <FilterSection title="Franquicia">
         <CheckboxGroup<Franchise>
-          options={['pokemon', 'yugioh', 'lorcana']}
+          options={['pokemon', 'yugioh', 'lorcana', 'magic']}
           labels={FRANCHISE_LABELS}
           selected={filters.franchise}
           onChange={(v) => onUpdate('franchise', v)}
+        />
+      </FilterSection>
+
+      <FilterSection title="Tipo de producto">
+        <CheckboxGroup<ProductType>
+          options={['carta', 'display', 'dado', 'binder', 'accessory']}
+          labels={PRODUCT_TYPE_LABELS}
+          selected={filters.productType}
+          onChange={(v) => onUpdate('productType', v)}
         />
       </FilterSection>
 

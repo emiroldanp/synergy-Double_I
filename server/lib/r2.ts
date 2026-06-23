@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 // Cliente Cloudflare R2 compatible con S3
 const r2 = new S3Client({
@@ -26,4 +26,20 @@ export async function uploadToR2(key: string, body: Buffer, contentType: string)
     })
   )
   return `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`
+}
+
+/**
+ * Elimina un archivo de R2 dado su key (ruta dentro del bucket).
+ * Extrae el key desde la URL pública quitando el prefijo del dominio R2.
+ */
+export async function deleteFromR2ByUrl(publicUrl: string): Promise<void> {
+  const prefix = process.env.CLOUDFLARE_R2_PUBLIC_URL!
+  if (!publicUrl.startsWith(prefix)) return // URL externa, no es nuestro R2
+  const key = publicUrl.slice(prefix.length + 1) // +1 para el slash
+  await r2.send(
+    new DeleteObjectCommand({
+      Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
+      Key: key,
+    })
+  )
 }
