@@ -1,6 +1,7 @@
 import { prisma } from '../lib/prisma'
 import { uploadToR2 } from '../lib/r2'
 import axios from 'axios'
+import { withRetry } from '../lib/retry'
 
 // Lazy init de Facturapi.
 // Elige automáticamente entre la key Live y la Test según NODE_ENV
@@ -82,13 +83,23 @@ export async function createInvoice(orderId: string): Promise<void> {
   try {
     const facturapi = getFacturapi()
 
-    // Emitir factura
+    // Emitir factura.
+    // IMPORTANTE (RNF-005): NO se envuelve en withRetry. Emitir un CFDI es una
+    // operación de escritura NO idempotente con efectos fiscales reales ante el
+    // SAT — reintentar podría duplicar la factura. Si falla, la Invoice queda en
+    // 'draft' y se reintenta manualmente desde el panel admin (retryInvoice).
     const factura = await facturapi.invoices.create(invoicePayload)
 
-    // Descargar PDF y XML
+    // Descargar PDF y XML — son lecturas idempotentes → seguro reintentar.
     const [pdfBuffer, xmlBuffer] = await Promise.all([
-      facturapi.invoices.downloadPdf(factura.id) as Promise<Buffer>,
-      facturapi.invoices.downloadXml(factura.id) as Promise<Buffer>,
+      withRetry(
+        () => facturapi.invoices.downloadPdf(factura.id) as Promise<Buffer>,
+        { label: 'Facturapi descargar PDF' }
+      ),
+      withRetry(
+        () => facturapi.invoices.downloadXml(factura.id) as Promise<Buffer>,
+        { label: 'Facturapi descargar XML' }
+      ),
     ])
 
     // Subir a Cloudflare R2
@@ -132,7 +143,9 @@ async function sendInvoiceEmail(
 ): Promise<void> {
   if (!toEmail) return
 
-  await axios.post(
+  await withRetry(
+    () =>
+      axios.post(
     'https://api.brevo.com/v3/smtp/email',
     {
       sender: {
@@ -157,6 +170,8 @@ async function sendInvoiceEmail(
         'Content-Type': 'application/json',
       },
     }
+      ),
+    { label: 'Brevo email factura' }
   )
 }
 
@@ -168,7 +183,9 @@ async function sendInvoiceFailureAlert(orderId: string, buyerEmail: string): Pro
   const adminEmail = process.env.BREVO_SENDER_EMAIL
   if (!adminEmail) return
 
-  await axios.post(
+  await withRetry(
+    () =>
+      axios.post(
     'https://api.brevo.com/v3/smtp/email',
     {
       sender: {
@@ -197,5 +214,7 @@ async function sendInvoiceFailureAlert(orderId: string, buyerEmail: string): Pro
         'Content-Type': 'application/json',
       },
     }
+      ),
+    { label: 'Brevo alerta factura fallida' }
   )
 }

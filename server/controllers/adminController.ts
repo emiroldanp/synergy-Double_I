@@ -4,6 +4,7 @@ import { uploadToR2, deleteFromR2ByUrl } from '../lib/r2'
 import { Prisma } from '@prisma/client'
 import axios from 'axios'
 import { createInvoice } from './invoicesController'
+import { withRetry } from '../lib/retry'
 
 const BREVO_API = 'https://api.brevo.com/v3'
 const ARRIVAL_COOLDOWN_KEY = 'last_arrival_notification_at'
@@ -612,23 +613,35 @@ async function triggerArrivalNotification(productId: string): Promise<void> {
 
   if (!templateId || !listId) return
 
-  await axios.post(
-    `${BREVO_API}/smtp/email`,
-    {
-      sender: {
-        email: process.env.BREVO_SENDER_EMAIL,
-        name: process.env.BREVO_SENDER_NAME,
-      },
-      to: [{ email: `list+${listId}@list.brevo.com` }],
-      templateId,
-      params: {
-        PRODUCT_NAME: product.name,
-        FRANCHISE: product.category?.name || '',
-        PRICE: Number(product.price),
-        IMAGE_URL: product.images[0]?.url || '',
-      },
-    },
-    { headers: brevoHeaders() }
+  // Enlace público al detalle del producto en el catálogo (/catalogo/:slug).
+  // FRONTEND_URL puede traer varios orígenes separados por coma — usamos el primero.
+  const baseUrl = (process.env.FRONTEND_URL ?? '').split(',')[0].trim().replace(/\/$/, '')
+  const productUrl = `${baseUrl}/catalogo/${product.slug}`
+
+  // RNF-005: el envío a la lista es idempotente respecto a efectos persistentes
+  // (no crea órdenes ni cobros) → seguro reintentar ante fallos transitorios.
+  await withRetry(
+    () =>
+      axios.post(
+        `${BREVO_API}/smtp/email`,
+        {
+          sender: {
+            email: process.env.BREVO_SENDER_EMAIL,
+            name: process.env.BREVO_SENDER_NAME,
+          },
+          to: [{ email: `list+${listId}@list.brevo.com` }],
+          templateId,
+          params: {
+            PRODUCT_NAME: product.name,
+            FRANCHISE: product.category?.name || '',
+            PRICE: Number(product.price),
+            IMAGE_URL: product.images[0]?.url || '',
+            PRODUCT_URL: productUrl,
+          },
+        },
+        { headers: brevoHeaders() }
+      ),
+    { label: 'Brevo new arrivals' }
   )
 
   // Persistir timestamp en la base de datos
