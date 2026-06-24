@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import axios from 'axios'
 import { prisma } from '../lib/prisma'
+import { withRetry } from '../lib/retry'
 
 // Base URL de la API REST de Brevo
 const BREVO_API = 'https://api.brevo.com/v3'
@@ -42,16 +43,21 @@ export async function subscribeEmail(req: Request, res: Response, next: NextFunc
     // Crear o actualizar contacto en Brevo
     let isNewContact = false
     try {
-      await axios.post(
-        `${BREVO_API}/contacts`,
-        {
-          email,
-          firstName: fullName ? fullName.split(' ')[0] : undefined,
-          lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
-          listIds: listId ? [listId] : [],
-          updateEnabled: true,
-        },
-        { headers: brevoHeaders() }
+      // Alta de contacto con updateEnabled:true es idempotente → seguro reintentar.
+      await withRetry(
+        () =>
+          axios.post(
+            `${BREVO_API}/contacts`,
+            {
+              email,
+              firstName: fullName ? fullName.split(' ')[0] : undefined,
+              lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
+              listIds: listId ? [listId] : [],
+              updateEnabled: true,
+            },
+            { headers: brevoHeaders() }
+          ),
+        { label: 'Brevo alta contacto' }
       )
       isNewContact = true
     } catch (err: any) {
@@ -75,19 +81,21 @@ export async function subscribeEmail(req: Request, res: Response, next: NextFunc
     // Si es nuevo suscriptor, disparar email de bienvenida
     const templateId = parseInt(process.env.BREVO_WELCOME_TEMPLATE_ID || '0', 10)
     if (isNewContact && templateId) {
-      await axios
-        .post(
-          `${BREVO_API}/smtp/email`,
-          {
-            to: [{ email }],
-            templateId,
-            params: { FULLNAME: fullName || email },
-          },
-          { headers: brevoHeaders() }
-        )
-        .catch((err) =>
-          console.error(`Error enviando bienvenida a ${email}:`, err?.response?.data || err.message)
-        )
+      await withRetry(
+        () =>
+          axios.post(
+            `${BREVO_API}/smtp/email`,
+            {
+              to: [{ email }],
+              templateId,
+              params: { FULLNAME: fullName || email },
+            },
+            { headers: brevoHeaders() }
+          ),
+        { label: 'Brevo email bienvenida' }
+      ).catch((err) =>
+        console.error(`Error enviando bienvenida a ${email}:`, err?.response?.data || err.message)
+      )
     }
 
     res.json({ success: true })
@@ -130,7 +138,9 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
 
   const templateId = parseInt(process.env.BREVO_ORDER_CONFIRM_TEMPLATE_ID || '0', 10)
 
-  await axios.post(
+  await withRetry(
+    () =>
+      axios.post(
     `${BREVO_API}/smtp/email`,
     {
       to: [{ email: recipientEmail, name: recipientName }],
@@ -159,6 +169,8 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
       },
     },
     { headers: brevoHeaders() }
+      ),
+    { label: 'Brevo confirmación pedido' }
   )
 
   // Marcar como comprador en la tabla local si existe el suscriptor
@@ -195,18 +207,22 @@ export async function sendTransactionalEmail(req: Request, res: Response, next: 
       return res.status(400).json({ error: 'templateId debe ser un número entero positivo' })
     }
 
-    await axios.post(
-      `${BREVO_API}/smtp/email`,
-      {
-        to: [{ email: to, name: name || to }],
-        sender: {
-          email: process.env.BREVO_SENDER_EMAIL,
-          name: process.env.BREVO_SENDER_NAME,
-        },
-        templateId: tid,
-        params: params || {},
-      },
-      { headers: brevoHeaders() }
+    await withRetry(
+      () =>
+        axios.post(
+          `${BREVO_API}/smtp/email`,
+          {
+            to: [{ email: to, name: name || to }],
+            sender: {
+              email: process.env.BREVO_SENDER_EMAIL,
+              name: process.env.BREVO_SENDER_NAME,
+            },
+            templateId: tid,
+            params: params || {},
+          },
+          { headers: brevoHeaders() }
+        ),
+      { label: 'Brevo email transaccional' }
     )
 
     res.json({ success: true })
@@ -241,17 +257,21 @@ export async function addContactToList(req: Request, res: Response, next: NextFu
       return res.status(400).json({ error: 'listId debe ser un número entero positivo' })
     }
 
-    // Crear o actualizar contacto con la lista
-    await axios.post(
-      `${BREVO_API}/contacts`,
-      {
-        email,
-        firstName: fullName ? fullName.split(' ')[0] : undefined,
-        lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
-        listIds: [lid],
-        updateEnabled: true,
-      },
-      { headers: brevoHeaders() }
+    // Crear o actualizar contacto con la lista (idempotente → seguro reintentar)
+    await withRetry(
+      () =>
+        axios.post(
+          `${BREVO_API}/contacts`,
+          {
+            email,
+            firstName: fullName ? fullName.split(' ')[0] : undefined,
+            lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
+            listIds: [lid],
+            updateEnabled: true,
+          },
+          { headers: brevoHeaders() }
+        ),
+      { label: 'Brevo alta contacto a lista' }
     )
 
     res.json({ success: true })
@@ -260,10 +280,14 @@ export async function addContactToList(req: Request, res: Response, next: NextFu
       // Contacto ya existe — intentar solo agregar a la lista
       try {
         const { email, listId } = req.body
-        await axios.post(
-          `${BREVO_API}/contacts/lists/${listId}/contacts/add`,
-          { emails: [email] },
-          { headers: brevoHeaders() }
+        await withRetry(
+          () =>
+            axios.post(
+              `${BREVO_API}/contacts/lists/${listId}/contacts/add`,
+              { emails: [email] },
+              { headers: brevoHeaders() }
+            ),
+          { label: 'Brevo agregar a lista' }
         )
         return res.json({ success: true })
       } catch {

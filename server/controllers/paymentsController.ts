@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma'
 import { Prisma } from '@prisma/client'
 import { createInvoice } from './invoicesController'
 import { sendOrderConfirmationEmail } from './emailController'
+import { withRetry } from '../lib/retry'
 import crypto from 'crypto'
 
 // Verificar en producción que el webhook secret esté configurado
@@ -162,10 +163,16 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
     const paymentId = notification?.data?.id
     if (!paymentId) return
 
-    // Consultar el pago directamente en la API de MP
+    // Consultar el pago directamente en la API de MP.
+    // RNF-005: consultar el estado de un pago es una LECTURA IDEMPOTENTE → seguro
+    // reintentar. (La creación de preferencias/pagos NO se reintenta nunca para
+    // evitar cobros o preferencias duplicadas.)
     const client = getMpClient()
     const paymentClient = new Payment(client)
-    const paymentData = await paymentClient.get({ id: paymentId })
+    const paymentData = await withRetry(
+      () => paymentClient.get({ id: paymentId }),
+      { label: 'MercadoPago consultar pago' }
+    )
 
     const status = paymentData.status
     const orderId = paymentData.external_reference
