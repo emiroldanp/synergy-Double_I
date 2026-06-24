@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '@/hooks/useCart'
 import { useShippingQuote } from '@/hooks/useShippingQuote'
 import { useAuth } from '@/hooks/useAuth'
-import { ordersApi } from '@/lib/api'
+import { ordersApi, paymentsApi } from '@/lib/api'
 import { contactSchema, addressSchema, cfdiSchema } from '@/lib/schemas/checkout'
 import type { ContactFormData, AddressFormData, CfdiFormData } from '@/lib/schemas/checkout'
 import { formatPrice, CFDI_USES } from '@/lib/utils'
@@ -124,10 +124,24 @@ export default function CheckoutPage() {
       const res = await ordersApi.create(orderPayload)
       const orderId: string = res.data?.data?.orderId ?? res.data?.orderId
 
+      // Crear preferencia de pago en Mercado Pago y redirigir al checkout de MP.
+      // El carrito se limpia al volver desde MP a /pedido/confirmacion (back_url).
+      const prefRes = await paymentsApi.createPreference(orderId)
+      const initPoint: string | undefined =
+        prefRes.data?.data?.initPoint ?? prefRes.data?.initPoint
+
+      if (!initPoint) {
+        throw new Error('No se obtuvo la URL de pago de Mercado Pago')
+      }
+
+      // Persistimos el contexto para mostrarlo al volver desde MP
+      sessionStorage.setItem(
+        'checkout:lastOrder',
+        JSON.stringify({ orderId, contact, shipping: shipping.selected, subtotal })
+      )
+
       clearCart()
-      navigate('/pedido/confirmacion', {
-        state: { orderId, contact, shipping: shipping.selected, subtotal },
-      })
+      window.location.href = initPoint
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? 'Error al crear el pedido. Intenta de nuevo.'
       setPayError(msg)
@@ -256,8 +270,8 @@ export default function CheckoutPage() {
                               onChange={() => shipping.setSelected(opt)}
                             />
                             <div>
-                              <p className="font-agency text-sm text-white uppercase tracking-wide">{opt.service}</p>
-                              <p className="font-exo text-xs text-ash">{opt.eta}</p>
+                              <p className="font-agency text-sm text-white uppercase tracking-wide">{opt.carrier}</p>
+                              <p className="font-exo text-xs text-ash">{opt.service}{opt.eta ? ` · ${opt.eta}` : ''}</p>
                             </div>
                           </div>
                           <span className="font-agency text-sm text-dragon">{formatPrice(opt.price)}</span>
@@ -334,12 +348,11 @@ export default function CheckoutPage() {
                 <div className="bg-deep border border-navy/40 p-6">
                   <h2 className="font-agency text-white uppercase tracking-wider text-lg mb-4">Pago</h2>
                   <div className="bg-abyss border border-navy/30 p-6 text-center mb-6">
-                    <p className="font-agency text-dragon uppercase tracking-wider text-sm mb-2">
-                      [PLACEHOLDER — Integración Mercado Pago]
+                    <p className="font-agency text-white uppercase tracking-wider text-sm mb-2">
+                      Pago con Mercado Pago
                     </p>
                     <p className="font-exo text-ash text-xs">
-                      La pasarela de pagos se configurará con las credenciales de Mercado Pago de Irving.
-                      Métodos: tarjeta, OXXO Pay, SPEI.
+                      Al confirmar el pedido te redirigiremos al checkout seguro de Mercado Pago para que pagues con tarjeta, OXXO o transferencia (SPEI).
                     </p>
                   </div>
                   <div className="border border-navy/30 p-4 mb-6">

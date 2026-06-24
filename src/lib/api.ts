@@ -34,6 +34,11 @@ export const shippingApi = {
   }) => api.post('/api/shipping/quote', { address }),
 }
 
+export const paymentsApi = {
+  createPreference: (orderId: string) =>
+    api.post('/api/payments/create-preference', { orderId }),
+}
+
 export const ordersApi = {
   create: (order: unknown) => api.post('/api/orders', order),
   getByUser: () => api.get('/api/orders/me'),

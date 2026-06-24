@@ -63,11 +63,25 @@ export async function createPreference(req: Request, res: Response, next: NextFu
       currency_id: 'MXN',
     }))
 
+    // Agregar el costo de envío como item adicional para que se sume al total
+    // cobrado por Mercado Pago. Aparece como una línea más en el checkout.
+    const shippingCost = Number(order.shippingCost || 0)
+    if (shippingCost > 0) {
+      mpItems.push({
+        id: 'shipping',
+        title: `Envío${order.shippingMethod ? ` (${order.shippingMethod})` : ''}`,
+        quantity: 1,
+        unit_price: shippingCost,
+        currency_id: 'MXN',
+      })
+    }
+
     const preferenceData = {
       items: mpItems,
       payment_methods: {
-        // Solo pagos en efectivo (OXXO) y transferencia (SPEI)
-        excluded_payment_types: [{ id: 'account_money' }],
+        // Sin exclusiones a nivel de preferencia: MP no permite excluir
+        // account_money en este tipo de cuenta. Si Irving quiere restringir
+        // a tarjeta/OXXO/SPEI, debe configurarlo en el panel de MP.
         installments: 1,
       },
       back_urls: {
