@@ -20,14 +20,6 @@ const FRANCHISE_QUICKLINKS = [
     accent: 'from-yellow-900/20 to-yellow-950/40',
   },
   {
-    id: 'yugioh',
-    label: 'Yu-Gi-Oh!',
-    sub: 'LOB · SDK · TCG/OCG moderno',
-    href: '/catalogo?franchise=yugioh',
-    color: '#C8950A',
-    accent: 'from-amber-900/20 to-amber-950/40',
-  },
-  {
     id: 'lorcana',
     label: 'Disney Lorcana',
     sub: 'The First Chapter · Rise of the Floodborn',
@@ -110,7 +102,7 @@ export default function HomePage() {
         <title>Double-I TCG — Tu tienda especialista en tarjetas coleccionables</title>
         <meta
           name="description"
-          content="Pokémon, Yu-Gi-Oh! y Lorcana — cartas individuales con condición verificada. Envíos a todo México."
+          content="Pokémon y Lorcana — cartas individuales con condición verificada. Envíos a todo México."
         />
         <meta property="og:title" content="Double-I TCG — Trading Card Game Mexico" />
         <meta property="og:description" content="Tu tienda especialista en tarjetas coleccionables TCG" />

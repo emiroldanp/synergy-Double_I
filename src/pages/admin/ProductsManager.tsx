@@ -93,8 +93,8 @@ export default function ProductsManager() {
                   <FormRow label="Franquicia" error={errors.franchise?.message}>
                     <select {...register('franchise')} className="input-dark cursor-pointer">
                       <option value="pokemon">Pokémon</option>
-                      <option value="yugioh">Yu-Gi-Oh!</option>
                       <option value="lorcana">Lorcana</option>
+                      <option value="magic">Magic: The Gathering</option>
                     </select>
                   </FormRow>
                   <FormRow label="Set" error={errors.set?.message}>

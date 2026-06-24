@@ -53,7 +53,6 @@ export function Footer() {
               {[
                 { to: '/catalogo', label: 'Catálogo' },
                 { to: '/catalogo?franchise=pokemon', label: 'Pokémon' },
-                { to: '/catalogo?franchise=yugioh', label: 'Yu-Gi-Oh!' },
                 { to: '/catalogo?franchise=lorcana', label: 'Lorcana' },
                 { to: '/catalogo?franchise=magic', label: 'Magic: TG' },
               ].map((link) => (

@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const adminProductoSchema = z.object({
   name: z.string().min(2, 'Nombre requerido'),
-  franchise: z.enum(['pokemon', 'yugioh', 'lorcana']),
+  franchise: z.enum(['pokemon', 'lorcana', 'magic']),
   set: z.string().min(2, 'Set requerido'),
   rarity: z.enum(['comun', 'poco_comun', 'rara', 'ultra_rara', 'secret_rare', 'full_art', 'gold_rare', 'prismatic']),
   edition: z.enum(['primera', 'shadowless', 'ilimitada']),

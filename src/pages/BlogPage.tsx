@@ -13,7 +13,6 @@ import type { BlogPost } from '@/types'
 const CATEGORY_TABS = [
   { label: 'Todos', value: '' },
   { label: 'Pokémon', value: 'pokemon' },
-  { label: 'Yu-Gi-Oh!', value: 'yugioh' },
   { label: 'Lorcana', value: 'lorcana' },
   { label: 'General', value: 'general' },
 ]
@@ -106,11 +105,11 @@ export default function BlogPage() {
         <title>Blog TCG — Double-I</title>
         <meta
           name="description"
-          content="Guías, análisis y novedades del mundo TCG: Pokémon, Yu-Gi-Oh! y Lorcana."
+          content="Guías, análisis y novedades del mundo TCG: Pokémon y Lorcana."
         />
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-night min-h-screen pt-32 md:pt-48">
         <div className="page-container py-8">
 
           {/* Encabezado */}

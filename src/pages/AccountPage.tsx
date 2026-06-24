@@ -35,7 +35,7 @@ export default function AccountPage() {
 
   if (!isLoaded) {
     return (
-      <div className="bg-night min-h-screen pt-20 flex items-center justify-center">
+      <div className="bg-night min-h-screen pt-32 md:pt-48 flex items-center justify-center">
         <svg className="animate-spin h-8 w-8 text-dragon" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -48,7 +48,7 @@ export default function AccountPage() {
     return (
       <>
         <Helmet><title>Mi cuenta — Double-I TCG</title></Helmet>
-        <div className="bg-night min-h-screen pt-20 flex items-center justify-center px-4">
+        <div className="bg-night min-h-screen pt-32 md:pt-48 flex items-center justify-center px-4">
           <div className="w-full max-w-sm text-center">
             <h1 className="section-title mb-6">Mi cuenta</h1>
             {ClerkSignIn ? (
@@ -72,7 +72,7 @@ export default function AccountPage() {
   return (
     <>
       <Helmet><title>Mi cuenta — Double-I TCG</title></Helmet>
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-night min-h-screen pt-32 md:pt-48">
         <div className="page-container py-8">
           <h1 className="section-title mb-2">Mi cuenta</h1>
           <p className="font-exo text-ash text-sm mb-8">
