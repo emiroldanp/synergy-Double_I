@@ -157,7 +157,7 @@ function ImageLightbox({
                   current === i ? 'border-dragon' : 'border-white/20 hover:border-white/50'
                 }`}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <img src={img} alt="" loading="lazy" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
@@ -282,7 +282,7 @@ export default function ProductDetailPage() {
                         activeImg === i ? 'border-dragon' : 'border-navy/50 hover:border-navy'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img src={img} alt="" loading="lazy" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>

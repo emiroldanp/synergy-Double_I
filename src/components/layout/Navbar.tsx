@@ -8,9 +8,10 @@ import { CartDrawer } from '@/components/ui/CartDrawer'
 import { cn } from '@/lib/utils'
 
 const CATEGORIES = [
-  { label: 'Pokémon', href: '/catalogo?franchise=pokemon', color: '#F5C400' },
-  { label: 'Lorcana', href: '/catalogo?franchise=lorcana', color: '#6B5ECD' },
-  { label: 'Magic', href: '/catalogo?franchise=magic', color: '#A82FBB' },
+  // Franquicias con ruta limpia (SEO). Accesorios sigue por query param.
+  { label: 'Pokémon', href: '/catalogo/pokemon', color: '#F5C400' },
+  { label: 'Lorcana', href: '/catalogo/lorcana', color: '#6B5ECD' },
+  { label: 'Magic', href: '/catalogo/magic', color: '#A82FBB' },
   { label: 'Accesorios', href: '/catalogo?productType=accessory', color: '#6BB8EC' },
 ]
 

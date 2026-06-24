@@ -52,9 +52,9 @@ export function Footer() {
             <ul className="space-y-2">
               {[
                 { to: '/catalogo', label: 'Catálogo' },
-                { to: '/catalogo?franchise=pokemon', label: 'Pokémon' },
-                { to: '/catalogo?franchise=lorcana', label: 'Lorcana' },
-                { to: '/catalogo?franchise=magic', label: 'Magic: TG' },
+                { to: '/catalogo/pokemon', label: 'Pokémon' },
+                { to: '/catalogo/lorcana', label: 'Lorcana' },
+                { to: '/catalogo/magic', label: 'Magic: TG' },
               ].map((link) => (
                 <li key={link.to}>
                   <Link

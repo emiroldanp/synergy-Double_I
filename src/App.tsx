@@ -1,32 +1,58 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
+import { BrowserRouter, Routes, Route, useLocation, useParams } from 'react-router-dom'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { ParticleCanvas } from '@/components/ui/ParticleCanvas'
 
-import HomePage from '@/pages/HomePage'
-import CatalogPage from '@/pages/CatalogPage'
-import ProductDetailPage from '@/pages/ProductDetailPage'
-import CartPage from '@/pages/CartPage'
-import CheckoutPage from '@/pages/CheckoutPage'
-import OrderConfirmationPage from '@/pages/OrderConfirmationPage'
-import OrderPendingPage from '@/pages/OrderPendingPage'
-import AccountPage from '@/pages/AccountPage'
-import BlogPage from '@/pages/BlogPage'
-import BlogPostPage from '@/pages/BlogPostPage'
-import ContactPage from '@/pages/ContactPage'
+// Code splitting: cada página se carga en su propio chunk mediante import dinámico.
+// Reduce el bundle inicial — el navegador solo descarga la página visitada.
+const HomePage = lazy(() => import('@/pages/HomePage'))
+const CatalogPage = lazy(() => import('@/pages/CatalogPage'))
+const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'))
+const CartPage = lazy(() => import('@/pages/CartPage'))
+const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'))
+const OrderConfirmationPage = lazy(() => import('@/pages/OrderConfirmationPage'))
+const OrderPendingPage = lazy(() => import('@/pages/OrderPendingPage'))
+const AccountPage = lazy(() => import('@/pages/AccountPage'))
+const BlogPage = lazy(() => import('@/pages/BlogPage'))
+const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'))
+const ContactPage = lazy(() => import('@/pages/ContactPage'))
 
-import AdminLayout from '@/components/admin/AdminLayout'
-import DashboardPage from '@/pages/admin/DashboardPage'
-import ProductsPage from '@/pages/admin/ProductsPage'
-import ProductFormPage from '@/pages/admin/ProductFormPage'
-import OrdersPage from '@/pages/admin/OrdersPage'
-import InvoicesPage from '@/pages/admin/InvoicesPage'
-import SubscribersPage from '@/pages/admin/SubscribersPage'
-import BlogManager from '@/pages/admin/BlogManager'
-import BannerManager from '@/pages/admin/BannerManager'
-import LoginPage from '@/pages/admin/LoginPage'
+// Panel admin — todo su árbol queda fuera del bundle público.
+const AdminLayout = lazy(() => import('@/components/admin/AdminLayout'))
+const DashboardPage = lazy(() => import('@/pages/admin/DashboardPage'))
+const ProductsPage = lazy(() => import('@/pages/admin/ProductsPage'))
+const ProductFormPage = lazy(() => import('@/pages/admin/ProductFormPage'))
+const OrdersPage = lazy(() => import('@/pages/admin/OrdersPage'))
+const InvoicesPage = lazy(() => import('@/pages/admin/InvoicesPage'))
+const SubscribersPage = lazy(() => import('@/pages/admin/SubscribersPage'))
+const BlogManager = lazy(() => import('@/pages/admin/BlogManager'))
+const BannerManager = lazy(() => import('@/pages/admin/BannerManager'))
+const LoginPage = lazy(() => import('@/pages/admin/LoginPage'))
+
 import { CardFlipFlyPortal } from '@/components/ui/CardFlipFlyPortal'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
+
+// Fallback de carga simple mientras se descarga el chunk de la página.
+function PageLoader() {
+  return (
+    <div
+      className="flex items-center justify-center py-32"
+      role="status"
+      aria-label="Cargando"
+    >
+      <div className="flex gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="w-2 h-2 bg-dragon/70 rounded-full"
+            style={{ animation: `deckBounce 0.8s ease-in-out ${i * 0.15}s infinite` }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -41,9 +67,23 @@ function Layout({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Franquicias con ruta limpia propia (/catalogo/pokemon, etc.)
+const FRANCHISE_SLUGS = ['pokemon', 'lorcana', 'magic'] as const
+
 function CatalogPageWrapper() {
   const { search } = useLocation()
-  return <CatalogPage key={search} />
+  // Incluye el segmento de franquicia en la key para remontar al cambiar entre
+  // /catalogo/:franchise y re-aplicar los filtros iniciales del catálogo.
+  const { slug } = useParams<{ slug?: string }>()
+  return <CatalogPage key={`${slug ?? ''}::${search}`} />
+}
+
+// Dispatcher para /catalogo/:slug — distingue franquicia vs. slug de producto.
+function CatalogOrProductRoute() {
+  const { slug } = useParams<{ slug?: string }>()
+  const isFranchise =
+    !!slug && (FRANCHISE_SLUGS as readonly string[]).includes(slug)
+  return isFranchise ? <CatalogPageWrapper /> : <ProductDetailPage />
 }
 
 function AppContent() {
@@ -53,10 +93,14 @@ function AppContent() {
     <>
       <CardFlipFlyPortal />
       {!isAdmin && <WhatsAppButton />}
+      <Suspense fallback={<Layout><PageLoader /></Layout>}>
       <Routes>
         <Route path="/" element={<Layout><HomePage /></Layout>} />
         <Route path="/catalogo" element={<Layout><CatalogPageWrapper /></Layout>} />
-        <Route path="/catalogo/:slug" element={<Layout><ProductDetailPage /></Layout>} />
+        {/* Un único segmento dinámico /catalogo/:slug. El dispatcher decide:
+            si el segmento es una franquicia válida (pokemon/lorcana/magic) muestra
+            el catálogo prefiltrado; si no, lo trata como slug de producto. */}
+        <Route path="/catalogo/:slug" element={<Layout><CatalogOrProductRoute /></Layout>} />
         <Route path="/carrito" element={<Layout><CartPage /></Layout>} />
         <Route path="/checkout" element={<Layout><CheckoutPage /></Layout>} />
         <Route path="/pedido/confirmacion" element={<Layout><OrderConfirmationPage /></Layout>} />
@@ -79,6 +123,7 @@ function AppContent() {
           <Route path="banners" element={<BannerManager />} />
         </Route>
       </Routes>
+      </Suspense>
     </>
   )
 }
