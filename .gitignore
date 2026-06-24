@@ -39,3 +39,5 @@ public/Imagenes tienda/
 # TypeScript build info
 tsconfig.app.tsbuildinfo
 tsconfig.node.tsbuildinfo
+
+docs/
