@@ -11,7 +11,7 @@ export default function ContactPage() {
         <meta name="description" content="Contacta a Double-I TCG para preguntas sobre cartas, envíos o coleccionismo." />
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-night min-h-screen pt-32 md:pt-48">
         <div className="page-container py-16">
           <div className="max-w-2xl mx-auto">
             <p className="section-subtitle mb-2">Estamos aquí para ayudarte</p>

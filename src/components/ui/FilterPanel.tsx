@@ -1,13 +1,11 @@
 import { cn } from '@/lib/utils'
 import {
   FRANCHISE_LABELS,
-  CONDITION_LABELS,
   RARITY_LABELS,
-  EDITION_LABELS,
   VARIANT_LABELS,
   LANGUAGE_LABELS,
 } from '@/lib/utils'
-import type { FilterState, Franchise, Condition, Rarity, Edition, Variant, Language, ProductType } from '@/types'
+import type { FilterState, Franchise, Rarity, Variant, Language, ProductType } from '@/types'
 
 const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   carta: 'Carta individual',
@@ -104,7 +102,7 @@ export function FilterPanel({
 
       <FilterSection title="Franquicia">
         <CheckboxGroup<Franchise>
-          options={['pokemon', 'yugioh', 'lorcana', 'magic']}
+          options={['pokemon', 'lorcana', 'magic']}
           labels={FRANCHISE_LABELS}
           selected={filters.franchise}
           onChange={(v) => onUpdate('franchise', v)}
@@ -120,30 +118,12 @@ export function FilterPanel({
         />
       </FilterSection>
 
-      <FilterSection title="Condición">
-        <CheckboxGroup<Condition>
-          options={['mint', 'near_mint', 'lightly_played']}
-          labels={CONDITION_LABELS}
-          selected={filters.condition}
-          onChange={(v) => onUpdate('condition', v)}
-        />
-      </FilterSection>
-
       <FilterSection title="Rareza">
         <CheckboxGroup<Rarity>
           options={['comun', 'poco_comun', 'rara', 'ultra_rara', 'secret_rare', 'full_art', 'gold_rare', 'prismatic']}
           labels={RARITY_LABELS}
           selected={filters.rarity}
           onChange={(v) => onUpdate('rarity', v)}
-        />
-      </FilterSection>
-
-      <FilterSection title="Edición">
-        <CheckboxGroup<Edition>
-          options={['primera', 'shadowless', 'ilimitada']}
-          labels={EDITION_LABELS}
-          selected={filters.edition}
-          onChange={(v) => onUpdate('edition', v)}
         />
       </FilterSection>
 
@@ -158,7 +138,7 @@ export function FilterPanel({
 
       <FilterSection title="Idioma">
         <CheckboxGroup<Language>
-          options={['es', 'en', 'jp']}
+          options={['en', 'jp']}
           labels={LANGUAGE_LABELS}
           selected={filters.language}
           onChange={(v) => onUpdate('language', v)}

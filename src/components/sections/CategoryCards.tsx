@@ -11,15 +11,6 @@ const CATEGORIES = [
     bg: 'from-yellow-900/30 to-yellow-950/60',
   },
   {
-    id: 'yugioh',
-    label: 'Yu-Gi-Oh!',
-    description: 'LOB, SDK, TCG/OCG moderno',
-    color: '#C8950A',
-    image: null as string | null,
-    href: '/catalogo?franchise=yugioh',
-    bg: 'from-amber-900/30 to-amber-950/60',
-  },
-  {
     id: 'lorcana',
     label: 'Disney Lorcana',
     description: 'The First Chapter, Rise of the Floodborn',

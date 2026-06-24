@@ -131,7 +131,7 @@ export function Hero() {
             className="font-exo text-frost/80 text-lg md:text-xl max-w-xl leading-relaxed mb-8"
             style={{ animation: 'slideUp 0.7s ease-out 0.35s both' }}
           >
-            Pokémon · Yu-Gi-Oh! · Lorcana — cartas individuales, coleccionismo serio.
+            Pokémon · Lorcana — cartas individuales, coleccionismo serio.
             Condición verificada, envíos a todo México.
           </p>
 

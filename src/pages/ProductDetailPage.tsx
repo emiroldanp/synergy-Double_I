@@ -18,7 +18,7 @@ import { formatPrice, CONDITION_LABELS, EDITION_LABELS } from '@/lib/utils'
 
 function ProductDetailSkeleton() {
   return (
-    <div className="bg-night min-h-screen pt-20">
+    <div className="bg-night min-h-screen pt-32 md:pt-48">
       <div className="page-container py-8">
         {/* Breadcrumb skeleton */}
         <div className="flex items-center gap-2 mb-6">
@@ -223,7 +223,7 @@ export default function ProductDetailPage() {
         )}
       </AnimatePresence>
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-night min-h-screen pt-32 md:pt-48">
         <div className="page-container py-8">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs text-ash font-exo mb-6">

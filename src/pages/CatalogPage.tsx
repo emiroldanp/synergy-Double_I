@@ -15,7 +15,7 @@ const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Precio: mayor a menor' },
 ] as const
 
-const VALID_FRANCHISES = ['pokemon', 'yugioh', 'lorcana'] as const
+const VALID_FRANCHISES = ['pokemon', 'lorcana', 'magic'] as const
 const VALID_SORTS = ['newest', 'price_asc', 'price_desc'] as const
 
 function useInitialFiltersFromParams(): Partial<FilterState> {
@@ -68,11 +68,11 @@ export default function CatalogPage() {
         <title>Catálogo — Double-I TCG</title>
         <meta
           name="description"
-          content="Explora nuestro catálogo de tarjetas coleccionables Pokémon, Yu-Gi-Oh! y Lorcana."
+          content="Explora nuestro catálogo de tarjetas coleccionables Pokémon y Lorcana."
         />
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-night min-h-screen pt-32 md:pt-48">
         <div className="page-container py-8">
           {/* Header */}
           <motion.div

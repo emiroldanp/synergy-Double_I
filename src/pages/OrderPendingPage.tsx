@@ -11,7 +11,7 @@ export default function OrderPendingPage() {
         <title>Pago pendiente — Double-I TCG</title>
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-night min-h-screen pt-32 md:pt-48">
         <div className="page-container py-16">
           <div className="max-w-lg mx-auto text-center">
             {/* Ícono de reloj */}

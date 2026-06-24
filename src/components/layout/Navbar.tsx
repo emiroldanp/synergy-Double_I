@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 
 const CATEGORIES = [
   { label: 'Pokémon', href: '/catalogo?franchise=pokemon', color: '#F5C400' },
-  { label: 'Yu-Gi-Oh!', href: '/catalogo?franchise=yugioh', color: '#C8950A' },
   { label: 'Lorcana', href: '/catalogo?franchise=lorcana', color: '#6B5ECD' },
   { label: 'Magic', href: '/catalogo?franchise=magic', color: '#A82FBB' },
   { label: 'Accesorios', href: '/catalogo?productType=accessory', color: '#6BB8EC' },
@@ -112,13 +111,13 @@ export function Navbar() {
       <header
         className={cn(
           'fixed top-0 left-0 right-0 z-30 transition-all duration-300',
-          scrolled
+          scrolled || mobileOpen
             ? 'bg-void/95 backdrop-blur-md border-b border-navy/50 shadow-lg shadow-black/40'
             : 'bg-gradient-to-b from-void/80 to-transparent'
         )}
       >
         <div className="page-container">
-          <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="flex items-center justify-between h-24 md:h-32">
             {/* Logo — bigger and with glow */}
             <Link
               to="/"
@@ -128,7 +127,7 @@ export function Navbar() {
               <img
                 src="/logo-color.png"
                 alt="Double-I TCG"
-                className="h-12 md:h-16 w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300"
+                className="h-20 md:h-28 w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300"
               />
               <div className="hidden sm:flex flex-col leading-none">
                 <span className="font-agency text-xs text-dragon tracking-[0.3em] uppercase">Double-I</span>
@@ -236,7 +235,7 @@ export function Navbar() {
         {/* Mobile menu */}
         <div
           className={cn(
-            'md:hidden bg-void/98 border-b border-navy/50 overflow-hidden transition-all duration-300 ease-in-out',
+            'md:hidden bg-void border-b border-navy/50 overflow-hidden transition-all duration-300 ease-in-out',
             mobileOpen ? 'max-h-screen' : 'max-h-0'
           )}
         >

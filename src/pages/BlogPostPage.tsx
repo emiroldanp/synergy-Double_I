@@ -83,7 +83,7 @@ export default function BlogPostPage() {
   // ── Estado de carga ──────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-night min-h-screen pt-32 md:pt-48">
         <div className="page-container py-8 max-w-3xl mx-auto">
           {/* Skeleton */}
           <div className="animate-pulse space-y-6">
@@ -104,7 +104,7 @@ export default function BlogPostPage() {
   // ── Error ────────────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="bg-night min-h-screen pt-20 flex items-center justify-center">
+      <div className="bg-night min-h-screen pt-32 md:pt-48 flex items-center justify-center">
         <div className="text-center space-y-4">
           <p className="font-exo text-dragon text-sm">{error}</p>
           <Link
@@ -121,7 +121,7 @@ export default function BlogPostPage() {
   // ── Post no encontrado ───────────────────────────────────────────────────────
   if (!post) {
     return (
-      <div className="bg-night min-h-screen pt-20 flex items-center justify-center">
+      <div className="bg-night min-h-screen pt-32 md:pt-48 flex items-center justify-center">
         <div className="text-center space-y-4">
           <p className="font-exo text-ash text-sm">Post no encontrado.</p>
           <Link
@@ -173,7 +173,7 @@ export default function BlogPostPage() {
         />
       )}
 
-      <div className="bg-night min-h-screen pt-20">
+      <div className="bg-night min-h-screen pt-32 md:pt-48">
         {/* ── Barra de admin ───────────────────────────────────────────────── */}
         {isAdmin && (
           <div className="sticky top-0 z-40 bg-amber-400/95 backdrop-blur-sm border-b border-amber-500 shadow-sm">

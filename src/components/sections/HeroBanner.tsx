@@ -8,16 +8,16 @@ const STORAGE_KEY = 'doublei_banner_slides'
 const DEFAULT_SLIDES: BannerSlide[] = [
   {
     id: '1',
-    imageUrl: 'https://placehold.co/1600x700/0D0820/6BB8EC?text=Double-I+TCG',
+    imageUrl: 'https://placehold.co/1600x700/0D0820/0D0820',
     title: 'Tu tienda especialista',
-    subtitle: 'Pokémon · Yu-Gi-Oh! · Lorcana — cartas individuales con condición verificada.',
+    subtitle: 'Pokémon · Lorcana — cartas individuales con condición verificada.',
     ctaLabel: 'Explorar Catálogo',
     ctaHref: '/catalogo',
     isActive: true,
   },
   {
     id: '2',
-    imageUrl: 'https://placehold.co/1600x700/1E0E40/CC1515?text=Cartas+Primera+Edición',
+    imageUrl: 'https://placehold.co/1600x700/1E0E40/1E0E40',
     title: 'Coleccionismo serio',
     subtitle: 'Piezas únicas de Primera Edición. Cada carta verificada por expertos.',
     ctaLabel: 'Ver colección',
@@ -26,7 +26,7 @@ const DEFAULT_SLIDES: BannerSlide[] = [
   },
   {
     id: '3',
-    imageUrl: 'https://placehold.co/1600x700/0D0820/F5C400?text=Envíos+a+Todo+México',
+    imageUrl: 'https://placehold.co/1600x700/0D0820/0D0820',
     title: 'Envíos a todo México',
     subtitle: 'Empaque seguro, tracking en tiempo real y factura CFDI incluida.',
     ctaLabel: 'Conoce más',
@@ -167,7 +167,7 @@ export function HeroBanner() {
           <button
             onClick={prev}
             aria-label="Slide anterior"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-void/60 border border-navy/60 hover:border-dragon/60 hover:text-dragon text-ash transition-all"
+            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-void/60 border border-navy/60 hover:border-dragon/60 hover:text-dragon text-ash transition-all"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -176,7 +176,7 @@ export function HeroBanner() {
           <button
             onClick={next}
             aria-label="Siguiente slide"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-void/60 border border-navy/60 hover:border-dragon/60 hover:text-dragon text-ash transition-all"
+            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-void/60 border border-navy/60 hover:border-dragon/60 hover:text-dragon text-ash transition-all"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

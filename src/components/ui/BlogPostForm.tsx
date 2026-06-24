@@ -237,7 +237,7 @@ export default function BlogPostForm({
             <input
               type="text"
               className={inputCls}
-              placeholder="general, pokemon, yugioh..."
+              placeholder="general, pokemon, lorcana..."
               {...register('categorySlug')}
             />
           </div>
