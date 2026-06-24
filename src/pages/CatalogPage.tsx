@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useInfiniteProducts } from '@/hooks/useInfiniteProducts'
 import type { FilterState } from '@/types'
@@ -20,7 +20,11 @@ const VALID_SORTS = ['newest', 'price_asc', 'price_desc'] as const
 
 function useInitialFiltersFromParams(): Partial<FilterState> {
   const [params] = useSearchParams()
-  const franchise = params.get('franchise')
+  // La franquicia puede venir por ruta limpia (/catalogo/:franchise — el segmento
+  // dinámico se llama `slug`) o por query param de compatibilidad
+  // (/catalogo?franchise=x). La ruta limpia tiene prioridad.
+  const { slug: franchiseFromPath } = useParams<{ slug?: string }>()
+  const franchise = franchiseFromPath ?? params.get('franchise')
   const sort = params.get('sort')
   const productType = params.get('productType')
   const filters: Partial<FilterState> = {}
