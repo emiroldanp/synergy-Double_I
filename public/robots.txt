@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /mi-cuenta/
-Sitemap: [PLACEHOLDER — confirmar dominio con Irving]/sitemap.xml
+Sitemap: https://doubleicards.com/sitemap.xml
