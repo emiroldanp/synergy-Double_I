@@ -24,6 +24,8 @@ export default function OrdersManager() {
   const [savingId, setSavingId] = useState<string | null>(null)
   const [retryingInvoiceId, setRetryingInvoiceId] = useState<string | null>(null)
   const [retrySuccess, setRetrySuccess] = useState<string | null>(null)
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null)
+  const [markPaidError, setMarkPaidError] = useState<string | null>(null)
   const [pendingStatus, setPendingStatus] = useState<Record<string, string>>({})
   const [pendingTracking, setPendingTracking] = useState<Record<string, string>>({})
 
@@ -55,6 +57,23 @@ export default function OrdersManager() {
       // silenciar
     } finally {
       setSavingId(null)
+    }
+  }
+
+  async function handleMarkPaid(orderId: string) {
+    if (!confirm('¿Confirmas que ya recibiste el pago en Mercado Pago? Se descontará stock y se enviará el correo de confirmación al cliente.')) {
+      return
+    }
+    setMarkingPaidId(orderId)
+    setMarkPaidError(null)
+    try {
+      await ordersApi.markPaid(orderId)
+      const res = await ordersApi.getAll()
+      setOrders(res.data.orders ?? res.data.data ?? [])
+    } catch (err: any) {
+      setMarkPaidError(err?.response?.data?.error ?? 'No se pudo marcar como pagado.')
+    } finally {
+      setMarkingPaidId(null)
     }
   }
 
@@ -212,6 +231,28 @@ export default function OrdersManager() {
                       {order.address?.street ?? ''} {order.address?.number ?? ''}, {order.address?.colonia ?? ''}, {order.address?.city ?? ''}, {order.address?.state ?? ''} CP {order.address?.zip ?? ''}
                     </p>
                   </div>
+
+                  {/* Verificación manual de pago (OXXO / SPEI) */}
+                  {order.paymentStatus === 'awaiting_verification' && (
+                    <div className="border-t border-navy/40 pt-4 space-y-2">
+                      <p className="font-agency text-xs text-cyan-400 uppercase tracking-widest">
+                        ⏳ Pago pendiente de verificar
+                      </p>
+                      <p className="font-exo text-xs text-ash">
+                        Este pedido fue pagado por OXXO o transferencia. Verifica en tu cuenta de Mercado Pago que el dinero haya llegado antes de marcarlo como pagado. Al confirmar, se descontará stock, se emitirá la factura si aplica y se enviará el correo al cliente.
+                      </p>
+                      {markPaidError && markingPaidId !== order.id && (
+                        <p className="font-exo text-xs text-red-400">{markPaidError}</p>
+                      )}
+                      <button
+                        onClick={() => handleMarkPaid(order.id)}
+                        disabled={markingPaidId === order.id}
+                        className="w-full text-xs py-2 font-agency uppercase tracking-wider border border-cyan-500/60 text-cyan-400 hover:bg-cyan-500/10 transition-colors disabled:opacity-60"
+                      >
+                        {markingPaidId === order.id ? 'Marcando...' : 'Marcar pago verificado'}
+                      </button>
+                    </div>
+                  )}
 
                   {/* Reintento de factura */}
                   {hasInvoicePending(order) && (
