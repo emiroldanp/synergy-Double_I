@@ -159,17 +159,14 @@ export async function quoteShipping(req: Request, res: Response, next: NextFunct
         }
       }
     } catch (axiosError: any) {
+      // Logueamos detalle en el server pero NO lo devolvemos al cliente
+      // para evitar filtrar info interna del proveedor.
       console.error('[Skydropx] status:', axiosError?.response?.status)
       console.error('[Skydropx] data:', JSON.stringify(axiosError?.response?.data))
       console.error('[Skydropx] message:', axiosError?.message)
       return res.status(503).json({
         error: 'shipping_timeout',
         message: 'No pudimos cotizar envíos en este momento. Intenta de nuevo.',
-        _debug: {
-          status: axiosError?.response?.status,
-          data: axiosError?.response?.data,
-          message: axiosError?.message,
-        },
       })
     }
 
@@ -189,8 +186,13 @@ export async function quoteShipping(req: Request, res: Response, next: NextFunct
       })
       .map((q: any) => {
         const attrs = q.attributes || q
+        // provider_display_name viene con casing natural ("FedEx", "Estafeta");
+        // provider_name es el slug ("fedex", "estafeta") — fallback si no está.
         return {
-          carrier: attrs.provider_name || attrs.carrier_name || attrs.carrier,
+          carrier: attrs.provider_display_name
+            || attrs.carrier_name
+            || attrs.provider_name
+            || attrs.carrier,
           service: attrs.provider_service_name || attrs.service_level_name || attrs.service,
           price: Number(attrs.total || attrs.amount_local || attrs.total_pricing || 0),
           eta: attrs.days || attrs.days_transit,
