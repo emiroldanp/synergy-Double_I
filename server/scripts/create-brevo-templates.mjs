@@ -122,7 +122,45 @@ const orderConfirmHtml = `<!DOCTYPE html>
   </table>
 </body></html>`
 
-// ── Plantilla 3: Llegada de nuevo producto ────────────────────────────────
+// ── Plantilla 3: Verificación de pago (OXXO / SPEI) ───────────────────────
+// params: ORDER_ID, CUSTOMER_NAME, PAYMENT_METHOD, WHATSAPP_NUMBER
+// Se dispara desde el webhook de MP cuando el pago llega por OXXO o
+// transferencia y la orden queda en 'awaiting_verification'.
+const paymentVerifHtml = `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d0d0d;font-family:Arial,sans-serif;color:#e5e5e5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#151515;border-top:3px solid #06b6d4;">
+    <tr><td style="padding:32px 40px 16px;text-align:center;">
+      <img src="https://pub-c0ec2ca658064853a766252fdca0ebf1.r2.dev/logo-color.png" alt="Double-I Cards" width="120" style="display:block;margin:0 auto 24px;">
+      <p style="color:#06b6d4;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">Pago recibido — Verificando</p>
+      <h1 style="color:#e5e5e5;font-size:22px;margin:0 0 8px;">¡Ya casi lo tenemos!</h1>
+      <p style="color:#b0b0b0;font-size:14px;margin:0 0 4px;">Pedido <strong style="color:#e5e5e5;">#{{ params.ORDER_ID }}</strong></p>
+    </td></tr>
+    <tr><td style="padding:8px 40px 24px;">
+      <p style="color:#b0b0b0;font-size:15px;line-height:1.6;margin:0 0 16px;">
+        Hola <strong style="color:#e5e5e5;">{{ params.CUSTOMER_NAME }}</strong>, recibimos la notificación de tu pago por <strong style="color:#e5e5e5;">{{ params.PAYMENT_METHOD }}</strong>. Estamos verificando en nuestra cuenta antes de preparar tu envío.
+      </p>
+      <div style="background:#1e1e1e;border-left:3px solid #06b6d4;padding:16px 20px;margin:20px 0;">
+        <p style="color:#e5e5e5;font-size:14px;font-weight:bold;margin:0 0 8px;">Para agilizar la verificación:</p>
+        <p style="color:#b0b0b0;font-size:14px;line-height:1.6;margin:0;">
+          Envíanos tu <strong style="color:#e5e5e5;">comprobante de pago</strong> por WhatsApp al <strong style="color:#06b6d4;">{{ params.WHATSAPP_NUMBER }}</strong>.
+        </p>
+      </div>
+      <p style="color:#b0b0b0;font-size:14px;line-height:1.6;margin:0 0 20px;">
+        En cuanto validemos tu pago te llegará un correo con la confirmación y comenzaremos a preparar tu pedido.
+      </p>
+    </td></tr>
+    <tr><td style="padding:8px 40px 32px;text-align:center;">
+      <a href="https://wa.me/{{ params.WHATSAPP_NUMBER }}" style="display:inline-block;background:#06b6d4;color:#fff;text-decoration:none;padding:14px 32px;border-radius:4px;font-size:15px;font-weight:bold;">Enviar comprobante por WhatsApp</a>
+    </td></tr>
+    <tr><td style="padding:24px 40px;border-top:1px solid #2a2a2a;text-align:center;">
+      <p style="color:#555;font-size:12px;margin:0;">© 2026 Double-I Cards · <a href="https://doubleicards.com" style="color:#777;text-decoration:none;">doubleicards.com</a></p>
+    </td></tr>
+  </table>
+</body></html>`
+
+// ── Plantilla 4: Llegada de nuevo producto ────────────────────────────────
 // params: PRODUCT_NAME, PRODUCT_DESCRIPTION, PRODUCT_PRICE, PRODUCT_SLUG, PRODUCT_IMAGE
 const arrivalHtml = `<!DOCTYPE html>
 <html lang="es">
@@ -168,6 +206,16 @@ async function main() {
     console.log(`Plantilla confirmacion pedido creada. ID: ${orderConfirmId}`)
     console.log(`   -> BREVO_ORDER_CONFIRM_TEMPLATE_ID=${orderConfirmId}`)
 
+    const paymentVerifId = await createTemplate({
+      templateName: 'Verificacion de Pago — Double-I',
+      subject: 'Estamos verificando tu pago — Pedido #{{ params.ORDER_ID }}',
+      htmlContent: paymentVerifHtml,
+      sender: { email: senderEmail, name: senderName },
+      isActive: true,
+    })
+    console.log(`Plantilla verificacion de pago creada. ID: ${paymentVerifId}`)
+    console.log(`   -> BREVO_PAYMENT_VERIFICATION_TEMPLATE_ID=${paymentVerifId}`)
+
     const arrivalId = await createTemplate({
       templateName: 'Llegada de Producto — Double-I',
       subject: 'Nuevo en stock: {{ params.PRODUCT_NAME }}',
@@ -182,6 +230,7 @@ async function main() {
     console.log('Agrega estas lineas a server/.env:')
     console.log(`BREVO_WELCOME_TEMPLATE_ID=${welcomeId}`)
     console.log(`BREVO_ORDER_CONFIRM_TEMPLATE_ID=${orderConfirmId}`)
+    console.log(`BREVO_PAYMENT_VERIFICATION_TEMPLATE_ID=${paymentVerifId}`)
     console.log(`BREVO_ARRIVAL_TEMPLATE_ID=${arrivalId}`)
     console.log('-----------------------------------------')
   } catch (err) {
