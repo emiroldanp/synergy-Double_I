@@ -1,18 +1,23 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Control de acceso', () => {
-  // NOTA: Las rutas /admin son actualmente accesibles sin autenticación en el frontend.
-  // La protección real ocurre a nivel de API (Clerk en Express).
-  // Estos tests verifican el comportamiento actual y documentan qué se muestra sin sesión.
-
-  test('F22: /admin carga la UI del panel sin sesión (auth protegida en API)', async ({ page }) => {
+  test('F22: /admin sin sesión redirige a login o muestra pantalla Clerk', async ({ page }) => {
     await page.goto('/admin')
     await page.waitForLoadState('networkidle')
 
-    // El panel admin carga en el frontend — la auth real es a nivel de API
-    // Verificar que la URL es /admin y no hay error 500
-    const hasFatalError = await page.getByText(/error 500|internal server error/i).isVisible()
-    expect(hasFatalError, 'No debe haber error 500 en /admin sin sesión').toBe(false)
+    // RequireAdmin redirige a /admin/login cuando no hay sesión activa
+    const redirectedToLogin =
+      page.url().includes('/admin/login') ||
+      page.url().includes('/sign-in') ||
+      page.url().includes('/login')
+
+    const hasLoginUI =
+      await page.getByLabel(/email/i).isVisible().catch(() => false) ||
+      await page.locator('.cl-rootBox, [data-clerk-component]').isVisible().catch(() => false) ||
+      await page.getByText(/inicia sesión|iniciar sesión|acceso admin/i).isVisible().catch(() => false)
+
+    expect(redirectedToLogin || hasLoginUI,
+      'Debe redirigir a login o mostrar UI de autenticación').toBe(true)
   })
 
   test('F23: /mi-cuenta sin sesión redirige a login de Clerk', async ({ page }) => {
@@ -29,13 +34,22 @@ test.describe('Control de acceso', () => {
       'Debe redirigir a login o mostrar componente Clerk').toBe(true)
   })
 
-  test('F24: /admin/pedidos carga la UI sin sesión — datos protegidos en API', async ({ page }) => {
+  test('F24: /admin/pedidos sin sesión redirige a login (no muestra datos)', async ({ page }) => {
     await page.goto('/admin/pedidos')
     await page.waitForLoadState('networkidle')
 
-    // Sin backend: la tabla de pedidos estará vacía o en estado de carga
-    // Verificar que no hay error 500
-    const hasFatalError = await page.getByText(/error 500|internal server error/i).isVisible()
-    expect(hasFatalError, 'No debe haber error 500 en /admin/pedidos sin sesión').toBe(false)
+    // Igual que F22: RequireAdmin debe interceptar antes de renderizar el panel
+    const redirectedToLogin =
+      page.url().includes('/admin/login') ||
+      page.url().includes('/sign-in') ||
+      page.url().includes('/login')
+
+    const hasLoginUI =
+      await page.getByLabel(/email/i).isVisible().catch(() => false) ||
+      await page.locator('.cl-rootBox, [data-clerk-component]').isVisible().catch(() => false) ||
+      await page.getByText(/inicia sesión|iniciar sesión|acceso admin/i).isVisible().catch(() => false)
+
+    expect(redirectedToLogin || hasLoginUI,
+      'Debe redirigir a login sin exponer datos del panel').toBe(true)
   })
 })
