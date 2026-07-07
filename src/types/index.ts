@@ -124,6 +124,7 @@ export interface Order {
   shippingOption?: ShippingOption
   trackingNumber?: string | null
   paymentMethod?: string | null
+  paymentStatus?: 'pending' | 'awaiting_verification' | 'confirmed' | 'failed'
   guestEmail?: string | null
   guestName?: string | null
   shippingAddress?: ShippingAddress | null

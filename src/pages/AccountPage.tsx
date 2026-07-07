@@ -116,7 +116,7 @@ export default function AccountPage() {
                       </div>
                       <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
                         {order.items.map((item) => (
-                          <img key={item.productId} src={item.image} alt={item.name} className="w-12 h-16 object-cover flex-shrink-0" />
+                          <img key={item.productId} src={item.image} alt={item.name} loading="lazy" className="w-12 h-16 object-cover flex-shrink-0" />
                         ))}
                       </div>
                       <div className="flex items-center justify-between">

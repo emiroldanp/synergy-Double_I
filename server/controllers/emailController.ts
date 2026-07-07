@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import axios from 'axios'
 import { prisma } from '../lib/prisma'
+import { withRetry } from '../lib/retry'
 
 // Base URL de la API REST de Brevo
 const BREVO_API = 'https://api.brevo.com/v3'
@@ -42,16 +43,21 @@ export async function subscribeEmail(req: Request, res: Response, next: NextFunc
     // Crear o actualizar contacto en Brevo
     let isNewContact = false
     try {
-      await axios.post(
-        `${BREVO_API}/contacts`,
-        {
-          email,
-          firstName: fullName ? fullName.split(' ')[0] : undefined,
-          lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
-          listIds: listId ? [listId] : [],
-          updateEnabled: true,
-        },
-        { headers: brevoHeaders() }
+      // Alta de contacto con updateEnabled:true es idempotente → seguro reintentar.
+      await withRetry(
+        () =>
+          axios.post(
+            `${BREVO_API}/contacts`,
+            {
+              email,
+              firstName: fullName ? fullName.split(' ')[0] : undefined,
+              lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
+              listIds: listId ? [listId] : [],
+              updateEnabled: true,
+            },
+            { headers: brevoHeaders() }
+          ),
+        { label: 'Brevo alta contacto' }
       )
       isNewContact = true
     } catch (err: any) {
@@ -75,19 +81,21 @@ export async function subscribeEmail(req: Request, res: Response, next: NextFunc
     // Si es nuevo suscriptor, disparar email de bienvenida
     const templateId = parseInt(process.env.BREVO_WELCOME_TEMPLATE_ID || '0', 10)
     if (isNewContact && templateId) {
-      await axios
-        .post(
-          `${BREVO_API}/smtp/email`,
-          {
-            to: [{ email }],
-            templateId,
-            params: { FULLNAME: fullName || email },
-          },
-          { headers: brevoHeaders() }
-        )
-        .catch((err) =>
-          console.error(`Error enviando bienvenida a ${email}:`, err?.response?.data || err.message)
-        )
+      await withRetry(
+        () =>
+          axios.post(
+            `${BREVO_API}/smtp/email`,
+            {
+              to: [{ email }],
+              templateId,
+              params: { FULLNAME: fullName || email },
+            },
+            { headers: brevoHeaders() }
+          ),
+        { label: 'Brevo email bienvenida' }
+      ).catch((err) =>
+        console.error(`Error enviando bienvenida a ${email}:`, err?.response?.data || err.message)
+      )
     }
 
     res.json({ success: true })
@@ -130,7 +138,9 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
 
   const templateId = parseInt(process.env.BREVO_ORDER_CONFIRM_TEMPLATE_ID || '0', 10)
 
-  await axios.post(
+  await withRetry(
+    () =>
+      axios.post(
     `${BREVO_API}/smtp/email`,
     {
       to: [{ email: recipientEmail, name: recipientName }],
@@ -159,6 +169,8 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
       },
     },
     { headers: brevoHeaders() }
+      ),
+    { label: 'Brevo confirmación pedido' }
   )
 
   // Marcar como comprador en la tabla local si existe el suscriptor
@@ -170,6 +182,78 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
     .catch(() => {
       // Si no está en la lista de suscriptores, no es error
     })
+}
+
+/**
+ * Función interna — se llama desde el webhook de Mercado Pago cuando un pago
+ * llegó en OXXO o transferencia SPEI y la orden queda en 'awaiting_verification'.
+ *
+ * El correo informa al cliente que recibimos su pago pero necesitamos verificar
+ * manualmente en la cuenta MP y le pide enviar el comprobante por WhatsApp.
+ * Ver [[project-flujo-pago-manual]] en la memoria del proyecto.
+ */
+export async function sendPaymentVerificationEmail(
+  orderId: string,
+  paymentMethod: string | null
+): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { customer: true },
+  })
+
+  if (!order) {
+    console.error(`sendPaymentVerificationEmail: orden no encontrada ${orderId}`)
+    return
+  }
+
+  const recipientEmail = order.guestEmail || order.customer?.email
+  const recipientName = order.guestName || 'Cliente'
+
+  if (!recipientEmail) {
+    console.error(`sendPaymentVerificationEmail: sin email para orden ${orderId}`)
+    return
+  }
+
+  const templateId = parseInt(process.env.BREVO_PAYMENT_VERIFICATION_TEMPLATE_ID || '0', 10)
+  const whatsapp = process.env.WHATSAPP_NUMBER || ''
+  const methodLabel =
+    paymentMethod === 'ticket' ? 'OXXO'
+    : paymentMethod === 'bank_transfer' ? 'transferencia SPEI'
+    : paymentMethod === 'atm' ? 'cajero automático'
+    : 'transferencia'
+
+  await withRetry(
+    () =>
+      axios.post(
+        `${BREVO_API}/smtp/email`,
+        {
+          to: [{ email: recipientEmail, name: recipientName }],
+          sender: {
+            email: process.env.BREVO_SENDER_EMAIL,
+            name: process.env.BREVO_SENDER_NAME,
+          },
+          templateId: templateId || undefined,
+          subject: templateId ? undefined : `Estamos verificando tu pago — Pedido #${orderId}`,
+          htmlContent: templateId
+            ? undefined
+            : `
+              <p>Hola ${recipientName},</p>
+              <p>Recibimos la notificación de tu pago por <strong>${methodLabel}</strong> para el pedido <strong>#${orderId}</strong>. Estamos verificando en nuestra cuenta antes de preparar tu envío.</p>
+              <p>Para agilizar la verificación, envíanos tu <strong>comprobante de pago</strong> por WhatsApp${whatsapp ? ` al <strong>${whatsapp}</strong>` : ''}.</p>
+              <p>En cuanto validemos el pago te llegará un correo con la confirmación y comenzaremos a preparar tu pedido.</p>
+              <p>Gracias por tu compra 🎴</p>
+            `,
+          params: {
+            ORDER_ID: orderId,
+            CUSTOMER_NAME: recipientName,
+            PAYMENT_METHOD: methodLabel,
+            WHATSAPP_NUMBER: whatsapp,
+          },
+        },
+        { headers: brevoHeaders() }
+      ),
+    { label: 'Brevo verificación de pago' }
+  )
 }
 
 /**
@@ -195,18 +279,22 @@ export async function sendTransactionalEmail(req: Request, res: Response, next: 
       return res.status(400).json({ error: 'templateId debe ser un número entero positivo' })
     }
 
-    await axios.post(
-      `${BREVO_API}/smtp/email`,
-      {
-        to: [{ email: to, name: name || to }],
-        sender: {
-          email: process.env.BREVO_SENDER_EMAIL,
-          name: process.env.BREVO_SENDER_NAME,
-        },
-        templateId: tid,
-        params: params || {},
-      },
-      { headers: brevoHeaders() }
+    await withRetry(
+      () =>
+        axios.post(
+          `${BREVO_API}/smtp/email`,
+          {
+            to: [{ email: to, name: name || to }],
+            sender: {
+              email: process.env.BREVO_SENDER_EMAIL,
+              name: process.env.BREVO_SENDER_NAME,
+            },
+            templateId: tid,
+            params: params || {},
+          },
+          { headers: brevoHeaders() }
+        ),
+      { label: 'Brevo email transaccional' }
     )
 
     res.json({ success: true })
@@ -241,17 +329,21 @@ export async function addContactToList(req: Request, res: Response, next: NextFu
       return res.status(400).json({ error: 'listId debe ser un número entero positivo' })
     }
 
-    // Crear o actualizar contacto con la lista
-    await axios.post(
-      `${BREVO_API}/contacts`,
-      {
-        email,
-        firstName: fullName ? fullName.split(' ')[0] : undefined,
-        lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
-        listIds: [lid],
-        updateEnabled: true,
-      },
-      { headers: brevoHeaders() }
+    // Crear o actualizar contacto con la lista (idempotente → seguro reintentar)
+    await withRetry(
+      () =>
+        axios.post(
+          `${BREVO_API}/contacts`,
+          {
+            email,
+            firstName: fullName ? fullName.split(' ')[0] : undefined,
+            lastName: fullName ? fullName.split(' ').slice(1).join(' ') : undefined,
+            listIds: [lid],
+            updateEnabled: true,
+          },
+          { headers: brevoHeaders() }
+        ),
+      { label: 'Brevo alta contacto a lista' }
     )
 
     res.json({ success: true })
@@ -260,10 +352,14 @@ export async function addContactToList(req: Request, res: Response, next: NextFu
       // Contacto ya existe — intentar solo agregar a la lista
       try {
         const { email, listId } = req.body
-        await axios.post(
-          `${BREVO_API}/contacts/lists/${listId}/contacts/add`,
-          { emails: [email] },
-          { headers: brevoHeaders() }
+        await withRetry(
+          () =>
+            axios.post(
+              `${BREVO_API}/contacts/lists/${listId}/contacts/add`,
+              { emails: [email] },
+              { headers: brevoHeaders() }
+            ),
+          { label: 'Brevo agregar a lista' }
         )
         return res.json({ success: true })
       } catch {

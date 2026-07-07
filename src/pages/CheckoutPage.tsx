@@ -14,6 +14,14 @@ import { cn } from '@/lib/utils'
 
 const STEPS = ['Contacto', 'Dirección', 'Envío', 'Facturación', 'Pago']
 
+function formatEta(days: unknown): string | null {
+  if (typeof days === 'number' && days >= 1) {
+    return days === 1 ? '1 día hábil' : `${days} días hábiles`
+  }
+  if (typeof days === 'string' && days.trim().length > 0) return days
+  return null
+}
+
 function StepIndicator({ current }: { current: number }) {
   return (
     <div className="flex items-center gap-0 mb-8 overflow-x-auto pb-2">
@@ -270,8 +278,8 @@ export default function CheckoutPage() {
                               onChange={() => shipping.setSelected(opt)}
                             />
                             <div>
-                              <p className="font-agency text-sm text-white uppercase tracking-wide">{opt.carrier}</p>
-                              <p className="font-exo text-xs text-ash">{opt.service}{opt.eta ? ` · ${opt.eta}` : ''}</p>
+                              <p className="font-agency text-sm text-white tracking-wide">{opt.carrier}</p>
+                              <p className="font-exo text-xs text-ash">{opt.service}{formatEta(opt.eta) ? ` · ${formatEta(opt.eta)}` : ''}</p>
                             </div>
                           </div>
                           <span className="font-agency text-sm text-dragon">{formatPrice(opt.price)}</span>
@@ -399,6 +407,7 @@ export default function CheckoutPage() {
                       <img
                         src={item.product.images[0]}
                         alt={item.product.name}
+                        loading="lazy"
                         className="w-10 h-14 object-cover flex-shrink-0"
                       />
                       <div className="min-w-0">

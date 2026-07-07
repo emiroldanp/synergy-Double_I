@@ -48,6 +48,8 @@ export const ordersApi = {
     api.patch(`/api/admin/orders/${id}`, { status, trackingNumber }),
   retryInvoice: (orderId: string) =>
     api.post(`/api/admin/invoices/${orderId}/retry`),
+  markPaid: (orderId: string) =>
+    api.post(`/api/admin/orders/${orderId}/mark-paid`),
 }
 
 export const productsApi = {

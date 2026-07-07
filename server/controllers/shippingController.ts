@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import axios from 'axios'
 import { prisma } from '../lib/prisma'
+import { withRetry } from '../lib/retry'
 
 interface ShippingDestination {
   street: string
@@ -34,14 +35,19 @@ async function getSkydropxToken(): Promise<string> {
     return cachedToken.value
   }
 
-  const response = await axios.post(
-    'https://pro.skydropx.com/api/v1/oauth/token',
-    {
-      client_id: process.env.SKYDROPX_API_KEY,
-      client_secret: process.env.SKYDROPX_API_SECRET,
-      grant_type: 'client_credentials',
-    },
-    { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+  // Obtener token es idempotente (solo lectura de credenciales) → seguro reintentar.
+  const response = await withRetry(
+    () =>
+      axios.post(
+        'https://pro.skydropx.com/api/v1/oauth/token',
+        {
+          client_id: process.env.SKYDROPX_API_KEY,
+          client_secret: process.env.SKYDROPX_API_SECRET,
+          grant_type: 'client_credentials',
+        },
+        { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+      ),
+    { label: 'Skydropx token' }
   )
 
   const { access_token, expires_in } = response.data
@@ -98,16 +104,22 @@ export async function quoteShipping(req: Request, res: Response, next: NextFunct
       const token = await getSkydropxToken()
 
       // 1) Crea la cotización — devuelve un ID pero las rates aún están "pending".
-      const createResp = await axios.post(
-        'https://pro.skydropx.com/api/v1/quotations',
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000,
-        }
+      //    Crear una cotización no genera cargos ni órdenes (no es escritura con
+      //    efectos secundarios persistentes/cobrables) → seguro reintentar.
+      const createResp = await withRetry(
+        () =>
+          axios.post(
+            'https://pro.skydropx.com/api/v1/quotations',
+            payload,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              timeout: 10000,
+            }
+          ),
+        { label: 'Skydropx crear cotización' }
       )
 
       const quotationId = createResp.data?.data?.id || createResp.data?.id
@@ -122,12 +134,18 @@ export async function quoteShipping(req: Request, res: Response, next: NextFunct
 
         for (let i = 0; i < maxAttempts; i++) {
           await sleep(delayMs)
-          const pollResp = await axios.get(
-            `https://pro.skydropx.com/api/v1/quotations/${quotationId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-              timeout: 5000,
-            }
+          // GET de polling es idempotente. Reintentos cortos (2) para absorber
+          // un blip de red puntual sin abortar todo el ciclo de polling.
+          const pollResp = await withRetry(
+            () =>
+              axios.get(
+                `https://pro.skydropx.com/api/v1/quotations/${quotationId}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                  timeout: 5000,
+                }
+              ),
+            { retries: 2, label: 'Skydropx polling' }
           )
           skydropxData = pollResp.data
           const ratesPreview = pollResp.data?.data?.attributes?.rates
@@ -141,17 +159,14 @@ export async function quoteShipping(req: Request, res: Response, next: NextFunct
         }
       }
     } catch (axiosError: any) {
+      // Logueamos detalle en el server pero NO lo devolvemos al cliente
+      // para evitar filtrar info interna del proveedor.
       console.error('[Skydropx] status:', axiosError?.response?.status)
       console.error('[Skydropx] data:', JSON.stringify(axiosError?.response?.data))
       console.error('[Skydropx] message:', axiosError?.message)
       return res.status(503).json({
         error: 'shipping_timeout',
         message: 'No pudimos cotizar envíos en este momento. Intenta de nuevo.',
-        _debug: {
-          status: axiosError?.response?.status,
-          data: axiosError?.response?.data,
-          message: axiosError?.message,
-        },
       })
     }
 
@@ -171,8 +186,13 @@ export async function quoteShipping(req: Request, res: Response, next: NextFunct
       })
       .map((q: any) => {
         const attrs = q.attributes || q
+        // provider_display_name viene con casing natural ("FedEx", "Estafeta");
+        // provider_name es el slug ("fedex", "estafeta") — fallback si no está.
         return {
-          carrier: attrs.provider_name || attrs.carrier_name || attrs.carrier,
+          carrier: attrs.provider_display_name
+            || attrs.carrier_name
+            || attrs.provider_name
+            || attrs.carrier,
           service: attrs.provider_service_name || attrs.service_level_name || attrs.service,
           price: Number(attrs.total || attrs.amount_local || attrs.total_pricing || 0),
           eta: attrs.days || attrs.days_transit,

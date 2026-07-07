@@ -7,7 +7,7 @@ const CATEGORIES = [
     description: 'Base Set, Neo, EX, Scarlet & Violet',
     color: '#F5C400',
     image: null as string | null,
-    href: '/catalogo?franchise=pokemon',
+    href: '/catalogo/pokemon',
     bg: 'from-yellow-900/30 to-yellow-950/60',
   },
   {
@@ -16,7 +16,7 @@ const CATEGORIES = [
     description: 'The First Chapter, Rise of the Floodborn',
     color: '#6B5ECD',
     image: null as string | null,
-    href: '/catalogo?franchise=lorcana',
+    href: '/catalogo/lorcana',
     bg: 'from-purple-900/30 to-purple-950/60',
   },
   {
@@ -25,7 +25,7 @@ const CATEGORIES = [
     description: 'Alpha, Beta, Dual Lands, Modern',
     color: '#A82FBB',
     image: null as string | null,
-    href: '/catalogo?franchise=magic',
+    href: '/catalogo/magic',
     bg: 'from-fuchsia-900/30 to-fuchsia-950/60',
   },
 ]
