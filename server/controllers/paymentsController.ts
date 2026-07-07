@@ -3,7 +3,7 @@ import MercadoPagoConfig, { Preference, Payment } from 'mercadopago'
 import { prisma } from '../lib/prisma'
 import { Prisma } from '@prisma/client'
 import { createInvoice } from './invoicesController'
-import { sendOrderConfirmationEmail } from './emailController'
+import { sendOrderConfirmationEmail, sendPaymentVerificationEmail } from './emailController'
 import { withRetry } from '../lib/retry'
 import crypto from 'crypto'
 
@@ -109,6 +109,118 @@ export async function createPreference(req: Request, res: Response, next: NextFu
 }
 
 /**
+ * Confirma un pago aprobado: cambia el estado de la orden a 'confirmed',
+ * descuenta stock, emite factura si aplica y dispara el email de confirmación.
+ *
+ * Es idempotente: si la orden ya está 'confirmed' no vuelve a descontar stock.
+ * Se comparte entre el webhook automático (tarjeta / saldo MP) y el marcado
+ * manual desde admin (OXXO / SPEI verificados por Irving).
+ */
+async function confirmOrderPayment(params: {
+  orderId: string
+  paymentReference: string | null
+  paymentMethod: string | null
+}): Promise<void> {
+  const { orderId, paymentReference, paymentMethod } = params
+
+  const alreadyConfirmed = await prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    })
+
+    if (!order) {
+      console.error(`confirmOrderPayment: orden no encontrada: ${orderId}`)
+      return true
+    }
+
+    // Guard idempotente: si otro proceso ya la confirmó, no volver a descontar.
+    if (order.paymentStatus === 'confirmed') return true
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        paymentStatus: 'confirmed',
+        orderStatus: 'confirmed',
+        paymentReference: paymentReference ?? order.paymentReference,
+        paymentMethod: paymentMethod ?? order.paymentMethod,
+      },
+    })
+
+    for (const item of order.items) {
+      const updated = await tx.product.updateMany({
+        where: { id: item.productId, stock: { gte: item.quantity } },
+        data: { stock: { decrement: item.quantity } },
+      })
+      if (updated.count === 0) {
+        console.error('[STOCK] Stock insuficiente para producto', item.productId)
+      }
+    }
+
+    return false
+  })
+
+  if (alreadyConfirmed) return
+
+  // Procesos post-transacción (facturación y email) se hacen fuera para no
+  // mantener abierta la conexión de Postgres mientras se llama a APIs externas.
+  const updatedOrder = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { invoice: true },
+  })
+
+  if (updatedOrder?.requiresInvoice && updatedOrder.invoice?.status === 'draft') {
+    await createInvoice(orderId).catch((err) =>
+      console.error(`Error al emitir factura para orden ${orderId}:`, err)
+    )
+  }
+
+  await sendOrderConfirmationEmail(orderId).catch((err) =>
+    console.error(`Error al enviar email de confirmación para orden ${orderId}:`, err)
+  )
+}
+
+/**
+ * POST /api/admin/orders/:id/mark-paid
+ * Solo aplica cuando la orden está en 'awaiting_verification' (pagos OXXO/SPEI
+ * pendientes de verificar en la cuenta MP de Irving). Idempotente.
+ */
+export async function markOrderPaid(req: Request, res: Response, next: NextFunction) {
+  try {
+    const orderId = String(req.params.id)
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, paymentStatus: true, paymentReference: true, paymentMethod: true },
+    })
+
+    if (!order) {
+      return res.status(404).json({ error: 'Pedido no encontrado' })
+    }
+
+    if (order.paymentStatus === 'confirmed') {
+      return res.json({ data: { orderId, alreadyConfirmed: true } })
+    }
+
+    if (order.paymentStatus !== 'awaiting_verification') {
+      return res.status(409).json({
+        error: `No se puede marcar como pagado: la orden está en estado '${order.paymentStatus}'.`,
+      })
+    }
+
+    await confirmOrderPayment({
+      orderId,
+      paymentReference: order.paymentReference,
+      paymentMethod: order.paymentMethod,
+    })
+
+    res.json({ data: { orderId, confirmed: true } })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * POST /api/payments/webhook
  * Recibe notificaciones de Mercado Pago.
  * El body llega como Buffer (raw) — se parsea manualmente.
@@ -183,59 +295,38 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
     }
 
     if (status === 'approved') {
-      // Actualizar orden y descontar stock en una transacción
-      await prisma.$transaction(async (tx) => {
-        // Obtener la orden con sus items
-        const order = await tx.order.findUnique({
-          where: { id: orderId },
-          include: { items: true, invoice: true },
-        })
+      const paymentType = paymentData.payment_type_id || null
 
-        if (!order) {
-          console.error(`Webhook MP: orden no encontrada: ${orderId}`)
-          return
-        }
+      // MP aprobó el pago, pero para OXXO (ticket) y transferencia (bank_transfer, atm)
+      // Irving quiere verificar manualmente en su cuenta antes de confirmar.
+      // Ver [[project-flujo-pago-manual]] en memoria del proyecto.
+      const requiresManualVerification =
+        paymentType === 'ticket' ||
+        paymentType === 'bank_transfer' ||
+        paymentType === 'atm'
 
-        // Actualizar estado de la orden
-        await tx.order.update({
+      if (requiresManualVerification) {
+        await prisma.order.update({
           where: { id: orderId },
           data: {
-            paymentStatus: 'confirmed',
-            orderStatus: 'confirmed',
+            paymentStatus: 'awaiting_verification',
             paymentReference: String(paymentId),
-            paymentMethod: paymentData.payment_type_id || null,
+            paymentMethod: paymentType,
           },
         })
 
-        // Descontar stock de cada item (con guard para evitar negativos)
-        for (const item of order.items) {
-          const updated = await tx.product.updateMany({
-            where: { id: item.productId, stock: { gte: item.quantity } },
-            data: { stock: { decrement: item.quantity } },
-          })
-          if (updated.count === 0) {
-            console.error('[STOCK] Stock insuficiente para producto', item.productId)
-          }
-        }
-      })
-
-      // Obtener la orden actualizada para procesos post-transacción
-      const updatedOrder = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: { invoice: true },
-      })
-
-      // Emitir factura si aplica
-      if (updatedOrder?.requiresInvoice && updatedOrder.invoice?.status === 'draft') {
-        await createInvoice(orderId).catch((err) =>
-          console.error(`Error al emitir factura para orden ${orderId}:`, err)
+        // Avisar al cliente que necesitamos verificar y pedirle comprobante.
+        // No relanzar si el email falla — la orden ya quedó registrada.
+        await sendPaymentVerificationEmail(orderId, paymentType).catch((err) =>
+          console.error(`Error al enviar email de verificación para orden ${orderId}:`, err)
         )
+      } else {
+        await confirmOrderPayment({
+          orderId,
+          paymentReference: String(paymentId),
+          paymentMethod: paymentType,
+        })
       }
-
-      // Enviar email de confirmación
-      await sendOrderConfirmationEmail(orderId).catch((err) =>
-        console.error(`Error al enviar email de confirmación para orden ${orderId}:`, err)
-      )
     } else if (status === 'rejected' || status === 'cancelled') {
       await prisma.order.update({
         where: { id: orderId },

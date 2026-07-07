@@ -22,6 +22,7 @@ import {
   updatePost,
   deletePost,
 } from '../controllers/blogController'
+import { markOrderPaid } from '../controllers/paymentsController'
 
 export const adminRoutes = Router()
 
@@ -39,6 +40,7 @@ adminRoutes.post('/products/:id/images', uploadProductImage)
 // --- Pedidos ---
 adminRoutes.get('/orders', listOrders)
 adminRoutes.patch('/orders/:id', updateOrder)
+adminRoutes.post('/orders/:id/mark-paid', markOrderPaid)
 
 // --- Facturas ---
 adminRoutes.get('/invoices', listInvoices)
