@@ -85,7 +85,7 @@ Prisma 7 tiene cambios de arquitectura respecto a versiones anteriores:
 
 ---
 
-## Bloqueantes (estado 2026-05-18)
+## Bloqueantes (estado 2026-07-09)
 
 | Bloqueante | Estado | Impacta |
 |------------|--------|---------|
@@ -93,11 +93,11 @@ Prisma 7 tiene cambios de arquitectura respecto a versiones anteriores:
 | Pickup en tienda | ✅ Eliminado — todo en línea | — |
 | Mercado Pago credentials prod | ⏳ Pendiente (Irving activa cuenta MP) | RF-025 bloqueado |
 | Dirección de origen (envíos) | ⏳ Pendiente | Cotización Skydropx |
-| RFC y CSD del SAT | ⏳ Pendiente | Facturapi, emisión CFDI |
+| RFC y CSD del SAT | ✅ CSD configurado en Facturapi | — |
 | Dominio | ✅ doubleicards.com | DNS, CI/CD, URLs SEO |
-| Logo e identidad visual | ⏳ Pendiente (Irving lo comparte) | Frontend completo |
+| Logo e identidad visual | ✅ Recibido | — |
 | Redes sociales del footer | ⏳ Pendiente | Footer |
-| Número de WhatsApp de Irving | ⏳ Pendiente | Botón flotante |
+| Número de WhatsApp de Irving | ✅ Confirmado | Botón flotante |
 
 ---
 
