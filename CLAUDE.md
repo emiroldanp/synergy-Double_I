@@ -92,7 +92,7 @@ Prisma 7 tiene cambios de arquitectura respecto a versiones anteriores:
 | Pasarela de pagos | ✅ Mercado Pago seleccionado | Webhook de pagos, checkout |
 | Pickup en tienda | ✅ Eliminado — todo en línea | — |
 | Mercado Pago credentials prod | ⏳ Pendiente (Irving activa cuenta MP) | RF-025 bloqueado |
-| Dirección de origen (envíos) | ⏳ Pendiente | Cotización Skydropx |
+| Dirección de origen (envíos) | ✅ Configurada | — |
 | RFC y CSD del SAT | ✅ CSD configurado en Facturapi | — |
 | Dominio | ✅ doubleicards.com | DNS, CI/CD, URLs SEO |
 | Logo e identidad visual | ✅ Recibido | — |
