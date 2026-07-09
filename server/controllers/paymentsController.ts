@@ -13,8 +13,13 @@ if (process.env.NODE_ENV === 'production' && !process.env.PAYMENT_WEBHOOK_SECRET
 }
 
 // Inicializar cliente de Mercado Pago
+// En staging/dev usa PAYMENT_ACCESS_TOKEN_TEST (token TEST-) para no rechazar tarjetas de prueba
 function getMpClient() {
-  return new MercadoPagoConfig({ accessToken: process.env.PAYMENT_ACCESS_TOKEN! })
+  const isProd = process.env.NODE_ENV === 'production'
+  const accessToken = isProd
+    ? process.env.PAYMENT_ACCESS_TOKEN!
+    : (process.env.PAYMENT_ACCESS_TOKEN_TEST || process.env.PAYMENT_ACCESS_TOKEN!)
+  return new MercadoPagoConfig({ accessToken })
 }
 
 /**
