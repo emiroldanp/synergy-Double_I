@@ -91,9 +91,11 @@ export async function createPreference(req: Request, res: Response, next: NextFu
         installments: 1,
       },
       back_urls: {
-        success: `${process.env.FRONTEND_URL}/pedido/confirmacion`,
-        failure: `${process.env.FRONTEND_URL}/checkout`,
-        pending: `${process.env.FRONTEND_URL}/pedido/pendiente`,
+        // FRONTEND_URL puede tener múltiples orígenes separados por coma (CORS);
+        // MP necesita una sola URL, tomamos el primero.
+        success: `${(process.env.FRONTEND_URL ?? '').split(',')[0].trim()}/pedido/confirmacion`,
+        failure: `${(process.env.FRONTEND_URL ?? '').split(',')[0].trim()}/checkout`,
+        pending: `${(process.env.FRONTEND_URL ?? '').split(',')[0].trim()}/pedido/pendiente`,
       },
       auto_return: 'approved' as const,
       notification_url: `${process.env.BACKEND_URL}/api/payments/webhook`,
