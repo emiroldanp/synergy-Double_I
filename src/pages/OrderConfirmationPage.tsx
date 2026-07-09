@@ -90,7 +90,7 @@ export default function OrderConfirmationPage() {
                       {order.items.map((item) => (
                         <div key={item.productId} className="flex justify-between text-xs font-exo">
                           <span className="text-ash">{item.name} ×{item.quantity}</span>
-                          <span className="text-frost">{formatPrice(item.price * item.quantity)}</span>
+                          <span className="text-frost">{formatPrice(Number(item.unitPrice ?? item.price) * item.quantity)}</span>
                         </div>
                       ))}
                       {order.shippingCost > 0 && (

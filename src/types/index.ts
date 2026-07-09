@@ -97,6 +97,7 @@ export interface OrderItem {
   productId: string
   name: string
   price: number
+  unitPrice?: number   // campo real que devuelve Prisma
   quantity: number
   subtotal?: number
   image?: string
