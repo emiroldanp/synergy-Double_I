@@ -17,7 +17,7 @@ export function useAdminApi() {
     })
     if (!res.ok) {
       const error = await res.json().catch(() => ({ message: res.statusText }))
-      throw new Error(error.message ?? 'Error en la solicitud')
+      throw new Error(error.error ?? error.message ?? 'Error en la solicitud')
     }
     return res.json()
   }, [getToken])
