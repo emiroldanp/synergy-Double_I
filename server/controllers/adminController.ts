@@ -4,7 +4,26 @@ import { uploadToR2, deleteFromR2ByUrl } from '../lib/r2'
 import { Prisma } from '@prisma/client'
 import axios from 'axios'
 import { createInvoice } from './invoicesController'
+import { confirmOrderPayment } from './paymentsController'
 import { withRetry } from '../lib/retry'
+
+// Mapeo entre los valores del enum de DB (inglés) y los que usa el frontend (español)
+const STATUS_TO_DB: Record<string, string> = {
+  pendiente_pago: 'pending_payment',
+  pago_confirmado: 'confirmed',
+  en_preparacion: 'preparing',
+  enviado: 'shipped',
+  entregado: 'delivered',
+  cancelado: 'cancelled',
+}
+const STATUS_TO_FRONTEND: Record<string, string> = {
+  pending_payment: 'pendiente_pago',
+  confirmed: 'pago_confirmado',
+  preparing: 'en_preparacion',
+  shipped: 'enviado',
+  delivered: 'entregado',
+  cancelled: 'cancelado',
+}
 
 const BREVO_API = 'https://api.brevo.com/v3'
 const ARRIVAL_COOLDOWN_KEY = 'last_arrival_notification_at'
@@ -289,7 +308,11 @@ export async function listOrders(req: Request, res: Response, next: NextFunction
       prisma.order.count({ where }),
     ])
 
-    res.json({ data: orders, meta: { page, limit, total } })
+    const mapped = orders.map((o) => ({
+      ...o,
+      status: STATUS_TO_FRONTEND[o.orderStatus] ?? o.orderStatus,
+    }))
+    res.json({ data: mapped, meta: { page, limit, total } })
   } catch (error) {
     next(error)
   }
@@ -297,20 +320,35 @@ export async function listOrders(req: Request, res: Response, next: NextFunction
 
 /**
  * PATCH /api/admin/orders/:id
- * Actualiza orderStatus y/o trackingNumber.
+ * Actualiza el estado y/o número de guía.
+ * Cuando el estado cambia a 'pago_confirmado' y el pago no estaba confirmado,
+ * dispara el flujo completo: stock, factura y email de confirmación.
  */
 export async function updateOrder(req: Request, res: Response, next: NextFunction) {
   try {
     const id = String(req.params.id)
-    const { orderStatus, trackingNumber } = req.body
+    // El frontend envía 'status' (valor en español como 'pago_confirmado')
+    const { status, trackingNumber } = req.body
 
     const updateData: Prisma.OrderUpdateInput = {}
-    if (orderStatus) updateData.orderStatus = orderStatus
+    const dbStatus = status ? (STATUS_TO_DB[status] ?? status) : undefined
+    if (dbStatus) updateData.orderStatus = dbStatus as any
     if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber
 
     const order = await prisma.order.update({ where: { id }, data: updateData })
 
-    res.json({ data: order })
+    // Si Irving confirmó el pago manualmente desde el dropdown, disparar flujo completo
+    if (dbStatus === 'confirmed' && order.paymentStatus !== 'confirmed') {
+      confirmOrderPayment({
+        orderId: id,
+        paymentReference: order.paymentReference,
+        paymentMethod: order.paymentMethod,
+      }).catch((err) =>
+        console.error(`[updateOrder] Error al confirmar pago de orden ${id}:`, err)
+      )
+    }
+
+    res.json({ data: { ...order, status: STATUS_TO_FRONTEND[order.orderStatus] ?? order.orderStatus } })
   } catch (error: any) {
     if (error?.code === 'P2025') {
       return res.status(404).json({ error: 'Registro no encontrado' })

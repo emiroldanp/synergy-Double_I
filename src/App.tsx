@@ -32,6 +32,7 @@ const LoginPage = lazy(() => import('@/pages/admin/LoginPage'))
 
 import { CardFlipFlyPortal } from '@/components/ui/CardFlipFlyPortal'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
+import RequireAdmin from '@/components/admin/RequireAdmin'
 
 // Fallback de carga simple mientras se descarga el chunk de la página.
 function PageLoader() {
@@ -110,7 +111,7 @@ function AppContent() {
         <Route path="/blog/:slug" element={<Layout><BlogPostPage /></Layout>} />
         <Route path="/contacto" element={<Layout><ContactPage /></Layout>} />
         <Route path="/admin/login" element={<Layout><LoginPage /></Layout>} />
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
           <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="productos" element={<ProductsPage />} />

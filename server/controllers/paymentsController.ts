@@ -8,8 +8,13 @@ import { withRetry } from '../lib/retry'
 import crypto from 'crypto'
 
 // Inicializar cliente de Mercado Pago
+// En staging/dev usa PAYMENT_ACCESS_TOKEN_TEST (token TEST-) para no rechazar tarjetas de prueba
 function getMpClient() {
-  return new MercadoPagoConfig({ accessToken: process.env.PAYMENT_ACCESS_TOKEN! })
+  const isProd = process.env.NODE_ENV === 'production'
+  const accessToken = isProd
+    ? process.env.PAYMENT_ACCESS_TOKEN!
+    : (process.env.PAYMENT_ACCESS_TOKEN_TEST || process.env.PAYMENT_ACCESS_TOKEN!)
+  return new MercadoPagoConfig({ accessToken })
 }
 
 /**
@@ -81,9 +86,11 @@ export async function createPreference(req: Request, res: Response, next: NextFu
         installments: 1,
       },
       back_urls: {
-        success: `${process.env.FRONTEND_URL}/pedido/confirmacion`,
-        failure: `${process.env.FRONTEND_URL}/checkout`,
-        pending: `${process.env.FRONTEND_URL}/pedido/pendiente`,
+        // FRONTEND_URL puede tener múltiples orígenes separados por coma (CORS);
+        // MP necesita una sola URL, tomamos el primero.
+        success: `${(process.env.FRONTEND_URL ?? '').split(',')[0].trim()}/pedido/confirmacion`,
+        failure: `${(process.env.FRONTEND_URL ?? '').split(',')[0].trim()}/checkout`,
+        pending: `${(process.env.FRONTEND_URL ?? '').split(',')[0].trim()}/pedido/pendiente`,
       },
       auto_return: 'approved' as const,
       notification_url: `${process.env.BACKEND_URL}/api/payments/webhook`,
@@ -111,7 +118,7 @@ export async function createPreference(req: Request, res: Response, next: NextFu
  * Se comparte entre el webhook automático (tarjeta / saldo MP) y el marcado
  * manual desde admin (OXXO / SPEI verificados por Irving).
  */
-async function confirmOrderPayment(params: {
+export async function confirmOrderPayment(params: {
   orderId: string
   paymentReference: string | null
   paymentMethod: string | null
@@ -197,7 +204,7 @@ export async function markOrderPaid(req: Request, res: Response, next: NextFunct
       return res.json({ data: { orderId, alreadyConfirmed: true } })
     }
 
-    if (order.paymentStatus !== 'awaiting_verification') {
+    if (order.paymentStatus !== 'awaiting_verification' && order.paymentStatus !== 'pending') {
       return res.status(409).json({
         error: `No se puede marcar como pagado: la orden está en estado '${order.paymentStatus}'.`,
       })

@@ -232,14 +232,17 @@ export default function OrdersManager() {
                     </p>
                   </div>
 
-                  {/* Verificación manual de pago (OXXO / SPEI) */}
-                  {order.paymentStatus === 'awaiting_verification' && (
+                  {/* Verificación manual de pago */}
+                  {(order.paymentStatus === 'awaiting_verification' || order.paymentStatus === 'pending') && (
                     <div className="border-t border-navy/40 pt-4 space-y-2">
                       <p className="font-agency text-xs text-cyan-400 uppercase tracking-widest">
-                        ⏳ Pago pendiente de verificar
+                        ⏳ {order.paymentStatus === 'awaiting_verification' ? 'Pago pendiente de verificar' : 'Pago no confirmado automáticamente'}
                       </p>
                       <p className="font-exo text-xs text-ash">
-                        Este pedido fue pagado por OXXO o transferencia. Verifica en tu cuenta de Mercado Pago que el dinero haya llegado antes de marcarlo como pagado. Al confirmar, se descontará stock, se emitirá la factura si aplica y se enviará el correo al cliente.
+                        {order.paymentStatus === 'awaiting_verification'
+                          ? 'Este pedido fue pagado por OXXO o transferencia. Verifica en tu cuenta de Mercado Pago que el dinero haya llegado antes de marcarlo como pagado.'
+                          : 'El webhook de confirmación no llegó. Si ya verificaste el pago en Mercado Pago, confirma manualmente.'
+                        } Al confirmar, se descontará stock, se emitirá la factura si aplica y se enviará el correo al cliente.
                       </p>
                       {markPaidError && markingPaidId !== order.id && (
                         <p className="font-exo text-xs text-red-400">{markPaidError}</p>
@@ -249,7 +252,7 @@ export default function OrdersManager() {
                         disabled={markingPaidId === order.id}
                         className="w-full text-xs py-2 font-agency uppercase tracking-wider border border-cyan-500/60 text-cyan-400 hover:bg-cyan-500/10 transition-colors disabled:opacity-60"
                       >
-                        {markingPaidId === order.id ? 'Marcando...' : 'Marcar pago verificado'}
+                        {markingPaidId === order.id ? 'Marcando...' : 'Confirmar pago manualmente'}
                       </button>
                     </div>
                   )}

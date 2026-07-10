@@ -41,3 +41,10 @@ tsconfig.app.tsbuildinfo
 tsconfig.node.tsbuildinfo
 
 docs/
+coverage/
+test-results/
+# Playwright E2E — artefactos de ejecución
+test-results/
+tests/e2e/report/
+tests/e2e/tests/
+playwright-report/
