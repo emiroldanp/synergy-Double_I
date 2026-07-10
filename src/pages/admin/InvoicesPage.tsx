@@ -49,11 +49,11 @@ export default function InvoicesPage() {
     setRetrying(orderId)
     try {
       await apiFetch(`/api/admin/invoices/${orderId}/retry`, { method: 'POST' })
-      fetchInvoices()
     } catch (e: unknown) {
       alert(`Error al reintentar: ${e instanceof Error ? e.message : 'Error desconocido'}`)
     } finally {
       setRetrying(null)
+      fetchInvoices()
     }
   }
 
