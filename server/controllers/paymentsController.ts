@@ -232,6 +232,8 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
   // Siempre responder 200 primero para evitar reintentos de Mercado Pago
   res.sendStatus(200)
 
+  console.log('[Webhook MP] Recibido —', new Date().toISOString(), '— tipo:', req.body?.type ?? req.query?.type ?? 'desconocido')
+
   try {
     // Parsear body raw
     const rawBody = req.body instanceof Buffer ? req.body.toString('utf-8') : JSON.stringify(req.body)
