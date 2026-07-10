@@ -209,7 +209,7 @@ export async function markOrderPaid(req: Request, res: Response, next: NextFunct
       return res.json({ data: { orderId, alreadyConfirmed: true } })
     }
 
-    if (order.paymentStatus !== 'awaiting_verification') {
+    if (order.paymentStatus !== 'awaiting_verification' && order.paymentStatus !== 'pending') {
       return res.status(409).json({
         error: `No se puede marcar como pagado: la orden está en estado '${order.paymentStatus}'.`,
       })

@@ -233,7 +233,7 @@ export default function OrdersManager() {
                   </div>
 
                   {/* Verificación manual de pago */}
-                  {(order.paymentStatus === 'awaiting_verification' || order.paymentStatus === 'pending_payment') && (
+                  {(order.paymentStatus === 'awaiting_verification' || order.paymentStatus === 'pending') && (
                     <div className="border-t border-navy/40 pt-4 space-y-2">
                       <p className="font-agency text-xs text-cyan-400 uppercase tracking-widest">
                         ⏳ {order.paymentStatus === 'awaiting_verification' ? 'Pago pendiente de verificar' : 'Pago no confirmado automáticamente'}
