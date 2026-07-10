@@ -136,15 +136,20 @@ export async function createInvoice(orderId: string): Promise<void> {
     })
 
     // Enviar email con factura adjunta vía Brevo
+    if (!buyerEmail) {
+      console.warn(`[Factura] Orden ${orderId} no tiene email de comprador — se omite envío de correo`)
+    }
     await sendInvoiceEmail(buyerEmail, orderId, pdfUrl, xmlUrl).catch((err) =>
-      console.error(`Error enviando email de factura para orden ${orderId}:`, err)
+      console.error(`[Factura] Error enviando email de factura para orden ${orderId}:`, err)
     )
   } catch (error) {
     // Dejar en draft para reintento manual y notificar a Irving
-    console.error(`Facturapi error para orden ${orderId}:`, error)
+    console.error(`[Factura] Error para orden ${orderId}:`, error)
     await sendInvoiceFailureAlert(orderId, buyerEmail).catch((err) =>
-      console.error(`Error enviando alerta de factura fallida para orden ${orderId}:`, err)
+      console.error(`[Factura] Error enviando alerta de factura fallida para orden ${orderId}:`, err)
     )
+    // Relanzar para que retryInvoice pueda responder con 500 al frontend
+    throw error
   }
 }
 
