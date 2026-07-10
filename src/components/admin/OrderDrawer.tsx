@@ -26,6 +26,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
   const [status, setStatus] = useState(order?.orderStatus ?? '')
   const [trackingNumber, setTrackingNumber] = useState(order?.trackingNumber ?? '')
   const [saving, setSaving] = useState(false)
+  const [markingPaid, setMarkingPaid] = useState(false)
 
   useEffect(() => {
     if (order) {
@@ -41,7 +42,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
       await apiFetch(`/api/admin/orders/${order.id}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          orderStatus: status,
+          status,
           trackingNumber: trackingNumber || undefined,
         }),
       })
@@ -53,6 +54,23 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
       setSaving(false)
     }
   }
+
+  const handleMarkPaid = async () => {
+    if (!order) return
+    if (!confirm('¿Confirmas que ya recibiste el pago? Se descontará stock, se emitirá la factura si aplica y se enviará el correo al cliente.')) return
+    setMarkingPaid(true)
+    try {
+      await apiFetch(`/api/admin/orders/${order.id}/mark-paid`, { method: 'POST' })
+      onUpdated()
+      onClose()
+    } catch (e: unknown) {
+      alert(`Error: ${e instanceof Error ? e.message : 'Error desconocido'}`)
+    } finally {
+      setMarkingPaid(false)
+    }
+  }
+
+  const canMarkPaid = order?.paymentStatus === 'pending' || order?.paymentStatus === 'awaiting_verification'
 
   // Obtener email del cliente (usuario registrado o invitado)
   const customerEmail = order?.customer?.email ?? order?.guestEmail ?? '—'
@@ -146,6 +164,27 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Botón de confirmar pago manual */}
+          {canMarkPaid && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+              <p className="text-sm font-medium text-blue-800">
+                {order.paymentStatus === 'awaiting_verification'
+                  ? 'Pago pendiente de verificar'
+                  : 'Pago no confirmado automáticamente'}
+              </p>
+              <p className="text-xs text-blue-600">
+                Al confirmar se descuenta stock, se emite la factura si aplica y se envía el correo al cliente.
+              </p>
+              <button
+                onClick={handleMarkPaid}
+                disabled={markingPaid}
+                className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {markingPaid ? 'Confirmando...' : 'Confirmar pago manualmente'}
+              </button>
             </div>
           )}
 
