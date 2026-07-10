@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client'
 interface OrderItem {
   productId: string
   quantity: number
-  unitPrice: number
+  // unitPrice lo ignoramos — el precio siempre viene de la BD para evitar price manipulation
 }
 
 interface CreateOrderBody {
@@ -39,20 +39,28 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ error: 'La orden debe tener al menos un item' })
     }
 
-    // Calcular totales
-    const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
-    const total = subtotal + (shippingCost || 0)
-
     // Crear orden e items en una sola transacción (validación de stock incluida para eliminar TOCTOU)
     const order = await prisma.$transaction(async (tx) => {
-      // 1. Validar stock dentro de la transacción
+      // 1. Validar stock y obtener precios desde la BD — nunca del cliente
+      const resolvedItems: { productId: string; quantity: number; unitPrice: Prisma.Decimal; subtotal: Prisma.Decimal }[] = []
       for (const item of items) {
         const product = await tx.product.findUnique({ where: { id: item.productId } })
         if (!product || !product.isActive) throw new Error(`Producto ${item.productId} no disponible`)
         if (product.stock < item.quantity) throw new Error(`Stock insuficiente para ${product.name}`)
+        const unitPrice = product.price
+        resolvedItems.push({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice,
+          subtotal: new Prisma.Decimal(Number(unitPrice) * item.quantity),
+        })
       }
 
-      // 2. Crear orden e items
+      // 2. Calcular totales desde precios de BD
+      const subtotal = resolvedItems.reduce((sum, i) => sum + Number(i.unitPrice) * i.quantity, 0)
+      const total = subtotal + (shippingCost || 0)
+
+      // 3. Crear orden e items
       const newOrder = await tx.order.create({
         data: {
           customerId: customerId || null,
@@ -66,12 +74,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
           total: new Prisma.Decimal(total),
           requiresInvoice,
           items: {
-            create: items.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              unitPrice: new Prisma.Decimal(item.unitPrice),
-              subtotal: new Prisma.Decimal(item.unitPrice * item.quantity),
-            })),
+            create: resolvedItems,
           },
         },
       })

@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import rateLimit from 'express-rate-limit'
 
 import { shippingRoutes } from './routes/shipping'
 import { ordersRoutes } from './routes/orders'
@@ -44,6 +45,23 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
 }
 
+// Rate limiting — protección contra abuso y DoS
+const orderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes, intenta más tarde' },
+})
+
+const subscribeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas suscripciones desde esta IP' },
+})
+
 // El webhook de Mercado Pago necesita el body raw para verificar la firma
 // — debe registrarse ANTES de express.json()
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }))
@@ -56,8 +74,9 @@ app.use('/api/products', productsRoutes)
 app.use('/api/blog', blogRoutes)
 app.get('/api/banners', listPublicBanners)
 app.use('/api/shipping', shippingRoutes)
-app.use('/api/orders', ordersRoutes)
+app.use('/api/orders', orderLimiter, ordersRoutes)
 app.use('/api/payments', paymentsRoutes)
+app.use('/api/email/subscribe', subscribeLimiter)
 app.use('/api/email', emailRoutes)
 
 // Rutas de facturas (extensión futura)
