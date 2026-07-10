@@ -7,11 +7,6 @@ import { sendOrderConfirmationEmail, sendPaymentVerificationEmail } from './emai
 import { withRetry } from '../lib/retry'
 import crypto from 'crypto'
 
-// Verificar en producción que el webhook secret esté configurado
-if (process.env.NODE_ENV === 'production' && !process.env.PAYMENT_WEBHOOK_SECRET) {
-  throw new Error('PAYMENT_WEBHOOK_SECRET es requerido en producción')
-}
-
 // Inicializar cliente de Mercado Pago
 // En staging/dev usa PAYMENT_ACCESS_TOKEN_TEST (token TEST-) para no rechazar tarjetas de prueba
 function getMpClient() {
