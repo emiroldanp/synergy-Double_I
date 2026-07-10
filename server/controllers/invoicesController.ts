@@ -63,6 +63,7 @@ export async function createInvoice(orderId: string): Promise<void> {
 
   const inv = order.invoice
   const buyerEmail = order.guestEmail || order.customer?.email || ''
+  const orderLabel = `#${orderId.slice(0, 8).toUpperCase()}`
 
   // Determinar forma de pago según método registrado
   // '03' = transferencia electrónica, '31' = Intermediario pagos
@@ -139,7 +140,7 @@ export async function createInvoice(orderId: string): Promise<void> {
     if (!buyerEmail) {
       console.warn(`[Factura] Orden ${orderId} no tiene email de comprador — se omite envío de correo`)
     }
-    await sendInvoiceEmail(buyerEmail, orderId, pdfUrl, xmlUrl).catch((err) =>
+    await sendInvoiceEmail(buyerEmail, orderLabel, pdfUrl, xmlUrl).catch((err) =>
       console.error(`[Factura] Error enviando email de factura para orden ${orderId}:`, err)
     )
   } catch (error) {
@@ -158,7 +159,7 @@ export async function createInvoice(orderId: string): Promise<void> {
  */
 async function sendInvoiceEmail(
   toEmail: string,
-  orderId: string,
+  orderLabel: string,
   pdfUrl: string,
   xmlUrl: string
 ): Promise<void> {
@@ -174,15 +175,19 @@ async function sendInvoiceEmail(
         name: process.env.BREVO_SENDER_NAME,
       },
       to: [{ email: toEmail }],
-      subject: `Tu factura — Pedido ${orderId}`,
+      subject: `Factura de tu compra ${orderLabel} — Double-I TCG`,
+      textContent: `Hola, tu factura CFDI para el pedido ${orderLabel} está lista.\n\nDescarga tu PDF: ${pdfUrl}\nDescarga tu XML: ${xmlUrl}\n\nGracias por tu compra en Double-I TCG.`,
       htmlContent: `
-        <p>Hola,</p>
-        <p>Tu factura está lista. Puedes descargarla aquí:</p>
-        <ul>
-          <li><a href="${pdfUrl}">Descargar PDF</a></li>
-          <li><a href="${xmlUrl}">Descargar XML</a></li>
-        </ul>
-        <p>Gracias por tu compra.</p>
+        <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;color:#333">
+          <h2 style="color:#111;margin-bottom:8px">Tu factura está lista</h2>
+          <p style="color:#555;margin-bottom:20px">Pedido <strong>${orderLabel}</strong></p>
+          <p>Descarga tus archivos CFDI:</p>
+          <div style="margin:20px 0">
+            <a href="${pdfUrl}" style="display:inline-block;margin-right:12px;padding:10px 20px;background:#111;color:#fff;text-decoration:none;border-radius:4px">Descargar PDF</a>
+            <a href="${xmlUrl}" style="display:inline-block;padding:10px 20px;background:#555;color:#fff;text-decoration:none;border-radius:4px">Descargar XML</a>
+          </div>
+          <p style="color:#888;font-size:13px">Gracias por tu compra en Double-I TCG.</p>
+        </div>
       `,
     },
     {
