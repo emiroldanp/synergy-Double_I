@@ -136,7 +136,7 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
     return
   }
 
-  const templateId = parseInt(process.env.BREVO_ORDER_CONFIRM_TEMPLATE_ID || '0', 10)
+  const orderLabel = `#${orderId.slice(0, 8).toUpperCase()}`
 
   await withRetry(
     () =>
@@ -148,25 +148,22 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
         email: process.env.BREVO_SENDER_EMAIL,
         name: process.env.BREVO_SENDER_NAME,
       },
-      templateId: templateId || undefined,
-      subject: templateId ? undefined : `Confirmación de pedido #${orderId}`,
-      htmlContent: templateId
-        ? undefined
-        : buildOrderConfirmationHtml(order),
-      params: {
-        ORDER_ID: orderId,
-        CUSTOMER_NAME: recipientName,
-        ITEMS_HTML: order.items
-          .map(
-            (item) =>
-              `<tr><td style="padding:10px 12px;font-size:14px;border-bottom:1px solid #1e1e1e;">${item.product.name}</td>` +
-              `<td style="padding:10px 12px;text-align:center;font-size:14px;color:#b0b0b0;border-bottom:1px solid #1e1e1e;">${item.quantity}</td>` +
-              `<td style="padding:10px 12px;text-align:right;font-size:14px;border-bottom:1px solid #1e1e1e;">$${Number(item.unitPrice).toFixed(2)}</td></tr>`
-          )
-          .join(''),
-        TOTAL: Number(order.total).toFixed(2),
-        SHIPPING_METHOD: order.shippingMethod || 'Por confirmar',
-      },
+      subject: `Tu pedido fue confirmado ${orderLabel} — Double-I Cards`,
+      textContent: [
+        `¡Pedido confirmado!`,
+        ``,
+        `Hola ${recipientName}, tu pago fue procesado exitosamente.`,
+        `Pedido: ${orderLabel}`,
+        ``,
+        `Productos:`,
+        ...order.items.map((i) => `- ${i.product.name} x${i.quantity}  $${Number(i.unitPrice).toFixed(2)} c/u`),
+        ``,
+        `Total: $${Number(order.total).toFixed(2)} MXN`,
+        `Envío: ${order.shippingMethod || 'Por confirmar'}`,
+        ``,
+        `Gracias por tu compra en Double-I Cards.`,
+      ].join('\n'),
+      htmlContent: buildOrderConfirmationHtml(order, recipientName, orderLabel),
     },
     { headers: brevoHeaders() }
       ),
@@ -371,23 +368,77 @@ export async function addContactToList(req: Request, res: Response, next: NextFu
   }
 }
 
-/** Genera HTML simple de confirmación si no hay template configurado */
-function buildOrderConfirmationHtml(order: any): string {
+function buildOrderConfirmationHtml(order: any, recipientName: string, orderLabel: string): string {
   const itemsHtml = order.items
     .map(
       (item: any) =>
-        `<tr><td>${item.product.name}</td><td>${item.quantity}</td><td>$${Number(item.unitPrice).toFixed(2)}</td></tr>`
+        `<tr>` +
+        `<td style="padding:10px 12px;font-size:14px;color:#e0e0e0;border-bottom:1px solid #2a2a2a;">${item.product.name}</td>` +
+        `<td style="padding:10px 12px;font-size:14px;color:#a0a0a0;text-align:center;border-bottom:1px solid #2a2a2a;">${item.quantity}</td>` +
+        `<td style="padding:10px 12px;font-size:14px;color:#e0e0e0;text-align:right;border-bottom:1px solid #2a2a2a;">$${Number(item.unitPrice).toFixed(2)}</td>` +
+        `</tr>`
     )
     .join('')
 
-  return `
-    <h2>¡Tu pedido fue confirmado!</h2>
-    <p>Número de pedido: <strong>${order.id}</strong></p>
-    <table border="1" cellpadding="8">
-      <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th></tr></thead>
-      <tbody>${itemsHtml}</tbody>
-    </table>
-    <p>Total: <strong>$${Number(order.total).toFixed(2)} MXN</strong></p>
-    <p>Método de envío: ${order.shippingMethod || 'Por confirmar'}</p>
-  `
+  const shippingCost = Number(order.shippingCost || 0)
+  const total = Number(order.total)
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#0a0a0a;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#141414;border-radius:8px;overflow:hidden;">
+
+        <!-- Header -->
+        <tr><td style="background-color:#111111;padding:24px 32px;text-align:center;border-bottom:1px solid #222;">
+          <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;">Double-I Cards</p>
+          <p style="margin:4px 0 0;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">Pokémon · Yu-Gi-Oh! · Lorcana</p>
+        </td></tr>
+
+        <!-- Título -->
+        <tr><td style="padding:32px 32px 8px;text-align:center;">
+          <p style="margin:0;font-size:28px;font-weight:700;color:#e63946;">¡Pedido confirmado!</p>
+          <p style="margin:8px 0 0;font-size:14px;color:#888;">Pedido <strong style="color:#ffffff;">${orderLabel}</strong></p>
+        </td></tr>
+
+        <!-- Saludo -->
+        <tr><td style="padding:16px 32px 24px;text-align:center;">
+          <p style="margin:0;font-size:15px;color:#b0b0b0;">Hola <strong style="color:#ffffff;">${recipientName}</strong>, tu pago fue procesado exitosamente.</p>
+        </td></tr>
+
+        <!-- Tabla de productos -->
+        <tr><td style="padding:0 32px 24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden;">
+            <thead>
+              <tr style="background-color:#1a1a1a;">
+                <th style="padding:10px 12px;font-size:12px;color:#888;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Producto</th>
+                <th style="padding:10px 12px;font-size:12px;color:#888;text-align:center;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Cant.</th>
+                <th style="padding:10px 12px;font-size:12px;color:#888;text-align:right;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Precio</th>
+              </tr>
+            </thead>
+            <tbody>${itemsHtml}</tbody>
+            <tfoot>
+              ${shippingCost > 0 ? `<tr><td colspan="2" style="padding:10px 12px;font-size:14px;color:#888;border-top:1px solid #2a2a2a;">Envío (${order.shippingMethod || 'estándar'})</td><td style="padding:10px 12px;font-size:14px;color:#e0e0e0;text-align:right;border-top:1px solid #2a2a2a;">$${shippingCost.toFixed(2)}</td></tr>` : ''}
+              <tr style="background-color:#1a1a1a;"><td colspan="2" style="padding:12px;font-size:15px;font-weight:700;color:#ffffff;border-top:1px solid #2a2a2a;">Total</td><td style="padding:12px;font-size:15px;font-weight:700;color:#e63946;text-align:right;border-top:1px solid #2a2a2a;">$${total.toFixed(2)} MXN</td></tr>
+            </tfoot>
+          </table>
+        </td></tr>
+
+        <!-- Mensaje siguiente paso -->
+        <tr><td style="padding:0 32px 32px;text-align:center;">
+          <p style="margin:0;font-size:14px;color:#888;">Te avisaremos cuando tu pedido esté en camino.<br>Cualquier duda escríbenos por WhatsApp.</p>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background-color:#0f0f0f;padding:16px 32px;text-align:center;border-top:1px solid #222;">
+          <p style="margin:0;font-size:12px;color:#555;">© 2025 Double-I Cards · Made by <a href="https://synergy-mx.tech" style="color:#666;text-decoration:none;">Synergy</a></p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
 }
