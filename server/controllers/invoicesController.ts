@@ -24,6 +24,14 @@ function getFacturapi() {
   return new Facturapi(key)
 }
 
+async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string))
+  }
+  return Buffer.concat(chunks)
+}
+
 /**
  * Función interna — no es ruta pública.
  * Se llama desde el webhook de Mercado Pago cuando se confirma el pago
@@ -91,15 +99,23 @@ export async function createInvoice(orderId: string): Promise<void> {
     const factura = await facturapi.invoices.create(invoicePayload)
 
     // Descargar PDF y XML — son lecturas idempotentes → seguro reintentar.
-    const [pdfBuffer, xmlBuffer] = await Promise.all([
+    // Facturapi devuelve un ReadableStream, no un Buffer, así que acumulamos
+    // los chunks manualmente antes de pasar el body a uploadToR2 (que usa
+    // PutObjectCommand y necesita conocer el tamaño exacto del cuerpo).
+    const [pdfStream, xmlStream] = await Promise.all([
       withRetry(
-        () => facturapi.invoices.downloadPdf(factura.id) as Promise<Buffer>,
+        () => facturapi.invoices.downloadPdf(factura.id) as Promise<NodeJS.ReadableStream>,
         { label: 'Facturapi descargar PDF' }
       ),
       withRetry(
-        () => facturapi.invoices.downloadXml(factura.id) as Promise<Buffer>,
+        () => facturapi.invoices.downloadXml(factura.id) as Promise<NodeJS.ReadableStream>,
         { label: 'Facturapi descargar XML' }
       ),
+    ])
+
+    const [pdfBuffer, xmlBuffer] = await Promise.all([
+      streamToBuffer(pdfStream),
+      streamToBuffer(xmlStream),
     ])
 
     // Subir a Cloudflare R2
