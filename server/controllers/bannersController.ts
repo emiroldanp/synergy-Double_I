@@ -51,7 +51,7 @@ export async function createBanner(req: Request, res: Response, next: NextFuncti
 /** PATCH /api/admin/banners/:id */
 export async function updateBanner(req: Request, res: Response, next: NextFunction) {
   try {
-    const { id } = req.params
+    const id = String(req.params.id)
     const { imageUrl, title, subtitle, ctaLabel, ctaHref, isActive, sortOrder } = req.body
     const slide = await prisma.bannerSlide.update({
       where: { id },
@@ -74,7 +74,7 @@ export async function updateBanner(req: Request, res: Response, next: NextFuncti
 /** DELETE /api/admin/banners/:id */
 export async function deleteBanner(req: Request, res: Response, next: NextFunction) {
   try {
-    await prisma.bannerSlide.delete({ where: { id: req.params.id } })
+    await prisma.bannerSlide.delete({ where: { id: String(req.params.id) } })
     res.json({ data: { deleted: true } })
   } catch (error) {
     next(error)
