@@ -164,7 +164,7 @@ async function sendInvoiceEmail(
 ): Promise<void> {
   if (!toEmail) return
 
-  await withRetry(
+  const res = await withRetry(
     () =>
       axios.post(
     'https://api.brevo.com/v3/smtp/email',
@@ -194,6 +194,7 @@ async function sendInvoiceEmail(
       ),
     { label: 'Brevo email factura' }
   )
+  console.log(`[Factura] Brevo respondió ${res.status} para email a ${toEmail}:`, JSON.stringify(res.data))
 }
 
 /**
