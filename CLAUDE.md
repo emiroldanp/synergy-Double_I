@@ -85,19 +85,23 @@ Prisma 7 tiene cambios de arquitectura respecto a versiones anteriores:
 
 ---
 
-## Bloqueantes (estado 2026-07-09)
+## Bloqueantes (estado 2026-07-10)
 
 | Bloqueante | Estado | Impacta |
 |------------|--------|---------|
 | Pasarela de pagos | ✅ Mercado Pago seleccionado | Webhook de pagos, checkout |
 | Pickup en tienda | ✅ Eliminado — todo en línea | — |
-| Mercado Pago credentials prod | ⏳ Pendiente (Irving activa cuenta MP) | RF-025 bloqueado |
+| Mercado Pago credentials prod | ✅ Disponibles (Irving activó cuenta MP 2026-07-10) | RF-025 desbloqueado |
+| Migración SDK mercadopago v2→v3 | ⏳ Pendiente — breaking API changes | RF-025, checkout producción |
 | Dirección de origen (envíos) | ✅ Configurada | — |
 | RFC y CSD del SAT | ✅ CSD configurado en Facturapi | — |
 | Dominio | ✅ doubleicards.com | DNS, CI/CD, URLs SEO |
 | Logo e identidad visual | ✅ Recibido | — |
 | Redes sociales del footer | ⏳ Pendiente | Footer |
 | Número de WhatsApp de Irving | ✅ Confirmado | Botón flotante |
+| Rotación credenciales producción | ⏳ Pendiente — Neon DB + Facturapi sk_live_ | Seguridad pre go-live |
+| Clerk Dev → Production instance | ⏳ Pendiente | Auth producción real |
+| Limpieza DB (pedidos/facturas test) | ⏳ Pendiente | Go-live limpio |
 
 ---
 
