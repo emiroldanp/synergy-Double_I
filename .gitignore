@@ -48,3 +48,6 @@ test-results/
 tests/e2e/report/
 tests/e2e/tests/
 playwright-report/
+
+# Archivos de entorno de test — no deben rastrearse en git (CN-012)
+server/.env.test

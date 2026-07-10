@@ -1,29 +1,27 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../lib/prisma'
 import { Prisma } from '@prisma/client'
+import { z } from 'zod'
 
-interface OrderItem {
-  productId: string
-  quantity: number
-  // unitPrice lo ignoramos — el precio siempre viene de la BD para evitar price manipulation
-}
-
-interface CreateOrderBody {
-  customerId?: string | null
-  guestEmail?: string
-  guestName?: string
-  guestPhone?: string
-  shippingAddress: object
-  shippingMethod?: string
-  shippingCost: number
-  items: OrderItem[]
-  requiresInvoice: boolean
-  invoiceData?: {
-    rfc: string
-    razonSocial: string
-    cfdiUse: string
-  } | null
-}
+const createOrderSchema = z.object({
+  customerId: z.string().optional().nullable(),
+  guestEmail: z.string().email().optional().nullable(),
+  guestName: z.string().max(100).optional().nullable(),
+  guestPhone: z.string().max(20).optional().nullable(),
+  shippingAddress: z.any(),
+  shippingMethod: z.string().optional().nullable(),
+  shippingCost: z.number().min(0, 'shippingCost no puede ser negativo').max(2000, 'shippingCost excede el máximo permitido'),
+  items: z.array(z.object({
+    productId: z.string().min(1),
+    quantity: z.number().int().min(1).max(100),
+  })).min(1, 'La orden debe tener al menos un item'),
+  requiresInvoice: z.boolean(),
+  invoiceData: z.object({
+    rfc: z.string().min(1).max(13),
+    razonSocial: z.string().min(1).max(200),
+    cfdiUse: z.string().min(1),
+  }).optional().nullable(),
+})
 
 /**
  * POST /api/orders
@@ -32,12 +30,11 @@ interface CreateOrderBody {
  */
 export async function createOrder(req: Request, res: Response, next: NextFunction) {
   try {
-    const body = req.body as CreateOrderBody
-    const { customerId, guestEmail, guestName, guestPhone, shippingAddress, shippingMethod, shippingCost, items, requiresInvoice, invoiceData } = body
-
-    if (!items || items.length === 0) {
-      return res.status(400).json({ error: 'La orden debe tener al menos un item' })
+    const parsed = createOrderSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Datos de orden inválidos', details: parsed.error.flatten().fieldErrors })
     }
+    const { customerId, guestEmail, guestName, guestPhone, shippingAddress, shippingMethod, shippingCost, items, requiresInvoice, invoiceData } = parsed.data
 
     // Crear orden e items en una sola transacción (validación de stock incluida para eliminar TOCTOU)
     const order = await prisma.$transaction(async (tx) => {
@@ -141,7 +138,9 @@ export async function getOrder(req: Request, res: Response, next: NextFunction) 
       return res.status(404).json({ error: 'Pedido no encontrado', code: 'ORDER_NOT_FOUND' })
     }
 
-    res.json({ data: order })
+    // Excluir guestPhone — PII innecesario en endpoint público (CN-006)
+    const { guestPhone: _phone, ...publicOrder } = order as any
+    res.json({ data: publicOrder })
   } catch (error) {
     next(error)
   }

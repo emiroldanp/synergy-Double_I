@@ -232,7 +232,8 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
   // Siempre responder 200 primero para evitar reintentos de Mercado Pago
   res.sendStatus(200)
 
-  console.log('[Webhook MP] Recibido —', new Date().toISOString(), '— tipo:', req.body?.type ?? req.query?.type ?? 'desconocido')
+  const eventType = String(req.body?.type ?? req.query?.type ?? 'desconocido').slice(0, 50).replace(/[\n\r]/g, '')
+  if (process.env.NODE_ENV !== 'production') console.log('[Webhook MP] Recibido —', new Date().toISOString(), '— tipo:', eventType)
 
   try {
     // Parsear body raw
@@ -251,7 +252,13 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
     const xRequestId = req.headers['x-request-id'] as string || ''
     const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET
 
-    if (webhookSecret && xSignature) {
+    // Con secret configurado, la firma es obligatoria (CN-002)
+    if (webhookSecret) {
+      if (!xSignature) {
+        console.error('[Webhook MP] x-signature ausente — notificación rechazada')
+        return
+      }
+
       const paymentId = notification?.data?.id || ''
 
       // Parsear ts y v1 del header x-signature (formato: ts=TIMESTAMP,v1=HASH)
@@ -267,8 +274,11 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
       const manifest = `id:${paymentId};request-id:${xRequestId};ts:${ts};`
       const hmac = crypto.createHmac('sha256', webhookSecret).update(manifest).digest('hex')
 
-      if (hmac !== v1) {
-        console.error('Webhook MP: firma inválida')
+      // Comparación segura contra timing attacks (CN-004)
+      const hmacBuf = Buffer.from(hmac, 'hex')
+      const v1Buf = Buffer.from(v1 || '', 'hex')
+      if (hmacBuf.length !== v1Buf.length || !crypto.timingSafeEqual(hmacBuf, v1Buf)) {
+        console.error('[Webhook MP] firma inválida — notificación rechazada')
         return
       }
     }

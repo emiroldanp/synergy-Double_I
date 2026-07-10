@@ -199,7 +199,7 @@ async function sendInvoiceEmail(
       ),
     { label: 'Brevo email factura' }
   )
-  console.log(`[Factura] Brevo respondió ${res.status} para email a ${toEmail}:`, JSON.stringify(res.data))
+  if (process.env.NODE_ENV !== 'production') console.log(`[Factura] Brevo respondió ${res.status} para email a ${toEmail}:`, JSON.stringify(res.data))
 }
 
 /**

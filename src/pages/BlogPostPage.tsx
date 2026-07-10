@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import DOMPurify from 'dompurify'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useBlogPost } from '@/hooks/useBlogPosts'
@@ -275,7 +276,7 @@ export default function BlogPostPage() {
             {/* Cuerpo del artículo */}
             <div
               className="prose prose-invert max-w-none font-exo text-ash text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: post.body ?? '' }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body ?? '') }}
             />
 
             {/* Volver */}

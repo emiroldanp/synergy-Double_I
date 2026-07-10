@@ -217,10 +217,10 @@ export async function uploadProductImage(req: Request, res: Response, next: Next
       const buffer = Buffer.from(base64, 'base64')
       const ext = mimeType.split('/')[1] || 'jpg'
       const filename = `${Date.now()}.${ext}`
-      console.log('[R2 upload] iniciando subida a R2 — bucket:', process.env.CLOUDFLARE_R2_BUCKET_NAME, 'key:', `products/${id}/${filename}`)
+      if (process.env.NODE_ENV !== 'production') console.log('[R2 upload] iniciando subida a R2 — bucket:', process.env.CLOUDFLARE_R2_BUCKET_NAME, 'key:', `products/${id}/${filename}`)
       try {
         finalUrl = await uploadToR2(`products/${id}/${filename}`, buffer, mimeType)
-        console.log('[R2 upload] éxito — url:', finalUrl)
+        if (process.env.NODE_ENV !== 'production') console.log('[R2 upload] éxito — url:', finalUrl)
       } catch (r2Err: any) {
         console.error('[R2 upload] error al subir a R2:', r2Err?.message, r2Err?.Code, r2Err?.$metadata)
         return res.status(500).json({ error: 'Error al subir imagen a R2', detail: r2Err?.message, code: r2Err?.Code })
@@ -232,12 +232,22 @@ export async function uploadProductImage(req: Request, res: Response, next: Next
         return res.status(400).json({ error: 'Solo se permiten URLs HTTPS' })
       }
       const blockedHosts = ['169.254.169.254', '169.254.170.2', 'metadata.google.internal', '::1', '127.0.0.1', 'localhost']
-      if (blockedHosts.some(h => parsedUrl.hostname === h)) {
+      const blockedPatterns = [
+        /^127\./,
+        /^10\./,
+        /^192\.168\./,
+        /^172\.(1[6-9]|2\d|3[01])\./,
+        /^::ffff:127\./i,
+        /^fc/i,
+        /^fd[0-9a-f]{2}:/i,
+      ]
+      const hostname = parsedUrl.hostname
+      if (blockedHosts.some(h => hostname === h) || blockedPatterns.some(p => p.test(hostname))) {
         return res.status(400).json({ error: 'URL no permitida' })
       }
 
-      // Descargar la imagen y subirla a R2
-      const response = await axios.get(imageUrl, { responseType: 'arraybuffer' })
+      // Descargar la imagen y subirla a R2 — maxRedirects:0 previene bypass SSRF via redirect (CN-003)
+      const response = await axios.get(imageUrl, { responseType: 'arraybuffer', maxRedirects: 0, timeout: 10000 })
       const buffer = Buffer.from(response.data)
       const contentType = response.headers['content-type'] || mimeType
       const ext = contentType.split('/')[1]?.split(';')[0] || 'jpg'
