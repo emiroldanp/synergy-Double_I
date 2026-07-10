@@ -79,16 +79,18 @@ export async function subscribeEmail(req: Request, res: Response, next: NextFunc
     })
 
     // Si es nuevo suscriptor, disparar email de bienvenida
-    const templateId = parseInt(process.env.BREVO_WELCOME_TEMPLATE_ID || '0', 10)
-    if (isNewContact && templateId) {
+    if (isNewContact) {
+      const displayName = fullName || email
       await withRetry(
         () =>
           axios.post(
             `${BREVO_API}/smtp/email`,
             {
-              to: [{ email }],
-              templateId,
-              params: { FULLNAME: fullName || email },
+              to: [{ email, name: displayName }],
+              sender: { email: process.env.BREVO_SENDER_EMAIL, name: process.env.BREVO_SENDER_NAME },
+              subject: '¡Bienvenido a Double-I Cards! 🃏',
+              textContent: `Hola ${displayName},\n\nGracias por suscribirte a Double-I Cards. Serás el primero en enterarte de nuevas cartas, promociones exclusivas y artículos de colección.\n\n— El equipo de Double-I Cards\nhttps://doubleicards.com`,
+              htmlContent: buildWelcomeHtml(displayName),
             },
             { headers: brevoHeaders() }
           ),
@@ -366,6 +368,41 @@ export async function addContactToList(req: Request, res: Response, next: NextFu
     }
     next(error)
   }
+}
+
+function buildWelcomeHtml(displayName: string): string {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#0a0a0a;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#141414;border-radius:8px;overflow:hidden;">
+
+        <!-- Header -->
+        <tr><td style="background-color:#111111;padding:24px 32px;text-align:center;border-bottom:1px solid #222;">
+          <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;">Double-I Cards</p>
+          <p style="margin:4px 0 0;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">Pokémon · Lorcana</p>
+        </td></tr>
+
+        <!-- Cuerpo -->
+        <tr><td style="padding:40px 32px;text-align:center;">
+          <p style="margin:0 0 8px;font-size:28px;font-weight:700;color:#e63946;">¡Bienvenido! 🃏</p>
+          <p style="margin:16px 0 0;font-size:15px;color:#b0b0b0;">Hola <strong style="color:#ffffff;">${displayName}</strong>,</p>
+          <p style="margin:12px 0 0;font-size:14px;color:#888;line-height:1.6;">Gracias por suscribirte a Double-I Cards. Serás el primero en enterarte de nuevas cartas, promociones exclusivas y artículos de colección.</p>
+          <a href="https://doubleicards.com/catalogo" style="display:inline-block;margin-top:28px;padding:14px 32px;background-color:#e63946;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;border-radius:4px;letter-spacing:1px;">Explorar catálogo</a>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background-color:#0f0f0f;padding:16px 32px;text-align:center;border-top:1px solid #222;">
+          <p style="margin:0;font-size:12px;color:#555;">© 2025 Double-I Cards · Made by <a href="https://synergy-mx.tech" style="color:#666;text-decoration:none;">Synergy</a></p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
 }
 
 function buildOrderConfirmationHtml(order: any, recipientName: string, orderLabel: string): string {
