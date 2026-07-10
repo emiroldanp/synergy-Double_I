@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { BannerSlide } from '@/types'
 
-const STORAGE_KEY = 'doublei_banner_slides'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 const DEFAULT_SLIDES: BannerSlide[] = [
   {
@@ -35,18 +35,6 @@ const DEFAULT_SLIDES: BannerSlide[] = [
   },
 ]
 
-export function loadSlides(): BannerSlide[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as BannerSlide[]
-  } catch { /* ignore */ }
-  return DEFAULT_SLIDES
-}
-
-export function saveSlides(slides: BannerSlide[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(slides))
-}
-
 const variants = {
   enter: (dir: number) => ({ x: dir > 0 ? '100%' : '-100%', opacity: 0 }),
   center: { x: 0, opacity: 1 },
@@ -54,18 +42,25 @@ const variants = {
 }
 
 export function HeroBanner() {
-  const slides = loadSlides().filter((s) => s.isActive)
+  const [slides, setSlides] = useState<BannerSlide[]>(DEFAULT_SLIDES)
   const [index, setIndex] = useState(0)
   const [dir, setDir] = useState(1)
   const [paused, setPaused] = useState(false)
 
-  const go = useCallback(
-    (newIndex: number, direction: number) => {
-      setDir(direction)
-      setIndex(newIndex)
-    },
-    []
-  )
+  useEffect(() => {
+    fetch(`${API_URL}/api/banners`)
+      .then((r) => r.json())
+      .then((json) => {
+        const active = (json.data as BannerSlide[]).filter((s) => s.isActive)
+        if (active.length > 0) setSlides(active)
+      })
+      .catch(() => { /* mantiene DEFAULT_SLIDES */ })
+  }, [])
+
+  const go = useCallback((newIndex: number, direction: number) => {
+    setDir(direction)
+    setIndex(newIndex)
+  }, [])
 
   const prev = useCallback(() => {
     go((index - 1 + slides.length) % slides.length, -1)

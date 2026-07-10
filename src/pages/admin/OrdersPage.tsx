@@ -26,6 +26,8 @@ export default function OrdersPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<OrderWithRelations | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,6 +39,8 @@ export default function OrdersPage() {
       page: String(page),
       pageSize: String(PAGE_SIZE),
       ...(statusFilter && { status: statusFilter }),
+      ...(dateFrom && { dateFrom }),
+      ...(dateTo && { dateTo }),
     })
     apiFetch<PaginatedResponse<OrderWithRelations>>(`/api/admin/orders?${params}`)
       .then((res) => {
@@ -45,16 +49,16 @@ export default function OrdersPage() {
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
-  }, [page, statusFilter, apiFetch])
+  }, [page, statusFilter, dateFrom, dateTo, apiFetch])
 
   useEffect(() => {
     fetchOrders()
   }, [fetchOrders])
 
-  // Reiniciar a página 1 al cambiar filtro
+  // Reiniciar a página 1 al cambiar filtros
   useEffect(() => {
     setPage(1)
-  }, [statusFilter])
+  }, [statusFilter, dateFrom, dateTo])
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
@@ -66,8 +70,8 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-4">
-      {/* Filtro por estado */}
-      <div className="flex items-center gap-3">
+      {/* Filtros */}
+      <div className="flex flex-wrap items-center gap-3">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -79,6 +83,28 @@ export default function OrdersPage() {
             </option>
           ))}
         </select>
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          title="Desde"
+        />
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          title="Hasta"
+        />
+        {(dateFrom || dateTo) && (
+          <button
+            onClick={() => { setDateFrom(''); setDateTo('') }}
+            className="text-xs text-gray-400 hover:text-gray-600"
+          >
+            Limpiar fechas
+          </button>
+        )}
         <span className="text-sm text-gray-500">{total} pedidos</span>
       </div>
 

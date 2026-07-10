@@ -394,7 +394,7 @@ function buildOrderConfirmationHtml(order: any, recipientName: string, orderLabe
         <!-- Header -->
         <tr><td style="background-color:#111111;padding:24px 32px;text-align:center;border-bottom:1px solid #222;">
           <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;">Double-I Cards</p>
-          <p style="margin:4px 0 0;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">Pokémon · Yu-Gi-Oh! · Lorcana</p>
+          <p style="margin:4px 0 0;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">Pokémon · Lorcana</p>
         </td></tr>
 
         <!-- Título -->
