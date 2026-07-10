@@ -425,12 +425,11 @@ export async function retryInvoice(req: Request, res: Response, next: NextFuncti
       return res.status(409).json({ error: `La factura ya tiene status '${invoice.status}'. Solo se pueden reintentar facturas en 'draft'.` })
     }
 
-    // Ejecutar de forma asíncrona — puede tardar varios segundos
-    createInvoice(orderId).catch((err) =>
-      console.error(`Error en reintento de factura para orden ${orderId}:`, err)
-    )
+    // Esperar a que createInvoice termine para que el frontend pueda refrescar
+    // la lista y ver el status actualizado sin necesitar recarga manual.
+    await createInvoice(orderId)
 
-    res.json({ success: true, message: 'Reintento de emisión CFDI iniciado.' })
+    res.json({ success: true, message: 'CFDI emitido correctamente.' })
   } catch (error) {
     next(error)
   }
