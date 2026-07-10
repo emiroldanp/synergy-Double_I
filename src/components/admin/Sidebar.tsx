@@ -8,6 +8,7 @@ const navItems = [
   { to: '/admin/facturas', label: 'Facturas', icon: '🧾' },
   { to: '/admin/suscriptores', label: 'Suscriptores', icon: '📧' },
   { to: '/admin/blog', label: 'Blog', icon: '✏️' },
+  { to: '/admin/banners', label: 'Banners', icon: '🖼️' },
 ]
 
 export default function Sidebar() {
