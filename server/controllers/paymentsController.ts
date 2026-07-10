@@ -118,7 +118,7 @@ export async function createPreference(req: Request, res: Response, next: NextFu
  * Se comparte entre el webhook automático (tarjeta / saldo MP) y el marcado
  * manual desde admin (OXXO / SPEI verificados por Irving).
  */
-async function confirmOrderPayment(params: {
+export async function confirmOrderPayment(params: {
   orderId: string
   paymentReference: string | null
   paymentMethod: string | null
