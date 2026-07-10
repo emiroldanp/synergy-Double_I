@@ -12,6 +12,7 @@ import { emailRoutes } from './routes/email'
 import { adminRoutes } from './routes/admin'
 import { productsRoutes } from './routes/products'
 import { blogRoutes } from './routes/blog'
+import { listPublicBanners } from './controllers/bannersController'
 import { errorHandler } from './middleware/errorHandler'
 
 const app = express()
@@ -53,6 +54,7 @@ app.use(express.json({ limit: '10mb' }))
 // Rutas públicas
 app.use('/api/products', productsRoutes)
 app.use('/api/blog', blogRoutes)
+app.get('/api/banners', listPublicBanners)
 app.use('/api/shipping', shippingRoutes)
 app.use('/api/orders', ordersRoutes)
 app.use('/api/payments', paymentsRoutes)

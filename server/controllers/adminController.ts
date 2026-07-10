@@ -281,13 +281,22 @@ export async function uploadProductImage(req: Request, res: Response, next: Next
  */
 export async function listOrders(req: Request, res: Response, next: NextFunction) {
   try {
-    const { status } = req.query
+    const { status, dateFrom, dateTo } = req.query
     const page = Math.max(1, parseInt(req.query.page as string) || 1)
     const limit = Math.min(100, parseInt(req.query.limit as string) || 20)
     const skip = (page - 1) * limit
 
     const where: Prisma.OrderWhereInput = {}
     if (status) where.orderStatus = status as any
+    if (dateFrom || dateTo) {
+      where.createdAt = {}
+      if (dateFrom) (where.createdAt as any).gte = new Date(dateFrom as string)
+      if (dateTo) {
+        const end = new Date(dateTo as string)
+        end.setHours(23, 59, 59, 999)
+        ;(where.createdAt as any).lte = end
+      }
+    }
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({

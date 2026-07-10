@@ -1,22 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { useBlogPosts } from '@/hooks/useBlogPosts'
 import BlogPostForm, { type BlogPostFormData } from '@/components/ui/BlogPostForm'
 import ConfirmModal from '@/components/admin/ConfirmModal'
-import { blogApi } from '@/lib/api'
+import { useAdminApi } from '@/hooks/useAdminApi'
 import { cn } from '@/lib/utils'
 import type { BlogPost } from '@/types'
 
 export default function BlogManager() {
-  // Datos reales desde el backend (endpoint admin que incluye borradores)
-  const { posts, loading, error, refetch } = useBlogPosts({ adminAll: true })
+  const { apiFetch } = useAdminApi()
 
-  // Estado local del CRUD
+  const [posts, setPosts] = useState<BlogPost[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+
+  const fetchPosts = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await apiFetch<{ data: BlogPost[] } | BlogPost[]>('/api/admin/blog')
+      setPosts((res as { data: BlogPost[] }).data ?? (res as BlogPost[]))
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al cargar posts')
+    } finally {
+      setLoading(false)
+    }
+  }, [apiFetch])
+
+  useEffect(() => { fetchPosts() }, [fetchPosts])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -43,12 +58,18 @@ export default function BlogManager() {
         tags: data.tags.split(',').map((t) => t.trim()).filter(Boolean),
       }
       if (editingPost) {
-        await blogApi.update(editingPost.id, payload)
+        await apiFetch(`/api/admin/blog/${editingPost.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        })
       } else {
-        await blogApi.create(payload)
+        await apiFetch('/api/admin/blog', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
       }
       closeForm()
-      refetch()
+      fetchPosts()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error al guardar el post')
     } finally {
@@ -59,8 +80,8 @@ export default function BlogManager() {
   async function handleDelete() {
     if (!deleteConfirm) return
     try {
-      await blogApi.delete(deleteConfirm)
-      refetch()
+      await apiFetch(`/api/admin/blog/${deleteConfirm}`, { method: 'DELETE' })
+      fetchPosts()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error al eliminar el post')
     } finally {
