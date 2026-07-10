@@ -70,7 +70,7 @@ export async function createInvoice(orderId: string): Promise<void> {
     items: order.items.map((item) => ({
       product: {
         description: item.product.name,
-        product_key: '44122300', // Juguetes y juegos — código SAT para tarjetas coleccionables
+        product_key: '60141102', // Juegos de mesa — código SAT para tarjetas coleccionables TCG
         unit_key: 'H87',
         price: Number(item.unitPrice),
       },
