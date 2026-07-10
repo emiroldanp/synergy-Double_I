@@ -58,7 +58,9 @@ export default function OrdersPage() {
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
-  // Obtener email para mostrar en la tabla
+  const getDisplayName = (order: OrderWithRelations) =>
+    order.customer?.fullName ?? order.guestName ?? null
+
   const getDisplayEmail = (order: OrderWithRelations) =>
     order.customer?.email ?? order.guestEmail ?? '—'
 
@@ -134,8 +136,11 @@ export default function OrdersPage() {
                     <td className="px-4 py-3 font-mono text-gray-700">
                       {order.id.slice(0, 8)}…
                     </td>
-                    <td className="px-4 py-3 text-gray-700">
-                      {getDisplayEmail(order)}
+                    <td className="px-4 py-3">
+                      {getDisplayName(order) && (
+                        <p className="text-gray-900 font-medium text-sm leading-tight">{getDisplayName(order)}</p>
+                      )}
+                      <p className="text-gray-500 text-xs">{getDisplayEmail(order)}</p>
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {new Date(order.createdAt).toLocaleDateString('es-MX')}
