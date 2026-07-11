@@ -28,6 +28,7 @@ jobs:
         env:
           VITE_API_URL: ${{ github.ref == 'refs/heads/main' && secrets.VITE_API_URL || secrets.VITE_API_URL_STAGING }}
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
+          VITE_WHATSAPP_NUMBER: ${{ secrets.VITE_WHATSAPP_NUMBER }}
         run: npm run build
 
       - name: Deploy a producción (main → /public_html/)
