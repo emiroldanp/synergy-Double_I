@@ -89,19 +89,20 @@ Prisma 7 tiene cambios de arquitectura respecto a versiones anteriores:
 
 | Bloqueante | Estado | Impacta |
 |------------|--------|---------|
-| Pasarela de pagos | ✅ Mercado Pago seleccionado | Webhook de pagos, checkout |
+| Pasarela de pagos | ✅ Mercado Pago seleccionado | — |
 | Pickup en tienda | ✅ Eliminado — todo en línea | — |
-| Mercado Pago credentials prod | ✅ Disponibles (Irving activó cuenta MP 2026-07-10) | RF-025 desbloqueado |
-| Migración SDK mercadopago v2→v3 | ⏳ Pendiente — breaking API changes | RF-025, checkout producción |
+| Mercado Pago credentials prod | ✅ Configuradas 2026-07-10 | — |
+| Webhook MP producción | ✅ URL + secret configurados 2026-07-10 | — |
 | Dirección de origen (envíos) | ✅ Configurada | — |
 | RFC y CSD del SAT | ✅ CSD configurado en Facturapi | — |
-| Dominio | ✅ doubleicards.com | DNS, CI/CD, URLs SEO |
+| Dominio | ✅ doubleicards.com | — |
 | Logo e identidad visual | ✅ Recibido | — |
-| Redes sociales del footer | ⏳ Pendiente | Footer |
-| Número de WhatsApp de Irving | ✅ Confirmado | Botón flotante |
-| Rotación credenciales producción | ⏳ Pendiente — Neon DB + Facturapi sk_live_ | Seguridad pre go-live |
-| Clerk Dev → Production instance | ⏳ Pendiente | Auth producción real |
-| Limpieza DB (pedidos/facturas test) | ⏳ Pendiente | Go-live limpio |
+| Redes sociales del footer | ✅ Decisión: no habrá redes por ahora | — |
+| Número de WhatsApp de Irving | ✅ Confirmado | — |
+| Clerk Dev → Production instance | ✅ Migrado 2026-07-10 | — |
+| Limpieza DB (pedidos/facturas test) | ✅ Realizada 2026-07-10 | — |
+| Rotación credenciales (Neon + Facturapi) | ⏳ Pendiente — Neon DB + Facturapi sk_live_ | Seguridad |
+| Migración SDK mercadopago v2→v3 | ⏳ Pendiente — mantenimiento de seguridad | No bloqueante para go-live |
 
 ---
 
