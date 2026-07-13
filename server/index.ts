@@ -19,6 +19,10 @@ import { errorHandler } from './middleware/errorHandler'
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Hostinger corre detrás de un reverse proxy — necesario para que express-rate-limit
+// lea el IP real desde X-Forwarded-For en lugar de la IP del proxy
+app.set('trust proxy', 1)
+
 // Seguridad de cabeceras HTTP — CSP explícita para servidor API
 app.use(helmet({
   contentSecurityPolicy: {
