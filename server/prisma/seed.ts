@@ -7,16 +7,16 @@ const prisma = new PrismaClient({ adapter })
 
 async function main() {
   // Categorías
-  const [pokemon, yugioh, lorcana] = await Promise.all([
+  const [pokemon, magic, lorcana] = await Promise.all([
     prisma.category.upsert({
       where: { slug: 'pokemon' },
       update: {},
       create: { name: 'Pokémon', slug: 'pokemon', description: 'Tarjetas coleccionables de la franquicia Pokémon' },
     }),
     prisma.category.upsert({
-      where: { slug: 'yu-gi-oh' },
+      where: { slug: 'magic' },
       update: {},
-      create: { name: 'Yu-Gi-Oh!', slug: 'yu-gi-oh', description: 'Tarjetas coleccionables de la franquicia Yu-Gi-Oh!' },
+      create: { name: 'Magic: The Gathering', slug: 'magic', description: 'Tarjetas coleccionables de Magic: The Gathering' },
     }),
     prisma.category.upsert({
       where: { slug: 'lorcana' },
@@ -74,7 +74,7 @@ async function main() {
       isActive: true,
     },
     {
-      categoryId: yugioh.id,
+      categoryId: magic.id,
       name: 'Blue-Eyes White Dragon LOB',
       slug: 'blue-eyes-white-dragon-lob',
       cardNumber: 'LOB-001',
@@ -88,7 +88,7 @@ async function main() {
       isActive: true,
     },
     {
-      categoryId: yugioh.id,
+      categoryId: magic.id,
       name: 'Dark Magician LOB',
       slug: 'dark-magician-lob',
       cardNumber: 'LOB-005',
