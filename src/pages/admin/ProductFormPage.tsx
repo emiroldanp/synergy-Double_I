@@ -150,6 +150,18 @@ export default function ProductFormPage() {
         productId = created.data.id
       }
 
+      // Sincronizar imágenes existentes: borra las eliminadas y actualiza isPrimary/sortOrder.
+      // Solo se envían las URLs de R2 que ya estaban guardadas (no las nuevas en base64).
+      const existingImages = images
+        .map((img, idx) => ({ img, idx }))
+        .filter(({ img }) => !img.url.startsWith('data:'))
+        .map(({ img, idx }) => ({ url: img.url, isPrimary: img.isPrimary, sortOrder: idx }))
+
+      await apiFetch(`/api/admin/products/${productId}/images/sync`, {
+        method: 'PUT',
+        body: JSON.stringify({ images: existingImages }),
+      })
+
       // Subir imágenes nuevas (base64 local) a R2 en secuencia
       for (let idx = 0; idx < images.length; idx++) {
         const img = images[idx]
