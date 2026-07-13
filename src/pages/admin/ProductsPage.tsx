@@ -31,7 +31,7 @@ export default function ProductsPage() {
     setLoading(true)
     const params = new URLSearchParams({
       page: String(page),
-      pageSize: String(PAGE_SIZE),
+      limit: String(PAGE_SIZE),
       ...(debouncedSearch && { search: debouncedSearch }),
     })
     apiFetch<PaginatedResponse<AdminProduct>>(`/api/admin/products?${params}`)

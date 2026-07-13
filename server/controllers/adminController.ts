@@ -49,9 +49,22 @@ export async function listProducts(req: Request, res: Response, next: NextFuncti
     const page = Math.max(1, parseInt(req.query.page as string) || 1)
     const limit = Math.min(100, parseInt(req.query.limit as string) || 20)
     const skip = (page - 1) * limit
+    const search = (req.query.search as string | undefined)?.trim()
+
+    const where: Prisma.ProductWhereInput = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { slug: { contains: search, mode: 'insensitive' } },
+            { setName: { contains: search, mode: 'insensitive' } },
+            { cardNumber: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : {}
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -60,7 +73,7 @@ export async function listProducts(req: Request, res: Response, next: NextFuncti
           images: { orderBy: { sortOrder: 'asc' } },
         },
       }),
-      prisma.product.count(),
+      prisma.product.count({ where }),
     ])
 
     res.json({ data: products, meta: { page, limit, total } })
@@ -196,6 +209,62 @@ export async function getProduct(req: Request, res: Response, next: NextFunction
       return res.status(404).json({ message: 'Producto no encontrado' })
     }
     res.json({ data: product })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * PUT /api/admin/products/:id/images/sync
+ * Sincroniza el estado final de las imágenes existentes de un producto.
+ * Borra de la BD y R2 las imágenes que ya no están en la lista enviada,
+ * y actualiza isPrimary/sortOrder de las que permanecen.
+ * Body: { images: Array<{ url: string; isPrimary: boolean; sortOrder: number }> }
+ * Las imágenes nuevas (base64) se siguen subiendo vía POST …/images.
+ */
+export async function syncProductImages(req: Request, res: Response, next: NextFunction) {
+  try {
+    const productId = String(req.params.id)
+    const { images: keepImages } = req.body as {
+      images: Array<{ url: string; isPrimary: boolean; sortOrder: number }>
+    }
+
+    if (!Array.isArray(keepImages)) {
+      return res.status(400).json({ error: 'images debe ser un arreglo' })
+    }
+
+    // URLs que el frontend quiere conservar
+    const keepUrls = new Set(keepImages.map((i) => i.url))
+
+    // Imágenes actuales en la BD para este producto
+    const currentImages = await prisma.productImage.findMany({
+      where: { productId },
+      select: { id: true, url: true },
+    })
+
+    // Imágenes que el usuario eliminó del frontend
+    const toDelete = currentImages.filter((img) => !keepUrls.has(img.url))
+
+    if (toDelete.length > 0) {
+      // Borrar de la BD primero (transaccional)
+      await prisma.productImage.deleteMany({
+        where: { id: { in: toDelete.map((img) => img.id) } },
+      })
+      // Borrar de R2 en segundo plano — errores de almacenamiento no bloquean la respuesta
+      Promise.allSettled(toDelete.map((img) => deleteFromR2ByUrl(img.url))).catch(() => {})
+    }
+
+    // Actualizar isPrimary y sortOrder de las imágenes que permanecen
+    for (const imgData of keepImages) {
+      const existing = currentImages.find((c) => c.url === imgData.url)
+      if (!existing) continue // puede ser una URL recién subida que no estaba en BD aún
+      await prisma.productImage.update({
+        where: { id: existing.id },
+        data: { isPrimary: Boolean(imgData.isPrimary), sortOrder: Number(imgData.sortOrder) },
+      })
+    }
+
+    res.json({ success: true, deleted: toDelete.length })
   } catch (error) {
     next(error)
   }

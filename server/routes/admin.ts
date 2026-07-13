@@ -7,6 +7,7 @@ import {
   updateProduct,
   deleteProduct,
   uploadProductImage,
+  syncProductImages,
   listOrders,
   updateOrder,
   listInvoices,
@@ -42,6 +43,7 @@ adminRoutes.post('/products', createProduct)
 adminRoutes.patch('/products/:id', updateProduct)
 adminRoutes.delete('/products/:id', deleteProduct)
 adminRoutes.post('/products/:id/images', uploadProductImage)
+adminRoutes.put('/products/:id/images/sync', syncProductImages)
 
 // --- Pedidos ---
 adminRoutes.get('/orders', listOrders)
