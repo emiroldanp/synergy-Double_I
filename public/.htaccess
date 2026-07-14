@@ -1,3 +1,10 @@
+# Redirect www → non-www (URL canónica)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^www\.doubleicards\.com [NC]
+  RewriteRule ^(.*)$ https://doubleicards.com/$1 [R=301,L]
+</IfModule>
+
 # SPA fallback (React Router) — Apache / Hostinger
 # Sirve index.html para cualquier ruta que no corresponda a un archivo o
 # directorio real, para que las rutas del cliente (p. ej. /catalogo/pokemon,
