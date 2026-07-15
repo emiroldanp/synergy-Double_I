@@ -28,6 +28,7 @@ export const FRANCHISE_LABELS: Record<Franchise, string> = {
   yugioh: 'Yu-Gi-Oh!',
   lorcana: 'Lorcana',
   magic: 'Magic: The Gathering',
+  accesorios: 'Accesorios',
 }
 
 export const FRANCHISE_COLORS: Record<Franchise, string> = {
@@ -35,6 +36,7 @@ export const FRANCHISE_COLORS: Record<Franchise, string> = {
   yugioh: '#C8950A',
   lorcana: '#6B5ECD',
   magic: '#A82FBB',
+  accesorios: '#6B7280',
 }
 
 export const CONDITION_LABELS: Record<Condition, string> = {

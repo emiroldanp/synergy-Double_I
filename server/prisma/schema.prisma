@@ -80,6 +80,7 @@ model Product {
   edition     Edition?
   language    Language?
   rarity      String?
+  productType String?
   condition   Condition?
   variant     Variant?
   price       Decimal    @db.Decimal(10, 2)

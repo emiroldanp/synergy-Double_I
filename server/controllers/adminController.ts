@@ -91,13 +91,13 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
     // Whitelist de campos permitidos — nunca spread req.body directo a Prisma
     const {
       categoryId, name, cardNumber, setName, edition, language,
-      rarity, condition, variant, price, stock, slug, description, isActive
+      rarity, condition, variant, price, stock, slug, description, isActive, productType
     } = req.body
 
     const product = await prisma.product.create({
       data: {
         categoryId, name, cardNumber, setName, edition, language,
-        rarity, condition, variant,
+        rarity, condition, variant, productType: productType || null,
         price: new Prisma.Decimal(price),
         stock,
         slug,
@@ -136,7 +136,7 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
 
     // Construir el objeto de update excluyendo campos que se manejan por separado
     const updateData: Prisma.ProductUpdateInput = {}
-    const allowedFields = ['name', 'description', 'slug', 'cardNumber', 'setName', 'rarity', 'stock', 'edition', 'language', 'condition', 'variant']
+    const allowedFields = ['name', 'description', 'slug', 'cardNumber', 'setName', 'rarity', 'stock', 'edition', 'language', 'condition', 'variant', 'productType']
     for (const field of allowedFields) {
       if (rest[field] !== undefined) (updateData as any)[field] = rest[field]
     }

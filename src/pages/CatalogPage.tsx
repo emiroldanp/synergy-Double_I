@@ -8,6 +8,7 @@ import { FilterPanel } from '@/components/ui/FilterPanel'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { Button } from '@/components/ui/Button'
 import { fadeUp, staggerContainer } from '@/lib/animations'
+import { productsApi } from '@/lib/api'
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Más recientes' },
@@ -47,9 +48,16 @@ function useInitialFiltersFromParams(): Partial<FilterState> {
 
 export default function CatalogPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [availableRarities, setAvailableRarities] = useState<string[]>([])
   const initialFilters = useInitialFiltersFromParams()
   const { products, totalProducts, hasMore, loadMore, loading, filters, updateFilter, resetFilters } =
     useInfiniteProducts(initialFilters)
+
+  useEffect(() => {
+    productsApi.getRarities()
+      .then((res) => setAvailableRarities(res.data?.data ?? []))
+      .catch(() => {})
+  }, [])
 
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -176,6 +184,7 @@ export default function CatalogPage() {
               onReset={resetFilters}
               isMobileOpen={mobileFiltersOpen}
               onMobileClose={() => setMobileFiltersOpen(false)}
+              availableRarities={availableRarities}
             />
 
             <div className="flex-1 min-w-0">

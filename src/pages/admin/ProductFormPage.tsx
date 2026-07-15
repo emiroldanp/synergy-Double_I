@@ -8,11 +8,21 @@ import { slugify } from '../../lib/utils'
 import ImageUploader, { type ImageEntry } from '../../components/admin/ImageUploader'
 import type { Category, AdminProduct } from '../../types'
 
+const ACCESSORY_SUBTYPES = ['Sleeve', 'Toploader', 'Binder', 'Playmats', 'Acrílicos'] as const
+
+const PRODUCT_TYPE_OPTIONS = [
+  { value: 'carta', label: 'Carta individual' },
+  { value: 'display', label: 'Display / Caja' },
+  { value: 'dado', label: 'Dado' },
+  { value: 'binder', label: 'Binder / Álbum' },
+] as const
+
 // Esquema Zod para validar el formulario del producto
 const productSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
   slug: z.string().min(1, 'El slug es requerido'),
   categoryId: z.string().min(1, 'La categoría es requerida'),
+  productType: z.string().nullable().optional(),
   cardNumber: z.string().nullable().optional(),
   setName: z.string().nullable().optional(),
   edition: z.enum(['first_edition', 'shadowless', 'unlimited', '']).nullable().optional(),
@@ -39,6 +49,7 @@ export default function ProductFormPage() {
   const [loading, setLoading] = useState(isEdit)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [accessorySubtypes, setAccessorySubtypes] = useState<string[]>([])
 
   const {
     register,
@@ -53,6 +64,7 @@ export default function ProductFormPage() {
       name: '',
       slug: '',
       categoryId: '',
+      productType: '',
       cardNumber: '',
       setName: '',
       edition: '',
@@ -69,6 +81,15 @@ export default function ProductFormPage() {
 
   const nameValue = watch('name')
   const slugValue = watch('slug')
+  const categoryId = watch('categoryId')
+  const selectedCategory = categories.find((c) => c.id === categoryId)
+  const isAccessory = selectedCategory?.slug === 'accesorios'
+
+  const toggleSubtype = (subtype: string) => {
+    setAccessorySubtypes((prev) =>
+      prev.includes(subtype) ? prev.filter((s) => s !== subtype) : [...prev, subtype],
+    )
+  }
 
   // Auto-generar slug desde el nombre, solo si el usuario no lo ha editado manualmente
   const [slugTouched, setSlugTouched] = useState(false)
@@ -91,15 +112,17 @@ export default function ProductFormPage() {
     setLoading(true)
     apiFetch<{ data: AdminProduct }>(`/api/admin/products/${id}`)
       .then(({ data: product }) => {
+        const isAccCat = (product as any).category?.slug === 'accesorios'
         reset({
           name: product.name,
           slug: product.slug,
           categoryId: product.categoryId ?? '',
+          productType: isAccCat ? 'accessory' : ((product as any).productType ?? ''),
           cardNumber: product.cardNumber ?? '',
           setName: product.setName ?? '',
           edition: (product.edition as '' | 'shadowless' | 'first_edition' | 'unlimited') ?? '',
           language: (product.language as '' | 'es' | 'en' | 'jp') ?? '',
-          rarity: (product.rarity as '' | 'comun' | 'poco_comun' | 'rara' | 'ultra_rara' | 'secret_rare' | 'full_art' | 'gold_rare' | 'prismatic') ?? '',
+          rarity: isAccCat ? '' : ((product.rarity as '' | 'comun' | 'poco_comun' | 'rara' | 'ultra_rara' | 'secret_rare' | 'full_art' | 'gold_rare' | 'prismatic') ?? ''),
           condition: (product.condition as '' | 'mint' | 'near_mint' | 'lightly_played') ?? '',
           variant: (product.variant as '' | 'holo' | 'reverse_holo' | 'standard') ?? '',
           price: product.price,
@@ -107,6 +130,9 @@ export default function ProductFormPage() {
           isActive: product.isActive,
           description: product.description ?? '',
         })
+        if (isAccCat && product.rarity) {
+          setAccessorySubtypes(product.rarity.split(',').map((s: string) => s.trim()).filter(Boolean))
+        }
         setSlugTouched(true)
         if (product.images) {
           setImages(
@@ -123,17 +149,30 @@ export default function ProductFormPage() {
     setError(null)
     try {
       // Normalizar campos vacíos a null para enums
-      const payload = {
-        ...values,
-        cardNumber: values.cardNumber || null,
-        setName: values.setName || null,
-        edition: values.edition || null,
-        language: values.language || null,
-        rarity: values.rarity || null,
-        condition: values.condition || null,
-        variant: values.variant || null,
-        description: values.description || null,
-      }
+      const payload = isAccessory
+        ? {
+            ...values,
+            productType: 'accessory',
+            rarity: accessorySubtypes.length > 0 ? accessorySubtypes.join(',') : null,
+            cardNumber: null,
+            setName: null,
+            edition: null,
+            language: null,
+            condition: null,
+            variant: null,
+            description: values.description || null,
+          }
+        : {
+            ...values,
+            cardNumber: values.cardNumber || null,
+            setName: values.setName || null,
+            edition: values.edition || null,
+            language: values.language || null,
+            rarity: values.rarity || null,
+            condition: values.condition || null,
+            variant: values.variant || null,
+            description: values.description || null,
+          }
 
       let productId: string
       if (isEdit) {
@@ -305,88 +344,127 @@ export default function ProductFormPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {isAccessory ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Número de carta</label>
-                <input
-                  type="text"
-                  {...register('cardNumber')}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de accesorio</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {ACCESSORY_SUBTYPES.map((subtype) => (
+                    <label
+                      key={subtype}
+                      className="flex items-center gap-2 cursor-pointer p-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={accessorySubtypes.includes(subtype)}
+                        onChange={() => toggleSubtype(subtype)}
+                        className="rounded"
+                      />
+                      <span className="text-sm text-gray-700">{subtype}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Set</label>
-                <input
-                  type="text"
-                  {...register('setName')}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de producto</label>
+                  <select
+                    {...register('productType')}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">— Seleccionar —</option>
+                    {PRODUCT_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Edición</label>
-                <select
-                  {...register('edition')}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">—</option>
-                  <option value="first_edition">First Edition</option>
-                  <option value="shadowless">Shadowless</option>
-                  <option value="unlimited">Unlimited</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
-                <select
-                  {...register('language')}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">—</option>
-                  <option value="es">Español</option>
-                  <option value="en">Inglés</option>
-                  <option value="jp">Japonés</option>
-                </select>
-              </div>
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Número de carta</label>
+                    <input
+                      type="text"
+                      {...register('cardNumber')}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Set</label>
+                    <input
+                      type="text"
+                      {...register('setName')}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rareza</label>
-                <input
-                  type="text"
-                  {...register('rarity')}
-                  placeholder="Ej. Holo Rare, Common..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Condición</label>
-                <select
-                  {...register('condition')}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">—</option>
-                  <option value="mint">Mint</option>
-                  <option value="near_mint">Near Mint</option>
-                  <option value="lightly_played">Lightly Played</option>
-                </select>
-              </div>
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Edición</label>
+                    <select
+                      {...register('edition')}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">—</option>
+                      <option value="first_edition">First Edition</option>
+                      <option value="shadowless">Shadowless</option>
+                      <option value="unlimited">Unlimited</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Idioma</label>
+                    <select
+                      {...register('language')}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">—</option>
+                      <option value="es">Español</option>
+                      <option value="en">Inglés</option>
+                      <option value="jp">Japonés</option>
+                    </select>
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Variante</label>
-              <select
-                {...register('variant')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">—</option>
-                <option value="standard">Standard</option>
-                <option value="holo">Holo</option>
-                <option value="reverse_holo">Reverse Holo</option>
-              </select>
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Rareza</label>
+                    <input
+                      type="text"
+                      {...register('rarity')}
+                      placeholder="Ej. Holo Rare, Common..."
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Condición</label>
+                    <select
+                      {...register('condition')}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">—</option>
+                      <option value="mint">Mint</option>
+                      <option value="near_mint">Near Mint</option>
+                      <option value="lightly_played">Lightly Played</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Variante</label>
+                  <select
+                    {...register('variant')}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">—</option>
+                    <option value="standard">Standard</option>
+                    <option value="holo">Holo</option>
+                    <option value="reverse_holo">Reverse Holo</option>
+                  </select>
+                </div>
+              </>
+            )}
           </section>
 
           {/* Sección: descripción */}

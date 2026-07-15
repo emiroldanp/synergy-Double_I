@@ -54,6 +54,7 @@ export const ordersApi = {
 
 export const productsApi = {
   getAll: (params?: Record<string, unknown>) => api.get('/api/products', { params }),
+  getRarities: () => api.get('/api/products/rarities'),
   getBySlug: (slug: string) => api.get(`/api/products/${slug}`),
   create: (data: unknown) => api.post('/api/admin/products', data),
   update: (id: string, data: unknown) => api.patch(`/api/admin/products/${id}`, data),

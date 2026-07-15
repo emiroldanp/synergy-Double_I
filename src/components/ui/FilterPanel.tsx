@@ -5,7 +5,9 @@ import {
   VARIANT_LABELS,
   LANGUAGE_LABELS,
 } from '@/lib/utils'
-import type { FilterState, Franchise, Rarity, Variant, Language, ProductType } from '@/types'
+import type { FilterState, Franchise, Variant, Language, ProductType } from '@/types'
+
+const STATIC_RARITIES = ['comun', 'poco_comun', 'rara', 'ultra_rara', 'secret_rare', 'full_art', 'gold_rare', 'prismatic'] as const
 
 const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   carta: 'Carta individual',
@@ -24,6 +26,7 @@ interface FilterPanelProps {
   onReset: () => void
   isMobileOpen?: boolean
   onMobileClose?: () => void
+  availableRarities?: string[]
 }
 
 function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -87,7 +90,15 @@ export function FilterPanel({
   onReset,
   isMobileOpen,
   onMobileClose,
+  availableRarities = [],
 }: FilterPanelProps) {
+  // Rarezas: lista estática + extras dinámicos que Irving haya registrado
+  const extraRarities = availableRarities.filter((r) => !STATIC_RARITIES.includes(r as any))
+  const allRarities = [...STATIC_RARITIES, ...extraRarities]
+  const rarityLabels: Record<string, string> = {
+    ...(RARITY_LABELS as Record<string, string>),
+    ...Object.fromEntries(extraRarities.map((r) => [r, r])),
+  }
   const content = (
     <div className="space-y-0">
       <div className="flex items-center justify-between mb-5">
@@ -119,9 +130,9 @@ export function FilterPanel({
       </FilterSection>
 
       <FilterSection title="Rareza">
-        <CheckboxGroup<Rarity>
-          options={['comun', 'poco_comun', 'rara', 'ultra_rara', 'secret_rare', 'full_art', 'gold_rare', 'prismatic']}
-          labels={RARITY_LABELS}
+        <CheckboxGroup<string>
+          options={allRarities}
+          labels={rarityLabels}
           selected={filters.rarity}
           onChange={(v) => onUpdate('rarity', v)}
         />

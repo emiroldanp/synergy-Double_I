@@ -9,6 +9,7 @@ const CARD_BACKS: Record<Franchise, string> = {
   yugioh: '/card-backs/yugioh.jpg',
   lorcana: '/card-backs/lorcana.jpg',
   magic: '/card-backs/magic.webp',
+  accesorios: '/card-backs/pokemon.jpg',
 }
 
 const OBJECT_FIT: Record<Franchise, 'cover' | 'contain'> = {
@@ -16,6 +17,7 @@ const OBJECT_FIT: Record<Franchise, 'cover' | 'contain'> = {
   yugioh: 'contain',
   lorcana: 'cover',
   magic: 'cover',
+  accesorios: 'cover',
 }
 
 export function CardFlipFlyPortal() {

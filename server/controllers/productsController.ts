@@ -14,6 +14,7 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
       franchise,
       categorySlug,
       rarity,
+      productType,
       edition,
       condition,
       variant,
@@ -40,7 +41,14 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
       where.category = { slug: categorySlug as string }
     }
 
-    if (rarity) where.rarity = rarity as string
+    if (rarity) {
+      const rarityList = (rarity as string).split(',').map((s) => s.trim()).filter(Boolean)
+      where.rarity = rarityList.length === 1 ? rarityList[0] : { in: rarityList }
+    }
+    if (productType) {
+      const typeList = (productType as string).split(',').map((s) => s.trim()).filter(Boolean)
+      ;(where as any).productType = typeList.length === 1 ? typeList[0] : { in: typeList }
+    }
     if (edition) where.edition = edition as any
     if (condition) where.condition = condition as any
     if (variant) where.variant = variant as any
@@ -106,6 +114,26 @@ export async function getCategories(req: Request, res: Response, next: NextFunct
       orderBy: { name: 'asc' },
     })
     res.json({ data: categories })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * GET /api/products/rarities
+ * Devuelve las rarezas únicas registradas en productos activos (excluye accesorios).
+ * Permite que el filtro del catálogo muestre rarezas dinámicas además de las estáticas.
+ */
+export async function getRarities(req: Request, res: Response, next: NextFunction) {
+  try {
+    const where: any = { isActive: true, rarity: { not: null }, productType: { not: 'accessory' } }
+    const results = await prisma.product.findMany({
+      where,
+      select: { rarity: true },
+      distinct: ['rarity'],
+    })
+    const rarities = results.map((r) => r.rarity).filter(Boolean) as string[]
+    res.json({ data: rarities })
   } catch (error) {
     next(error)
   }

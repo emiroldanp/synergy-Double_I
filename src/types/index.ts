@@ -1,4 +1,4 @@
-export type Franchise = 'pokemon' | 'yugioh' | 'lorcana' | 'magic'
+export type Franchise = 'pokemon' | 'yugioh' | 'lorcana' | 'magic' | 'accesorios'
 
 export type ProductType = 'carta' | 'sleeve' | 'playmat' | 'etb' | 'display' | 'dado' | 'binder' | 'accessory'
 
@@ -183,7 +183,7 @@ export interface Promotion {
 export interface FilterState {
   franchise: Franchise[]
   productType: ProductType[]
-  rarity: Rarity[]
+  rarity: string[]
   edition: Edition[]
   condition: Condition[]
   variant: Variant[]
