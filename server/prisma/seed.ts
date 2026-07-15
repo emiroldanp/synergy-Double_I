@@ -23,6 +23,11 @@ async function main() {
       update: {},
       create: { name: 'Lorcana', slug: 'lorcana', description: 'Tarjetas coleccionables de la franquicia Disney Lorcana' },
     }),
+    prisma.category.upsert({
+      where: { slug: 'accesorios' },
+      update: {},
+      create: { name: 'Accesorios', slug: 'accesorios', description: 'Accesorios para coleccionistas TCG' },
+    }),
   ])
   console.log('✓ Categorías')
 
