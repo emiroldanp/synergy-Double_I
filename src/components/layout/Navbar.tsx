@@ -12,7 +12,7 @@ const CATEGORIES = [
   { label: 'Pokémon', href: '/catalogo/pokemon', color: '#F5C400' },
   { label: 'Lorcana', href: '/catalogo/lorcana', color: '#6B5ECD' },
   { label: 'Magic', href: '/catalogo/magic', color: '#A82FBB' },
-  { label: 'Accesorios', href: '/catalogo?productType=accessory', color: '#6BB8EC' },
+  { label: 'Accesorios', href: '/catalogo/accesorios', color: '#6BB8EC' },
 ]
 
 function DeckIconButton({
