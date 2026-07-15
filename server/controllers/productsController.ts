@@ -126,7 +126,12 @@ export async function getCategories(req: Request, res: Response, next: NextFunct
  */
 export async function getRarities(req: Request, res: Response, next: NextFunction) {
   try {
-    const where: any = { isActive: true, rarity: { not: null }, productType: { not: 'accessory' } }
+    // Incluir productos sin productType (NULL = creados antes del campo) pero excluir accesorios
+    const where: any = {
+      isActive: true,
+      rarity: { not: null },
+      OR: [{ productType: null }, { productType: { not: 'accessory' } }],
+    }
     const results = await prisma.product.findMany({
       where,
       select: { rarity: true },
