@@ -15,7 +15,7 @@ const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Precio: mayor a menor' },
 ] as const
 
-const VALID_FRANCHISES = ['pokemon', 'lorcana', 'magic'] as const
+const VALID_FRANCHISES = ['pokemon', 'lorcana', 'magic', 'accesorios'] as const
 const VALID_SORTS = ['newest', 'price_asc', 'price_desc'] as const
 
 function useInitialFiltersFromParams(): Partial<FilterState> {
