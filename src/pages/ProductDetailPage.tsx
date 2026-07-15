@@ -15,6 +15,7 @@ import {
   StockBadge,
 } from '@/components/ui/Badge'
 import { formatPrice, CONDITION_LABELS, EDITION_LABELS } from '@/lib/utils'
+import { TcgCardDetails } from '@/components/ui/TcgCardDetails'
 
 function ProductDetailSkeleton() {
   return (
@@ -374,6 +375,9 @@ export default function ProductDetailPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Sección enriquecida con datos de la API TCG — solo aparece si la carta fue importada */}
+              <TcgCardDetails product={product} />
             </div>
           </div>
         </div>

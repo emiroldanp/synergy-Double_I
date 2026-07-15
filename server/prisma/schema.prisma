@@ -71,27 +71,32 @@ enum SubscriberSource {
 }
 
 model Product {
-  id          String     @id @default(cuid())
-  categoryId  String
-  category    Category   @relation(fields: [categoryId], references: [id])
-  name        String
-  cardNumber  String?
-  setName     String?
-  edition     Edition?
-  language    Language?
-  rarity      String?
-  productType String?
-  condition   Condition?
-  variant     Variant?
-  price       Decimal    @db.Decimal(10, 2)
-  stock       Int        @default(0)
-  isActive    Boolean    @default(true)
-  slug        String     @unique
-  description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  images      ProductImage[]
-  orderItems  OrderItem[]
+  id              String     @id @default(cuid())
+  categoryId      String
+  category        Category   @relation(fields: [categoryId], references: [id])
+  name            String
+  cardNumber      String?
+  setName         String?
+  edition         Edition?
+  language        Language?
+  rarity          String?
+  productType     String?
+  condition       Condition?
+  variant         Variant?
+  price           Decimal    @db.Decimal(10, 2)
+  stock           Int        @default(0)
+  isActive        Boolean    @default(true)
+  slug            String     @unique
+  description     String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  // Campos TCG — rellenados automáticamente desde la API al importar una carta
+  externalId      String?
+  externalSource  String?
+  tcgMetadata     Json?
+  marketPriceUsd  Decimal?   @db.Decimal(10, 2)
+  images          ProductImage[]
+  orderItems      OrderItem[]
 }
 
 model ProductImage {

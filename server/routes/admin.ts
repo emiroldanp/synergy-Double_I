@@ -30,6 +30,11 @@ import {
   updateBanner,
   deleteBanner,
 } from '../controllers/bannersController'
+import {
+  searchCards,
+  getCardDetail,
+  importCardImage,
+} from '../controllers/tcgController'
 
 export const adminRoutes = Router()
 
@@ -73,3 +78,8 @@ adminRoutes.get('/banners', listAllBanners)
 adminRoutes.post('/banners', createBanner)
 adminRoutes.patch('/banners/:id', updateBanner)
 adminRoutes.delete('/banners/:id', deleteBanner)
+
+// --- TCG — búsqueda en APIs externas de cartas ---
+adminRoutes.get('/tcg/search', searchCards)
+adminRoutes.get('/tcg/card', getCardDetail)
+adminRoutes.post('/tcg/import-image', importCardImage)

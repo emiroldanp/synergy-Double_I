@@ -91,7 +91,8 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
     // Whitelist de campos permitidos — nunca spread req.body directo a Prisma
     const {
       categoryId, name, cardNumber, setName, edition, language,
-      rarity, condition, variant, price, stock, slug, description, isActive, productType
+      rarity, condition, variant, price, stock, slug, description, isActive, productType,
+      externalId, externalSource, tcgMetadata, marketPriceUsd,
     } = req.body
 
     const product = await prisma.product.create({
@@ -103,6 +104,10 @@ export async function createProduct(req: Request, res: Response, next: NextFunct
         slug,
         description,
         isActive: isActive ?? true,
+        externalId: externalId ?? null,
+        externalSource: externalSource ?? null,
+        tcgMetadata: tcgMetadata ?? undefined,
+        marketPriceUsd: marketPriceUsd ? new Prisma.Decimal(marketPriceUsd) : null,
       },
     })
 
@@ -136,9 +141,17 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
 
     // Construir el objeto de update excluyendo campos que se manejan por separado
     const updateData: Prisma.ProductUpdateInput = {}
-    const allowedFields = ['name', 'description', 'slug', 'cardNumber', 'setName', 'rarity', 'stock', 'edition', 'language', 'condition', 'variant', 'productType']
+    const allowedFields = [
+      'name', 'description', 'slug', 'cardNumber', 'setName', 'rarity', 'stock',
+      'edition', 'language', 'condition', 'variant', 'productType',
+      'externalId', 'externalSource',
+    ]
     for (const field of allowedFields) {
       if (rest[field] !== undefined) (updateData as any)[field] = rest[field]
+    }
+    if (rest.tcgMetadata !== undefined) (updateData as any).tcgMetadata = rest.tcgMetadata
+    if (rest.marketPriceUsd !== undefined) {
+      updateData.marketPriceUsd = rest.marketPriceUsd ? new Prisma.Decimal(rest.marketPriceUsd) : null
     }
     if (rest.categoryId !== undefined) {
       if (!rest.categoryId) return res.status(400).json({ error: 'categoryId es requerido' })

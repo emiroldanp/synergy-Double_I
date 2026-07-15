@@ -76,3 +76,12 @@ export const blogApi = {
 export const dashboardApi = {
   getStats: () => api.get('/api/admin/dashboard'),
 }
+
+export const tcgApi = {
+  search: (franchise: string, q: string) =>
+    api.get('/api/admin/tcg/search', { params: { franchise, q } }),
+  getCard: (franchise: string, id: string) =>
+    api.get('/api/admin/tcg/card', { params: { franchise, id } }),
+  importImage: (imageUrl: string, productId?: string) =>
+    api.post('/api/admin/tcg/import-image', { imageUrl, productId }),
+}

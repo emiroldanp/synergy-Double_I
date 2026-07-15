@@ -6,7 +6,16 @@ import { z } from 'zod'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import { slugify } from '../../lib/utils'
 import ImageUploader, { type ImageEntry } from '../../components/admin/ImageUploader'
-import type { Category, AdminProduct } from '../../types'
+import { TcgCardSearch } from '../../components/ui/TcgCardSearch'
+import type { Category, AdminProduct, TcgCardResult } from '../../types'
+
+// Mapeo slug de categoría → franquicia para habilitar el buscador TCG
+const SLUG_TO_FRANCHISE: Record<string, 'pokemon' | 'magic' | 'lorcana'> = {
+  pokemon: 'pokemon',
+  magic: 'magic',
+  'magic-the-gathering': 'magic',
+  lorcana: 'lorcana',
+}
 
 const ACCESSORY_SUBTYPES = ['Sleeve', 'Toploader', 'Binder', 'Playmats', 'Acrílicos'] as const
 
@@ -50,6 +59,7 @@ export default function ProductFormPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [accessorySubtypes, setAccessorySubtypes] = useState<string[]>([])
+  const [tcgCardData, setTcgCardData] = useState<Pick<TcgCardResult, 'externalId' | 'externalSource' | 'metadata' | 'marketPriceUsd'> | null>(null)
 
   const {
     register,
@@ -84,11 +94,39 @@ export default function ProductFormPage() {
   const categoryId = watch('categoryId')
   const selectedCategory = categories.find((c) => c.id === categoryId)
   const isAccessory = selectedCategory?.slug === 'accesorios'
+  const tcgFranchise = selectedCategory ? SLUG_TO_FRANCHISE[selectedCategory.slug] ?? null : null
 
   const toggleSubtype = (subtype: string) => {
     setAccessorySubtypes((prev) =>
       prev.includes(subtype) ? prev.filter((s) => s !== subtype) : [...prev, subtype],
     )
+  }
+
+  // Rellena el formulario con los datos de la carta seleccionada en el buscador TCG
+  const handleTcgSelect = (card: TcgCardResult) => {
+    setValue('name', card.name)
+    setValue('cardNumber', card.cardNumber ?? '')
+    setValue('setName', card.setName ?? '')
+    setValue('rarity', card.rarity ?? '')
+    if (card.language === 'es' || card.language === 'en' || card.language === 'jp') {
+      setValue('language', card.language)
+    }
+    setTcgCardData({
+      externalId: card.externalId,
+      externalSource: card.externalSource,
+      metadata: card.metadata,
+      marketPriceUsd: card.marketPriceUsd,
+    })
+    // El slug se regenera desde el nombre si no fue tocado manualmente
+    if (!slugTouched) setValue('slug', slugify(card.name))
+  }
+
+  // Agrega la imagen descargada a R2 al estado de imágenes del formulario
+  const handleTcgImageImported = (url: string) => {
+    setImages((prev) => {
+      const alreadyHasPrimary = prev.some((i) => i.isPrimary)
+      return [...prev, { url, isPrimary: !alreadyHasPrimary }]
+    })
   }
 
   // Auto-generar slug desde el nombre, solo si el usuario no lo ha editado manualmente
@@ -172,6 +210,11 @@ export default function ProductFormPage() {
             condition: values.condition || null,
             variant: values.variant || null,
             description: values.description || null,
+            // Datos TCG: se envían solo si se seleccionó una carta desde el buscador
+            externalId: tcgCardData?.externalId ?? null,
+            externalSource: tcgCardData?.externalSource ?? null,
+            tcgMetadata: tcgCardData?.metadata ?? null,
+            marketPriceUsd: tcgCardData?.marketPriceUsd ?? null,
           }
 
       let productId: string
@@ -343,6 +386,28 @@ export default function ProductFormPage() {
                 <p className="text-xs text-red-500 mt-1">{errors.categoryId.message}</p>
               )}
             </div>
+
+            {/* Buscador TCG — solo para franquicias con API (Pokémon, Magic, Lorcana) */}
+            {tcgFranchise && !isAccessory && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Buscar carta en catálogo oficial
+                </label>
+                <TcgCardSearch
+                  franchise={tcgFranchise}
+                  onSelect={handleTcgSelect}
+                  onImageImported={handleTcgImageImported}
+                />
+                {tcgCardData?.marketPriceUsd && (
+                  <p className="mt-1.5 text-xs text-green-700 font-medium">
+                    Referencia de mercado: ${tcgCardData.marketPriceUsd.toFixed(2)} USD
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-gray-400">
+                  Opcional — selecciona una carta para rellenar los campos automáticamente.
+                </p>
+              </div>
+            )}
 
             {isAccessory ? (
               <div>
