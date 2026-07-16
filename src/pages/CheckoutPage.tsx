@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '@/hooks/useCart'
 import { useShippingQuote } from '@/hooks/useShippingQuote'
 import { useAuth } from '@/hooks/useAuth'
-import { ordersApi, paymentsApi } from '@/lib/api'
+import { ordersApi, paymentsApi, discountCodesApi } from '@/lib/api'
 import { contactSchema, addressSchema, cfdiSchema } from '@/lib/schemas/checkout'
 import type { ContactFormData, AddressFormData, CfdiFormData } from '@/lib/schemas/checkout'
 import { formatPrice, CFDI_USES } from '@/lib/utils'
@@ -66,10 +66,42 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState<AddressFormData | null>(null)
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
+  const [discountCode, setDiscountCode] = useState('')
+  const [discountAmount, setDiscountAmount] = useState(0)
+  const [discountValidating, setDiscountValidating] = useState(false)
+  const [discountError, setDiscountError] = useState<string | null>(null)
+  const [discountApplied, setDiscountApplied] = useState<{ code: string; amount: number } | null>(null)
   const { items, subtotal, clearCart } = useCart()
   const shipping = useShippingQuote()
   const { user, isSignedIn } = useAuth()
   const navigate = useNavigate()
+
+  const applyDiscount = async () => {
+    if (!discountCode.trim()) return
+    setDiscountValidating(true)
+    setDiscountError(null)
+    try {
+      const res = await discountCodesApi.validate(discountCode.trim(), subtotal)
+      const { discountAmount: amount } = res.data?.data ?? res.data
+      setDiscountAmount(amount)
+      setDiscountApplied({ code: discountCode.trim().toUpperCase(), amount })
+      setDiscountError(null)
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? 'Código inválido'
+      setDiscountError(msg)
+      setDiscountAmount(0)
+      setDiscountApplied(null)
+    } finally {
+      setDiscountValidating(false)
+    }
+  }
+
+  const removeDiscount = () => {
+    setDiscountCode('')
+    setDiscountAmount(0)
+    setDiscountApplied(null)
+    setDiscountError(null)
+  }
 
   const contactForm = useForm<ContactFormData>({ resolver: zodResolver(contactSchema) })
   const addressForm = useForm<AddressFormData>({ resolver: zodResolver(addressSchema) })
@@ -127,6 +159,7 @@ export default function CheckoutPage() {
         invoiceData: cfdiValues.requestCfdi
           ? { rfc: cfdiValues.rfc!, razonSocial: cfdiValues.razonSocial!, cfdiUse: cfdiValues.usoCfdi! }
           : null,
+        discountCode: discountApplied?.code ?? null,
       }
 
       const res = await ordersApi.create(orderPayload)
@@ -221,7 +254,7 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <div className="flex gap-3 mt-2">
-                      <button type="button" onClick={() => setStep(0)} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
+                      <button type="button" onClick={() => { removeDiscount(); setStep(0) }} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
                       <button type="submit" className="btn-primary flex-1">Continuar →</button>
                     </div>
                   </div>
@@ -320,7 +353,7 @@ export default function CheckoutPage() {
                   )}
 
                   <div className="flex gap-3 mt-6">
-                    <button onClick={() => setStep(1)} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
+                    <button onClick={() => { removeDiscount(); setStep(1) }} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
                     <button
                       onClick={handleShipping}
                       disabled={!shipping.selected}
@@ -376,7 +409,7 @@ export default function CheckoutPage() {
                     )}
 
                     <div className="flex gap-3 mt-2">
-                      <button type="button" onClick={() => setStep(2)} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
+                      <button type="button" onClick={() => { removeDiscount(); setStep(2) }} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
                       <button type="submit" className="btn-primary flex-1">Continuar →</button>
                     </div>
                   </div>
@@ -394,6 +427,47 @@ export default function CheckoutPage() {
                     <p className="font-exo text-ash text-xs">
                       Al confirmar el pedido te redirigiremos al checkout seguro de Mercado Pago para que pagues con tarjeta, OXXO o transferencia (SPEI).
                     </p>
+                  </div>
+                  {/* Campo de código de descuento */}
+                  <div className="border border-navy/30 p-4 mb-4">
+                    <h3 className="font-agency text-sm text-ash uppercase tracking-wider mb-3">Código de descuento</h3>
+                    {discountApplied ? (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-agency text-sm text-dragon tracking-wider">{discountApplied.code}</span>
+                          <span className="font-exo text-xs text-ash ml-3">
+                            −${discountApplied.amount.toFixed(2)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={removeDiscount}
+                          className="font-agency text-xs text-ash/60 hover:text-crimson uppercase tracking-wider transition-colors"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          value={discountCode}
+                          onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => e.key === 'Enter' && applyDiscount()}
+                          placeholder="PROMO10"
+                          className="input-dark flex-1 uppercase text-sm"
+                          disabled={discountValidating}
+                        />
+                        <button
+                          onClick={applyDiscount}
+                          disabled={discountValidating || !discountCode.trim()}
+                          className="btn-secondary text-xs px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {discountValidating ? '...' : 'Aplicar'}
+                        </button>
+                      </div>
+                    )}
+                    {discountError && (
+                      <p className="text-xs text-crimson mt-2">{discountError}</p>
+                    )}
                   </div>
                   <div className="border border-navy/30 p-4 mb-6">
                     <h3 className="font-agency text-sm text-ash uppercase tracking-wider mb-3">Resumen final</h3>
@@ -418,10 +492,16 @@ export default function CheckoutPage() {
                         Irving te contactará por WhatsApp para coordinar la entrega.
                       </p>
                     )}
+                    {discountApplied && (
+                      <div className="flex justify-between text-xs font-exo py-1">
+                        <span className="text-ash">Descuento ({discountApplied.code})</span>
+                        <span className="text-dragon">−${discountApplied.amount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between mt-2 pt-2 border-t border-navy/40">
                       <span className="font-agency text-sm text-ash uppercase">Total</span>
                       <span className="font-agency text-lg text-white">
-                        {formatPrice(subtotal + (shipping.selected?.price ?? 0))}
+                        {formatPrice(subtotal + (shipping.selected?.price ?? 0) - discountAmount)}
                       </span>
                     </div>
                   </div>
@@ -472,9 +552,15 @@ export default function CheckoutPage() {
                       <span className="text-frost">{formatPrice(shipping.selected.price)}</span>
                     </div>
                   )}
+                  {discountApplied && (
+                    <div className="flex justify-between text-ash">
+                      <span>Descuento</span>
+                      <span className="text-dragon">−${discountApplied.amount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-agency text-sm pt-2 border-t border-navy/40 mt-2">
                     <span className="text-ash uppercase">Total</span>
-                    <span className="text-white">{formatPrice(subtotal + (shipping.selected?.price ?? 0))}</span>
+                    <span className="text-white">{formatPrice(subtotal + (shipping.selected?.price ?? 0) - discountAmount)}</span>
                   </div>
                 </div>
               </div>

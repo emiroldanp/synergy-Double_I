@@ -85,3 +85,28 @@ export const tcgApi = {
   importImage: (imageUrl: string, productId?: string) =>
     api.post('/api/admin/tcg/import-image', { imageUrl, productId }),
 }
+
+export const discountCodesApi = {
+  validate: (code: string, subtotal: number) =>
+    api.post('/api/discount-codes/validate', { code, subtotal }),
+  list: () => api.get('/api/admin/discount-codes'),
+  create: (data: {
+    code: string
+    type: 'percentage' | 'fixed'
+    value: number
+    minAmount?: number | null
+    usageLimit?: number | null
+    expiresAt?: string | null
+    isActive?: boolean
+  }) => api.post('/api/admin/discount-codes', data),
+  update: (id: string, data: Partial<{
+    code: string
+    type: 'percentage' | 'fixed'
+    value: number
+    minAmount: number | null
+    usageLimit: number | null
+    expiresAt: string | null
+    isActive: boolean
+  }>) => api.patch(`/api/admin/discount-codes/${id}`, data),
+  remove: (id: string) => api.delete(`/api/admin/discount-codes/${id}`),
+}

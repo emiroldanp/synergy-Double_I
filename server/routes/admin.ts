@@ -35,6 +35,12 @@ import {
   getCardDetail,
   importCardImage,
 } from '../controllers/tcgController'
+import {
+  listDiscountCodes,
+  createDiscountCode,
+  updateDiscountCode,
+  deleteDiscountCode,
+} from '../controllers/discountCodesController'
 
 export const adminRoutes = Router()
 
@@ -83,3 +89,9 @@ adminRoutes.delete('/banners/:id', deleteBanner)
 adminRoutes.get('/tcg/search', searchCards)
 adminRoutes.get('/tcg/card', getCardDetail)
 adminRoutes.post('/tcg/import-image', importCardImage)
+
+// --- Códigos de descuento ---
+adminRoutes.get('/discount-codes', listDiscountCodes)
+adminRoutes.post('/discount-codes', createDiscountCode)
+adminRoutes.patch('/discount-codes/:id', updateDiscountCode)
+adminRoutes.delete('/discount-codes/:id', deleteDiscountCode)

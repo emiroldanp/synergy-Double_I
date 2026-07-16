@@ -56,6 +56,7 @@ export default function AdminDashboard() {
               { to: '/admin/productos', label: 'Productos' },
               { to: '/admin/pedidos', label: 'Pedidos' },
               { to: '/admin/blog', label: 'Blog' },
+              { to: '/admin/descuentos', label: 'Descuentos' },
             ].map((link) => (
               <Link
                 key={link.to}

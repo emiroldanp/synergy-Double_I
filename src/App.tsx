@@ -28,6 +28,7 @@ const InvoicesPage = lazy(() => import('@/pages/admin/InvoicesPage'))
 const SubscribersPage = lazy(() => import('@/pages/admin/SubscribersPage'))
 const BlogManager = lazy(() => import('@/pages/admin/BlogManager'))
 const BannerManager = lazy(() => import('@/pages/admin/BannerManager'))
+const DiscountCodesManager = lazy(() => import('@/pages/admin/DiscountCodesManager'))
 const LoginPage = lazy(() => import('@/pages/admin/LoginPage'))
 
 import { CardFlipFlyPortal } from '@/components/ui/CardFlipFlyPortal'
@@ -122,6 +123,7 @@ function AppContent() {
           <Route path="suscriptores" element={<SubscribersPage />} />
           <Route path="blog" element={<BlogManager />} />
           <Route path="banners" element={<BannerManager />} />
+          <Route path="descuentos" element={<DiscountCodesManager />} />
         </Route>
       </Routes>
       </Suspense>
