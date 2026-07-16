@@ -87,7 +87,10 @@ const createSchema = z.object({
   usageLimit: z.number().int().positive().nullable().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
   isActive: z.boolean().optional().default(true),
-})
+}).refine(
+  (data) => data.type !== 'percentage' || data.value <= 100,
+  { message: 'El porcentaje no puede exceder 100', path: ['value'] }
+)
 
 /**
  * GET /api/admin/discount-codes
@@ -174,12 +177,19 @@ export async function updateDiscountCode(req: Request, res: Response, next: Next
 
 /**
  * DELETE /api/admin/discount-codes/:id
+ * Bloquea el borrado si el código ya fue usado — protege el audit trail financiero.
  */
 export async function deleteDiscountCode(req: Request, res: Response, next: NextFunction) {
   try {
     const id = String(req.params.id)
     const existing = await prisma.discountCode.findUnique({ where: { id } })
     if (!existing) return res.status(404).json({ error: 'Código no encontrado' })
+    if (existing.usageCount > 0) {
+      return res.status(409).json({
+        error: `Este código ha sido utilizado ${existing.usageCount} vez/veces. Desactívalo en lugar de eliminarlo.`,
+        code: 'CODE_IN_USE',
+      })
+    }
     await prisma.discountCode.delete({ where: { id } })
     res.json({ data: { id } })
   } catch (error) {

@@ -77,8 +77,12 @@ export default function DiscountCodesManager() {
 
   const handleSave = async () => {
     setFormError(null)
-    if (!form.code || !form.value) {
-      setFormError('Código y valor son obligatorios')
+    if (!form.code || !form.value || Number(form.value) <= 0) {
+      setFormError('Código y valor son obligatorios (el valor debe ser mayor a 0)')
+      return
+    }
+    if (form.type === 'percentage' && Number(form.value) > 100) {
+      setFormError('El porcentaje no puede exceder 100%')
       return
     }
     setSaving(true)

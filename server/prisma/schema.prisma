@@ -157,7 +157,7 @@ model Order {
   trackingNumber   String?
   requiresInvoice  Boolean       @default(false)
   discountCodeId   String?
-  discountCode     DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  discountCode     DiscountCode? @relation(fields: [discountCodeId], references: [id], onDelete: SetNull)
   discountAmount   Decimal       @default(0) @db.Decimal(10, 2)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt

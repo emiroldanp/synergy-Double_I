@@ -121,10 +121,14 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
 
     res.status(201).json({ data: { orderId: order.id } })
   } catch (error: any) {
-    // Errores de validación (stock, producto no disponible) lanzados dentro de la transacción
-    const validationMessages = ['no disponible', 'Stock insuficiente', 'Código de descuento', 'Código inválido', 'Código no encontrado']
+    // Errores de validación (stock, producto no disponible, descuento) lanzados dentro de la transacción
+    const validationMessages = ['no disponible', 'Stock insuficiente', 'Código de descuento', 'Código inválido', 'Código no encontrado', 'expirado', 'agotado']
     if (validationMessages.some(msg => error?.message?.includes(msg))) {
-      return res.status(400).json({ error: error.message, code: 'INSUFFICIENT_STOCK' })
+      const isDiscountError = ['Código', 'expirado', 'agotado'].some(msg => error?.message?.includes(msg))
+      return res.status(400).json({
+        error: error.message,
+        code: isDiscountError ? 'DISCOUNT_INVALID' : 'INSUFFICIENT_STOCK',
+      })
     }
     next(error)
   }

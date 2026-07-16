@@ -254,7 +254,7 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <div className="flex gap-3 mt-2">
-                      <button type="button" onClick={() => setStep(0)} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
+                      <button type="button" onClick={() => { removeDiscount(); setStep(0) }} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
                       <button type="submit" className="btn-primary flex-1">Continuar →</button>
                     </div>
                   </div>
@@ -353,7 +353,7 @@ export default function CheckoutPage() {
                   )}
 
                   <div className="flex gap-3 mt-6">
-                    <button onClick={() => setStep(1)} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
+                    <button onClick={() => { removeDiscount(); setStep(1) }} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
                     <button
                       onClick={handleShipping}
                       disabled={!shipping.selected}
@@ -409,7 +409,7 @@ export default function CheckoutPage() {
                     )}
 
                     <div className="flex gap-3 mt-2">
-                      <button type="button" onClick={() => setStep(2)} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
+                      <button type="button" onClick={() => { removeDiscount(); setStep(2) }} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
                       <button type="submit" className="btn-primary flex-1">Continuar →</button>
                     </div>
                   </div>
