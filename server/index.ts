@@ -13,6 +13,7 @@ import { emailRoutes } from './routes/email'
 import { adminRoutes } from './routes/admin'
 import { productsRoutes } from './routes/products'
 import { blogRoutes } from './routes/blog'
+import { discountCodesRoutes } from './routes/discountCodes'
 import { listPublicBanners } from './controllers/bannersController'
 import { errorHandler } from './middleware/errorHandler'
 
@@ -105,6 +106,7 @@ app.use('/api/blog', generalLimiter, blogRoutes)
 app.get('/api/banners', generalLimiter, listPublicBanners)
 app.use('/api/shipping', generalLimiter, shippingRoutes)
 app.use('/api/orders', orderLimiter, ordersRoutes)
+app.use('/api/discount-codes', generalLimiter, discountCodesRoutes)
 app.use('/api/payments', paymentLimiter, paymentsRoutes)
 app.use('/api/email/subscribe', subscribeLimiter)
 app.use('/api/email', emailRoutes)
