@@ -103,7 +103,7 @@ export interface Cart {
 
 export interface ShippingOption {
   id: string
-  carrier: 'estafeta' | 'dhl' | 'fedex'
+  carrier: 'estafeta' | 'dhl' | 'fedex' | 'whatsapp_local'
   service: string
   price: number
   eta: string

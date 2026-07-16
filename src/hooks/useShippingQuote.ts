@@ -11,10 +11,36 @@ const DEFAULT_PARCEL = {
   height: 8,
 }
 
+// Estados que califican como zona local (coordinar envío por WhatsApp con Irving)
+const LOCAL_ZONE_PATTERNS = [
+  /cdmx/i,
+  /ciudad\s+de\s+m[eé]xico/i,
+  /distrito\s+federal/i,
+  /^d\.?f\.?$/i,
+  /estado\s+de\s+m[eé]xico/i,
+  /edomex/i,
+  /edo\.?\s*m[eé]x/i,
+]
+
+export function isLocalZone(state: string): boolean {
+  const s = state.trim()
+  return LOCAL_ZONE_PATTERNS.some((re) => re.test(s))
+}
+
+// Opción sintética que se muestra cuando el destino es zona local
+const LOCAL_SHIPPING_OPTION: ShippingOption = {
+  id: 'whatsapp_local',
+  carrier: 'whatsapp_local',
+  service: 'whatsapp_local',
+  price: 0,
+  eta: 'A coordinar por WhatsApp',
+}
+
 export function useShippingQuote() {
   const [status, setStatus] = useState<Status>('idle')
   const [options, setOptions] = useState<ShippingOption[]>([])
   const [selected, setSelected] = useState<ShippingOption | null>(null)
+  const [isLocal, setIsLocal] = useState(false)
 
   const fetchQuote = async (address: {
     street: string
@@ -24,6 +50,16 @@ export function useShippingQuote() {
     state: string
     zip: string
   }) => {
+    // Zona local → skip Skydropx, mostrar opción WhatsApp directamente
+    if (isLocalZone(address.state)) {
+      setIsLocal(true)
+      setOptions([LOCAL_SHIPPING_OPTION])
+      setSelected(LOCAL_SHIPPING_OPTION)
+      setStatus('success')
+      return
+    }
+
+    setIsLocal(false)
     setStatus('loading')
     setOptions([])
     setSelected(null)
@@ -72,5 +108,5 @@ export function useShippingQuote() {
     }
   }
 
-  return { status, options, selected, setSelected, fetchQuote }
+  return { status, options, selected, setSelected, fetchQuote, isLocal }
 }

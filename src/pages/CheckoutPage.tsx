@@ -232,7 +232,38 @@ export default function CheckoutPage() {
               {step === 2 && (
                 <div className="bg-deep border border-navy/40 p-6">
                   <h2 className="font-agency text-white uppercase tracking-wider text-lg mb-4">Método de envío</h2>
-                  {shipping.status === 'loading' && (
+
+                  {/* Zona local (CDMX / EDOMEX) — opción directa por WhatsApp */}
+                  {shipping.isLocal && shipping.status === 'success' && (
+                    <div className="space-y-4">
+                      <div className="border border-[#25D366]/40 bg-[#25D366]/5 p-4">
+                        <div className="flex items-start gap-3">
+                          <svg className="w-6 h-6 text-[#25D366] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                            <path d="M11.998 2C6.477 2 2 6.477 2 12c0 1.99.58 3.842 1.58 5.395L2.05 22l4.737-1.502A9.96 9.96 0 0 0 12 21.999c5.523 0 10-4.477 10-10S17.523 2 11.998 2zm.002 18.108a8.113 8.113 0 0 1-4.141-1.132l-.297-.176-3.084.978.93-3.07-.194-.315A8.108 8.108 0 0 1 12 3.892c4.473 0 8.108 3.635 8.108 8.108 0 4.472-3.635 8.108-8.108 8.108z"/>
+                          </svg>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-agency text-sm text-white tracking-wide uppercase">
+                              Envío local — CDMX / Estado de México
+                            </p>
+                            <p className="font-exo text-xs text-ash mt-1">
+                              Irving te contactará por WhatsApp para coordinar la entrega en tu zona.
+                            </p>
+                            <p className="font-agency text-sm text-[#25D366] mt-2">Sin costo de envío</p>
+                          </div>
+                          <div className="w-4 h-4 rounded-full border-2 border-[#25D366] flex items-center justify-center flex-shrink-0">
+                            <div className="w-2 h-2 rounded-full bg-[#25D366]" />
+                          </div>
+                        </div>
+                      </div>
+                      <p className="font-exo text-xs text-ash/60">
+                        Al completar tu pedido recibirás un mensaje de WhatsApp para acordar la entrega. Tu pago queda protegido por Mercado Pago.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Zona foránea — cotización Skydropx */}
+                  {!shipping.isLocal && shipping.status === 'loading' && (
                     <div className="flex items-center gap-3 py-8 justify-center">
                       <svg className="animate-spin h-6 w-6 text-dragon" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -241,7 +272,7 @@ export default function CheckoutPage() {
                       <span className="font-exo text-ash text-sm">Cotizando envíos...</span>
                     </div>
                   )}
-                  {shipping.status === 'error' && (
+                  {!shipping.isLocal && shipping.status === 'error' && (
                     <div className="text-center py-6">
                       <p className="font-exo text-crimson text-sm mb-3">No pudimos cotizar el envío. Intenta de nuevo.</p>
                       <button onClick={() => address && shipping.fetchQuote(address)} className="btn-secondary text-xs px-4 py-2">
@@ -249,7 +280,7 @@ export default function CheckoutPage() {
                       </button>
                     </div>
                   )}
-                  {shipping.status === 'success' && (
+                  {!shipping.isLocal && shipping.status === 'success' && (
                     <div className="space-y-3">
                       {shipping.options.map((opt) => (
                         <label
@@ -287,6 +318,7 @@ export default function CheckoutPage() {
                       ))}
                     </div>
                   )}
+
                   <div className="flex gap-3 mt-6">
                     <button onClick={() => setStep(1)} className="btn-ghost text-sm px-4 py-3">← Atrás</button>
                     <button
@@ -373,9 +405,18 @@ export default function CheckoutPage() {
                     ))}
                     {shipping.selected && (
                       <div className="flex justify-between text-xs font-exo py-1 border-t border-navy/30 mt-2 pt-2">
-                        <span className="text-ash">Envío ({shipping.selected.service})</span>
-                        <span className="text-frost">{formatPrice(shipping.selected.price)}</span>
+                        <span className="text-ash">
+                          {shipping.isLocal ? 'Envío local (WhatsApp)' : `Envío (${shipping.selected.service})`}
+                        </span>
+                        <span className={shipping.isLocal ? 'text-[#25D366]' : 'text-frost'}>
+                          {shipping.isLocal ? 'Sin costo' : formatPrice(shipping.selected.price)}
+                        </span>
                       </div>
+                    )}
+                    {shipping.isLocal && (
+                      <p className="text-xs text-ash/60 font-exo mt-2 border-t border-navy/20 pt-2">
+                        Irving te contactará por WhatsApp para coordinar la entrega.
+                      </p>
                     )}
                     <div className="flex justify-between mt-2 pt-2 border-t border-navy/40">
                       <span className="font-agency text-sm text-ash uppercase">Total</span>
