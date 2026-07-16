@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../lib/prisma'
 import { Prisma } from '@prisma/client'
 import { z } from 'zod'
+import { calcDiscount, isCodeValid } from './discountCodesController'
 
 const createOrderSchema = z.object({
   customerId: z.string().optional().nullable(),
@@ -21,6 +22,7 @@ const createOrderSchema = z.object({
     razonSocial: z.string().min(1).max(200),
     cfdiUse: z.string().min(1),
   }).optional().nullable(),
+  discountCode: z.string().max(50).optional().nullable(),
 })
 
 /**
@@ -34,7 +36,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
     if (!parsed.success) {
       return res.status(400).json({ error: 'Datos de orden inválidos', details: parsed.error.flatten().fieldErrors })
     }
-    const { customerId, guestEmail, guestName, guestPhone, shippingAddress, shippingMethod, shippingCost, items, requiresInvoice, invoiceData } = parsed.data
+    const { customerId, guestEmail, guestName, guestPhone, shippingAddress, shippingMethod, shippingCost, items, requiresInvoice, invoiceData, discountCode } = parsed.data
 
     // Crear orden e items en una sola transacción (validación de stock incluida para eliminar TOCTOU)
     const order = await prisma.$transaction(async (tx) => {
@@ -53,11 +55,34 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
         })
       }
 
-      // 2. Calcular totales desde precios de BD
+      // 2. Calcular subtotal desde precios de BD
       const subtotal = resolvedItems.reduce((sum, i) => sum + Number(i.unitPrice) * i.quantity, 0)
-      const total = subtotal + (shippingCost || 0)
 
-      // 3. Crear orden e items
+      // 3. Validar y aplicar código de descuento (server-side — nunca confiar en el cliente)
+      let discountAmount = 0
+      let resolvedDiscountCodeId: string | null = null
+
+      if (discountCode) {
+        const codeRecord = await tx.discountCode.findUnique({
+          where: { code: discountCode.toUpperCase().trim() },
+        })
+        if (!codeRecord) throw new Error('Código de descuento no encontrado')
+        const { valid, reason } = isCodeValid(codeRecord, subtotal)
+        if (!valid) throw new Error(reason ?? 'Código inválido')
+
+        discountAmount = calcDiscount(codeRecord.type, codeRecord.value, subtotal)
+        resolvedDiscountCodeId = codeRecord.id
+
+        // Incrementar usageCount dentro de la misma transacción
+        await tx.discountCode.update({
+          where: { id: codeRecord.id },
+          data: { usageCount: { increment: 1 } },
+        })
+      }
+
+      const total = subtotal + (shippingCost || 0) - discountAmount
+
+      // 4. Crear orden e items
       const newOrder = await tx.order.create({
         data: {
           customerId: customerId || null,
@@ -68,6 +93,8 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
           shippingMethod: shippingMethod || null,
           shippingCost: new Prisma.Decimal(shippingCost || 0),
           subtotal: new Prisma.Decimal(subtotal),
+          discountCodeId: resolvedDiscountCodeId,
+          discountAmount: new Prisma.Decimal(discountAmount),
           total: new Prisma.Decimal(total),
           requiresInvoice,
           items: {
@@ -95,7 +122,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
     res.status(201).json({ data: { orderId: order.id } })
   } catch (error: any) {
     // Errores de validación (stock, producto no disponible) lanzados dentro de la transacción
-    const validationMessages = ['no disponible', 'Stock insuficiente']
+    const validationMessages = ['no disponible', 'Stock insuficiente', 'Código de descuento', 'Código inválido', 'Código no encontrado']
     if (validationMessages.some(msg => error?.message?.includes(msg))) {
       return res.status(400).json({ error: error.message, code: 'INSUFFICIENT_STOCK' })
     }
