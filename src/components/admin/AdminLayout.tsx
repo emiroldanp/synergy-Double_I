@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 
@@ -10,6 +11,8 @@ const pageTitles: Record<string, string> = {
   '/admin/facturas': 'Facturas',
   '/admin/suscriptores': 'Suscriptores',
   '/admin/blog': 'Blog',
+  '/admin/banners': 'Banners',
+  '/admin/descuentos': 'Descuentos',
 }
 
 function getPageTitle(pathname: string): string {
@@ -31,7 +34,13 @@ export default function AdminLayout() {
         </header>
         {/* Contenido de la página */}
         <main className="flex-1 p-6">
-          <Outlet />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+            </div>
+          }>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>
