@@ -139,7 +139,15 @@ export async function createDiscountCode(req: Request, res: Response, next: Next
   }
 }
 
-const updateSchema = createSchema.partial()
+const updateSchema = z.object({
+  code: z.string().min(1).max(50).transform((s) => s.toUpperCase().trim()).optional(),
+  type: z.enum(['percentage', 'fixed']).optional(),
+  value: z.number().positive().optional(),
+  minAmount: z.number().positive().nullable().optional(),
+  usageLimit: z.number().int().positive().nullable().optional(),
+  expiresAt: z.string().datetime().nullable().optional(),
+  isActive: z.boolean().optional(),
+})
 
 /**
  * PATCH /api/admin/discount-codes/:id
