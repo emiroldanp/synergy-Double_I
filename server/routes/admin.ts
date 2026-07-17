@@ -25,12 +25,6 @@ import {
 } from '../controllers/blogController'
 import { markOrderPaid } from '../controllers/paymentsController'
 import {
-  listAllBanners,
-  createBanner,
-  updateBanner,
-  deleteBanner,
-} from '../controllers/bannersController'
-import {
   searchCards,
   getCardDetail,
   importCardImage,
@@ -78,12 +72,6 @@ adminRoutes.get('/blog', listAllPosts)
 adminRoutes.post('/blog', createPost)
 adminRoutes.patch('/blog/:id', updatePost)
 adminRoutes.delete('/blog/:id', deletePost)
-
-// --- Banners ---
-adminRoutes.get('/banners', listAllBanners)
-adminRoutes.post('/banners', createBanner)
-adminRoutes.patch('/banners/:id', updateBanner)
-adminRoutes.delete('/banners/:id', deleteBanner)
 
 // --- TCG — búsqueda en APIs externas de cartas ---
 adminRoutes.get('/tcg/search', searchCards)
