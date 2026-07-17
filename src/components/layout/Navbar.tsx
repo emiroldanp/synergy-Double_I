@@ -85,7 +85,7 @@ export function Navbar() {
   const [cartOpen, setCartOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const { isSignedIn, isAdmin, signOut } = useAuth()
+  const { isSignedIn, isAdmin, isBannerEditor, signOut } = useAuth()
   const { totalItems } = useCart()
   const { deckIconRef } = useDeckAnimation()
   const location = useLocation()
@@ -163,6 +163,19 @@ export function Navbar() {
                   }
                 >
                   Admin
+                </NavLink>
+              )}
+              {isBannerEditor && (
+                <NavLink
+                  to="/banner-editor"
+                  className={({ isActive }) =>
+                    cn(
+                      'font-agency text-sm uppercase tracking-widest transition-colors',
+                      isActive ? 'text-dragon' : 'text-dragon/70 hover:text-dragon'
+                    )
+                  }
+                >
+                  Panel Banners
                 </NavLink>
               )}
             </nav>
@@ -281,6 +294,14 @@ export function Navbar() {
                 className="block font-agency text-sm uppercase tracking-widest py-3 border-b border-navy/30 text-crimson"
               >
                 Admin Panel
+              </NavLink>
+            )}
+            {isBannerEditor && (
+              <NavLink
+                to="/banner-editor"
+                className="block font-agency text-sm uppercase tracking-widest py-3 border-b border-navy/30 text-dragon"
+              >
+                Panel Banners
               </NavLink>
             )}
             {isSignedIn ? (
