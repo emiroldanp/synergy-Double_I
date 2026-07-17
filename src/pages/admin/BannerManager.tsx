@@ -111,107 +111,105 @@ export default function BannerManager() {
         <title>Gestión de Banners — Admin</title>
       </Helmet>
 
-      <div className="min-h-screen pb-16">
-        <div className="page-container py-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="section-title mb-1">Banners del Hero</h1>
-              <p className="font-exo text-ash text-sm">
-                Administra los slides del banner principal de la homepage.
-              </p>
-            </div>
-            <button onClick={openNew} className="btn-primary text-sm px-5 py-2.5">
-              + Nuevo slide
+      <div className="pb-16">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Banners del Hero</h1>
+            <p className="text-gray-500 text-sm">
+              Administra los slides del banner principal de la homepage.
+            </p>
+          </div>
+          <button onClick={openNew} className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+            + Nuevo slide
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
+          </div>
+        ) : slides.length === 0 ? (
+          <div className="text-center py-20 border border-gray-200 rounded-lg bg-white">
+            <p className="text-gray-500 uppercase text-sm tracking-wider mb-4">Sin slides</p>
+            <button onClick={openNew} className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+              Crear primer slide
             </button>
           </div>
-
-          {error && (
-            <div className="mb-4 p-4 bg-red-900/20 border border-red-700/40 text-red-400 text-sm rounded">
-              {error}
-            </div>
-          )}
-
-          {loading ? (
-            <div className="text-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dragon mx-auto" />
-            </div>
-          ) : slides.length === 0 ? (
-            <div className="text-center py-20 border border-navy/40">
-              <p className="font-agency text-ash uppercase tracking-wider mb-4">Sin slides</p>
-              <button onClick={openNew} className="btn-secondary text-sm px-5 py-2">
-                Crear primer slide
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {slides.map((slide, i) => (
-                <div
-                  key={slide.id}
-                  className={`flex items-center gap-4 p-4 border transition-colors ${
-                    slide.isActive ? 'border-navy/50 bg-deep' : 'border-navy/30 bg-abyss opacity-60'
-                  }`}
-                >
-                  <div className="w-24 h-14 bg-void border border-navy/40 overflow-hidden flex-shrink-0">
-                    {slide.imageUrl ? (
-                      <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="font-agency text-[10px] text-ash/40 uppercase">Sin imagen</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-agency text-white text-sm truncate">{slide.title || '(Sin título)'}</p>
-                    <p className="font-exo text-ash text-xs truncate mt-0.5">{slide.subtitle}</p>
-                    <p className="font-exo text-ash/50 text-xs mt-0.5">CTA: {slide.ctaLabel} → {slide.ctaHref}</p>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => move(slide.id, -1)}
-                      disabled={i === 0}
-                      aria-label="Subir"
-                      className="w-7 h-7 border border-navy/50 text-ash hover:text-white disabled:opacity-30 transition-colors flex items-center justify-center"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      onClick={() => move(slide.id, 1)}
-                      disabled={i === slides.length - 1}
-                      aria-label="Bajar"
-                      className="w-7 h-7 border border-navy/50 text-ash hover:text-white disabled:opacity-30 transition-colors flex items-center justify-center"
-                    >
-                      ↓
-                    </button>
-                    <button
-                      onClick={() => toggleActive(slide)}
-                      className={`font-agency text-xs px-3 py-1 border transition-colors ${
-                        slide.isActive
-                          ? 'border-green-700/50 text-green-400 hover:border-green-600'
-                          : 'border-navy/50 text-ash hover:border-white/40'
-                      }`}
-                    >
-                      {slide.isActive ? 'Activo' : 'Inactivo'}
-                    </button>
-                    <button
-                      onClick={() => openEdit(slide)}
-                      className="font-agency text-xs px-3 py-1 border border-navy/50 text-ash hover:text-white hover:border-white/40 transition-colors"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => deleteSlide(slide.id)}
-                      className="font-agency text-xs px-3 py-1 border border-dragon/40 text-dragon hover:border-dragon transition-colors"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
+        ) : (
+          <div className="space-y-3">
+            {slides.map((slide, i) => (
+              <div
+                key={slide.id}
+                className={`flex items-center gap-4 p-4 border rounded-lg transition-colors ${
+                  slide.isActive ? 'border-gray-200 bg-white' : 'border-gray-200 bg-gray-50 opacity-70'
+                }`}
+              >
+                <div className="w-24 h-14 bg-gray-100 border border-gray-200 rounded overflow-hidden flex-shrink-0">
+                  {slide.imageUrl ? (
+                    <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-[10px] text-gray-400 uppercase">Sin imagen</span>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{slide.title || '(Sin título)'}</p>
+                  <p className="text-xs text-gray-500 truncate mt-0.5">{slide.subtitle}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">CTA: {slide.ctaLabel} → {slide.ctaHref}</p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => move(slide.id, -1)}
+                    disabled={i === 0}
+                    aria-label="Subir"
+                    className="w-7 h-7 border border-gray-300 text-gray-500 hover:text-gray-900 hover:border-gray-400 disabled:opacity-30 transition-colors flex items-center justify-center rounded"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    onClick={() => move(slide.id, 1)}
+                    disabled={i === slides.length - 1}
+                    aria-label="Bajar"
+                    className="w-7 h-7 border border-gray-300 text-gray-500 hover:text-gray-900 hover:border-gray-400 disabled:opacity-30 transition-colors flex items-center justify-center rounded"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    onClick={() => toggleActive(slide)}
+                    className={`text-xs px-3 py-1 border rounded transition-colors ${
+                      slide.isActive
+                        ? 'border-green-500 text-green-600 hover:bg-green-50'
+                        : 'border-gray-300 text-gray-500 hover:border-gray-400'
+                    }`}
+                  >
+                    {slide.isActive ? 'Activo' : 'Inactivo'}
+                  </button>
+                  <button
+                    onClick={() => openEdit(slide)}
+                    className="text-xs px-3 py-1 border border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400 rounded transition-colors"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => deleteSlide(slide.id)}
+                    className="text-xs px-3 py-1 border border-red-300 text-red-500 hover:border-red-500 hover:bg-red-50 rounded transition-colors"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Edit modal */}
