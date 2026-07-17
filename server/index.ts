@@ -11,6 +11,7 @@ import { paymentsRoutes } from './routes/payments'
 import { invoicesRoutes } from './routes/invoices'
 import { emailRoutes } from './routes/email'
 import { adminRoutes } from './routes/admin'
+import { bannerAdminRoutes } from './routes/banners'
 import { productsRoutes } from './routes/products'
 import { blogRoutes } from './routes/blog'
 import { discountCodesRoutes } from './routes/discountCodes'
@@ -113,6 +114,9 @@ app.use('/api/email', emailRoutes)
 
 // Rutas de facturas (extensión futura)
 app.use('/api/invoices', generalLimiter, invoicesRoutes)
+
+// Banners admin — acepta rol admin y banner_editor (debe ir antes que adminRoutes)
+app.use('/api/admin/banners', generalLimiter, bannerAdminRoutes)
 
 // Panel de administración — requiere Clerk + rol admin
 app.use('/api/admin', generalLimiter, adminRoutes)

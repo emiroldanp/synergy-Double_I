@@ -5,6 +5,7 @@ export interface AuthContextValue {
   isLoaded: boolean
   isSignedIn: boolean
   isAdmin: boolean
+  isBannerEditor: boolean
   signOut: () => void
   getToken: () => Promise<string | null>
 }
@@ -14,6 +15,7 @@ export const AuthContext = createContext<AuthContextValue>({
   isLoaded: true,
   isSignedIn: false,
   isAdmin: false,
+  isBannerEditor: false,
   signOut: () => {},
   getToken: async () => null,
 })

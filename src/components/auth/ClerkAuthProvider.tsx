@@ -8,6 +8,7 @@ export function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { signOut, getToken } = useClerkAuth()
 
   const isAdmin = user?.publicMetadata?.role === 'admin'
+  const isBannerEditor = user?.publicMetadata?.role === 'banner_editor'
 
   useEffect(() => {
     if (isSignedIn) {
@@ -30,6 +31,7 @@ export function ClerkAuthProvider({ children }: { children: ReactNode }) {
         isLoaded,
         isSignedIn: isSignedIn ?? false,
         isAdmin,
+        isBannerEditor,
         signOut: () => signOut(),
         getToken: () => getToken(),
       }}

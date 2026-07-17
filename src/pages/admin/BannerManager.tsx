@@ -111,7 +111,7 @@ export default function BannerManager() {
         <title>Gestión de Banners — Admin</title>
       </Helmet>
 
-      <div className="bg-night min-h-screen pt-20 pb-16">
+      <div className="min-h-screen pb-16">
         <div className="page-container py-8">
           <div className="flex items-center justify-between mb-8">
             <div>
