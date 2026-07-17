@@ -30,10 +30,12 @@ const BlogManager = lazy(() => import('@/pages/admin/BlogManager'))
 const BannerManager = lazy(() => import('@/pages/admin/BannerManager'))
 const DiscountCodesManager = lazy(() => import('@/pages/admin/DiscountCodesManager'))
 const LoginPage = lazy(() => import('@/pages/admin/LoginPage'))
+const BannerEditorLayout = lazy(() => import('@/components/admin/BannerEditorLayout'))
 
 import { CardFlipFlyPortal } from '@/components/ui/CardFlipFlyPortal'
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton'
 import RequireAdmin from '@/components/admin/RequireAdmin'
+import RequireBannerEditor from '@/components/admin/RequireBannerEditor'
 
 // Fallback de carga simple mientras se descarga el chunk de la página.
 function PageLoader() {
@@ -124,6 +126,16 @@ function AppContent() {
           <Route path="blog" element={<BlogManager />} />
           <Route path="banners" element={<BannerManager />} />
           <Route path="descuentos" element={<DiscountCodesManager />} />
+        </Route>
+        <Route
+          path="/banner-editor"
+          element={
+            <RequireBannerEditor>
+              <BannerEditorLayout />
+            </RequireBannerEditor>
+          }
+        >
+          <Route index element={<BannerManager />} />
         </Route>
       </Routes>
       </Suspense>
