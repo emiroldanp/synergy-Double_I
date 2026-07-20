@@ -146,8 +146,11 @@ export async function updateProduct(req: Request, res: Response, next: NextFunct
       'edition', 'language', 'condition', 'variant', 'productType',
       'externalId', 'externalSource',
     ]
+    const nullableStrings = new Set(['productType', 'cardNumber', 'setName', 'edition', 'language', 'condition', 'variant', 'description', 'rarity'])
     for (const field of allowedFields) {
-      if (rest[field] !== undefined) (updateData as any)[field] = rest[field]
+      if (rest[field] !== undefined) {
+        (updateData as any)[field] = nullableStrings.has(field) ? (rest[field] || null) : rest[field]
+      }
     }
     if (rest.tcgMetadata !== undefined) (updateData as any).tcgMetadata = rest.tcgMetadata
     if (rest.marketPriceUsd !== undefined) {

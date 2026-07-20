@@ -9,7 +9,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/">
-              <img src="/logo-color.png" alt="Double-I TCG" className="h-[8.75rem] w-auto mb-4" />
+              <img src="/logo-color.png" alt="Double-I TCG" className="h-[5.25rem] w-auto mb-4" />
             </Link>
             <p className="text-ash text-sm font-exo leading-relaxed">
               Tu tienda especialista en tarjetas coleccionables TCG en México.
