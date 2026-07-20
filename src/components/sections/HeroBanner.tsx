@@ -119,8 +119,8 @@ export function HeroBanner() {
             />
           </div>
 
-          {/* Content */}
-          <div className="absolute inset-0 flex items-center">
+          {/* Content — pt iguala la altura del navbar en cada breakpoint para centrar en el área visible */}
+          <div className="absolute inset-0 flex items-center pt-24 md:pt-32 lg:pt-44 xl:pt-52 2xl:pt-60">
             <div className="page-container">
               <div className="max-w-2xl">
                 <motion.div
