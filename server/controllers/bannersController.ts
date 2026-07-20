@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../lib/prisma'
+import { uploadToR2 } from '../lib/r2'
 
 /** GET /api/banners — banners activos para el HeroBanner público */
 export async function listPublicBanners(req: Request, res: Response, next: NextFunction) {
@@ -76,6 +77,23 @@ export async function deleteBanner(req: Request, res: Response, next: NextFuncti
   try {
     await prisma.bannerSlide.delete({ where: { id: String(req.params.id) } })
     res.json({ data: { deleted: true } })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/** POST /api/admin/banners/upload-image — sube imagen a R2, devuelve URL pública */
+export async function uploadBannerImage(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { base64, mimeType = 'image/jpeg' } = req.body
+    if (!base64) {
+      return res.status(400).json({ error: 'Se requiere el campo base64' })
+    }
+    const buffer = Buffer.from(base64, 'base64')
+    const ext = mimeType.split('/')[1]?.split(';')[0] || 'jpg'
+    const key = `banners/${Date.now()}.${ext}`
+    const url = await uploadToR2(key, buffer, mimeType)
+    res.json({ url })
   } catch (error) {
     next(error)
   }

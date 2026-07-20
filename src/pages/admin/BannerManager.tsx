@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import type { BannerSlide } from '@/types'
 import { useAdminApi } from '@/hooks/useAdminApi'
@@ -21,6 +21,8 @@ export default function BannerManager() {
   const [editing, setEditing] = useState<BannerSlide | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const fetchSlides = useCallback(async () => {
     setLoading(true)
@@ -85,6 +87,27 @@ export default function BannerManager() {
       fetchSlides()
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error al actualizar')
+    }
+  }
+
+  const handleFileUpload = async (file: File) => {
+    setUploading(true)
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const res = await apiFetch<{ url: string }>('/api/admin/banners/upload-image', {
+        method: 'POST',
+        body: JSON.stringify({ base64, mimeType: file.type }),
+      })
+      setEditing((prev) => prev && ({ ...prev, imageUrl: res.url }))
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Error al subir imagen')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -224,8 +247,53 @@ export default function BannerManager() {
             </h2>
 
             <div className="space-y-4">
+              {/* Imagen — upload desde computadora o URL manual */}
+              <div>
+                <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
+                  Imagen del banner
+                </label>
+                {editing.imageUrl && (
+                  <div className="mb-2 relative w-full h-28 border border-navy/40 overflow-hidden">
+                    <img
+                      src={editing.imageUrl}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="font-agency text-xs px-4 py-2 border border-navy/50 text-ash hover:text-white hover:border-white/40 transition-colors disabled:opacity-50 flex-shrink-0"
+                  >
+                    {uploading ? 'Subiendo...' : 'Subir imagen'}
+                  </button>
+                  <input
+                    type="text"
+                    value={editing.imageUrl}
+                    onChange={(e) =>
+                      setEditing((prev) => prev && ({ ...prev, imageUrl: e.target.value }))
+                    }
+                    placeholder="O pega una URL: https://..."
+                    className="input-dark flex-1 text-sm"
+                  />
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file)
+                    e.target.value = ''
+                  }}
+                />
+              </div>
+
               {[
-                { label: 'URL de imagen', field: 'imageUrl', placeholder: 'https://...' },
                 { label: 'Título', field: 'title', placeholder: 'Tu tienda especialista' },
                 { label: 'Subtítulo', field: 'subtitle', placeholder: 'Descripción breve del slide' },
                 { label: 'Texto del botón', field: 'ctaLabel', placeholder: 'Explorar Catálogo' },
@@ -261,8 +329,8 @@ export default function BannerManager() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button onClick={saveEdit} disabled={saving} className="btn-primary flex-1 text-sm py-2.5 disabled:opacity-50">
-                {saving ? 'Guardando...' : 'Guardar'}
+              <button onClick={saveEdit} disabled={saving || uploading} className="btn-primary flex-1 text-sm py-2.5 disabled:opacity-50">
+                {uploading ? 'Subiendo imagen...' : saving ? 'Guardando...' : 'Guardar'}
               </button>
               <button
                 onClick={() => setEditing(null)}
