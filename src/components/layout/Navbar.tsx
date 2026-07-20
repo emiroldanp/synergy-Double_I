@@ -111,16 +111,17 @@ export function Navbar() {
     <>
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-30 transition-all duration-300',
+          'fixed top-0 left-0 right-0 z-30 backdrop-blur-md border-b',
+          'transition-[background-color,border-color,box-shadow] duration-300',
           scrolled || mobileOpen
-            ? 'bg-void/95 backdrop-blur-md border-b border-navy/50 shadow-lg shadow-black/40'
-            : 'bg-gradient-to-b from-void/80 to-transparent'
+            ? 'bg-void/95 border-navy/50 shadow-lg shadow-black/40'
+            : 'bg-void/40 border-transparent'
         )}
       >
         <div className="page-container">
           <div className={cn(
             'flex items-center justify-between transition-all duration-300',
-            scrolled ? 'h-16 md:h-[4.5rem]' : 'h-28 md:h-40'
+            scrolled ? 'h-16 md:h-[4.5rem]' : 'h-24 md:h-32 lg:h-44 xl:h-52 2xl:h-60'
           )}>
             {/* Logo */}
             <Link
@@ -133,7 +134,7 @@ export function Navbar() {
                 alt="Double-I TCG"
                 className={cn(
                   'w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300',
-                  scrolled ? 'h-10 md:h-12' : 'h-24 md:h-36'
+                  scrolled ? 'h-10 md:h-12' : 'h-20 md:h-28 lg:h-40 xl:h-48 2xl:h-56'
                 )}
               />
               <div className={cn(
@@ -240,10 +241,10 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Categories bar — desktop, se oculta al compactar */}
+          {/* Categories bar — desktop: aparece solo en estado compacto */}
           <div className={cn(
             'hidden md:flex items-center gap-0.5 pb-2 overflow-x-auto scrollbar-none border-t border-navy/20 pt-1 transition-all duration-300',
-            scrolled ? 'opacity-0 h-0 pb-0 pt-0 pointer-events-none overflow-hidden' : 'opacity-100'
+            scrolled ? 'opacity-100' : 'opacity-0 h-0 pb-0 pt-0 pointer-events-none overflow-hidden'
           )}>
             {CATEGORIES.map((cat) => (
               <Link
