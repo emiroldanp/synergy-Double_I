@@ -118,8 +118,11 @@ export function Navbar() {
         )}
       >
         <div className="page-container">
-          <div className="flex items-center justify-between h-24 md:h-32">
-            {/* Logo — bigger and with glow */}
+          <div className={cn(
+            'flex items-center justify-between transition-all duration-300',
+            scrolled ? 'h-16 md:h-[4.5rem]' : 'h-28 md:h-40'
+          )}>
+            {/* Logo */}
             <Link
               to="/"
               className="flex items-center gap-3 flex-shrink-0 group"
@@ -128,9 +131,15 @@ export function Navbar() {
               <img
                 src="/logo-color.png"
                 alt="Double-I TCG"
-                className="h-20 md:h-28 w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300"
+                className={cn(
+                  'w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300',
+                  scrolled ? 'h-10 md:h-12' : 'h-24 md:h-36'
+                )}
               />
-              <div className="hidden sm:flex flex-col leading-none">
+              <div className={cn(
+                'hidden sm:flex flex-col leading-none transition-all duration-300',
+                scrolled ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              )}>
                 <span className="font-agency text-xs text-dragon tracking-[0.3em] uppercase">Double-I</span>
                 <span className="font-agency text-[10px] text-ash/70 tracking-[0.2em] uppercase">Trading Card Game</span>
               </div>
@@ -231,8 +240,11 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Categories bar — desktop */}
-          <div className="hidden md:flex items-center gap-0.5 pb-2 overflow-x-auto scrollbar-none border-t border-navy/20 pt-1">
+          {/* Categories bar — desktop, se oculta al compactar */}
+          <div className={cn(
+            'hidden md:flex items-center gap-0.5 pb-2 overflow-x-auto scrollbar-none border-t border-navy/20 pt-1 transition-all duration-300',
+            scrolled ? 'opacity-0 h-0 pb-0 pt-0 pointer-events-none overflow-hidden' : 'opacity-100'
+          )}>
             {CATEGORIES.map((cat) => (
               <Link
                 key={cat.label}
