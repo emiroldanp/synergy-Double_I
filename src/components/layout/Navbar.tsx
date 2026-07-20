@@ -101,6 +101,8 @@ export function Navbar() {
     setCartOpen(false)
   }, [location.pathname])
 
+  const isHome = location.pathname === '/'
+
   const navLinks = [
     { to: '/catalogo', label: 'Catálogo' },
     { to: '/blog', label: 'Blog' },
@@ -121,7 +123,7 @@ export function Navbar() {
         <div className="page-container">
           <div className={cn(
             'flex items-center justify-between transition-all duration-300',
-            scrolled ? 'h-16 md:h-[4.5rem]' : 'h-24 md:h-32 lg:h-44 xl:h-52 2xl:h-60'
+            scrolled || !isHome ? 'h-16 md:h-[4.5rem]' : 'h-24 md:h-32 lg:h-44 xl:h-52 2xl:h-60'
           )}>
             {/* Logo */}
             <Link
@@ -134,12 +136,12 @@ export function Navbar() {
                 alt="Double-I TCG"
                 className={cn(
                   'w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300',
-                  scrolled ? 'h-10 md:h-12' : 'h-20 md:h-28 lg:h-40 xl:h-48 2xl:h-56'
+                  scrolled || !isHome ? 'h-10 md:h-12' : 'h-20 md:h-28 lg:h-40 xl:h-48 2xl:h-56'
                 )}
               />
               <div className={cn(
                 'hidden sm:flex flex-col leading-none transition-all duration-300',
-                scrolled ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+                scrolled || !isHome ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
               )}>
                 <span className="font-agency text-xs text-dragon tracking-[0.3em] uppercase">Double-I</span>
                 <span className="font-agency text-[10px] text-ash/70 tracking-[0.2em] uppercase">Trading Card Game</span>
@@ -244,7 +246,7 @@ export function Navbar() {
           {/* Categories bar — desktop: aparece solo en estado compacto */}
           <div className={cn(
             'hidden md:flex items-center gap-0.5 pb-2 overflow-x-auto scrollbar-none border-t border-navy/20 pt-1 transition-all duration-300',
-            scrolled ? 'opacity-100' : 'opacity-0 h-0 pb-0 pt-0 pointer-events-none overflow-hidden'
+            scrolled || !isHome ? 'opacity-100' : 'opacity-0 h-0 pb-0 pt-0 pointer-events-none overflow-hidden'
           )}>
             {CATEGORIES.map((cat) => (
               <Link
