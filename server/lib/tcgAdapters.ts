@@ -189,7 +189,7 @@ export async function searchScryfall(query: string): Promise<TcgCardResult[]> {
   if (cached) return cached
 
   try {
-    const url = `https://api.scryfall.com/cards/search?q=name:${encodeURIComponent(query)}&unique=prints&order=released`
+    const url = `https://api.scryfall.com/cards/search?q=name:${encodeURIComponent(query)}&unique=prints&order=released&dir=desc`
     const res = await fetchWithTimeout(url, { headers: SCRYFALL_HEADERS })
 
     if (!res.ok) return []
@@ -268,7 +268,7 @@ export async function searchLorcast(query: string): Promise<TcgCardResult[]> {
   if (cached) return cached
 
   try {
-    const url = `https://api.lorcast.com/v0/cards/search?q=${encodeURIComponent(query)}`
+    const url = `https://api.lorcast.com/v0/cards/search?q=${encodeURIComponent(query)}&sort=-released_at`
     const res = await fetchWithTimeout(url)
 
     if (!res.ok) return []
