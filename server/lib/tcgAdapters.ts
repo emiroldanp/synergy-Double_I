@@ -94,15 +94,28 @@ export async function searchPokemon(query: string): Promise<TcgCardResult[]> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (apiKey) headers['X-Api-Key'] = apiKey
 
-    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(query)}*&pageSize=20&orderBy=-releaseDate`
+    // La API de Pokémon TCG (Lucene) no soporta wildcards en frases con espacios.
+    // Usamos solo el primer término + wildcard; pageSize grande cubre variantes (ex, vmax, etc.)
+    const firstTerm = query.trim().split(/\s+/)[0]
+    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=50`
     const res = await fetchWithTimeout(url, { headers })
 
     if (!res.ok) return []
 
     const json = await res.json()
-    const results = (json.data ?? []).map(normalizePokemon)
-    setCached(cacheKey, results)
-    return results
+    // Filtrar resultados por el query completo (case-insensitive) para afinar sin romper la búsqueda
+    const lowerQuery = query.toLowerCase()
+    const all: TcgCardResult[] = (json.data ?? []).map(normalizePokemon)
+    const filtered = all.filter((c) => c.name.toLowerCase().includes(lowerQuery.split(/\s+/)[0]))
+
+    // Si el query tiene más de una palabra, intentar sub-filtrar por ellas
+    const words = lowerQuery.split(/\s+/).slice(1)
+    const results = words.length
+      ? filtered.filter((c) => words.every((w) => c.name.toLowerCase().includes(w)))
+      : filtered
+
+    setCached(cacheKey, results.length ? results : all.slice(0, 20))
+    return results.length ? results : all.slice(0, 20)
   } catch {
     return []
   }
