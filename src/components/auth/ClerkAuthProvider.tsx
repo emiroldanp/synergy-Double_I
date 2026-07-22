@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from 'react'
 import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react'
 import { AuthContext } from '@/hooks/useAuth'
-import { setAuthToken } from '@/lib/api'
+import { setGetTokenFn } from '@/lib/api'
 
 export function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { user, isLoaded, isSignedIn } = useUser()
@@ -10,11 +10,12 @@ export function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.publicMetadata?.role === 'admin'
   const isBannerEditor = user?.publicMetadata?.role === 'banner_editor'
 
+  // Registramos getToken (no el token en sí) para que cada petición obtenga un token fresco
   useEffect(() => {
     if (isSignedIn) {
-      getToken().then(setAuthToken)
+      setGetTokenFn(getToken)
     } else {
-      setAuthToken(null)
+      setGetTokenFn(null)
     }
   }, [isSignedIn, getToken])
 
