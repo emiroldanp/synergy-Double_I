@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -55,6 +55,8 @@ export default function ProductFormPage() {
 
   const [categories, setCategories] = useState<Category[]>([])
   const [images, setImages] = useState<ImageEntry[]>([])
+  // URLs ya persistidas en BD al cargar el form; sirve para detectar imágenes R2 nuevas al guardar
+  const savedImageUrlsRef = useRef<Set<string>>(new Set())
   const [loading, setLoading] = useState(isEdit)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -173,9 +175,9 @@ export default function ProductFormPage() {
         }
         setSlugTouched(true)
         if (product.images) {
-          setImages(
-            product.images.map((img) => ({ url: img.url, isPrimary: img.isPrimary })),
-          )
+          const loaded = product.images.map((img) => ({ url: img.url, isPrimary: img.isPrimary }))
+          setImages(loaded)
+          savedImageUrlsRef.current = new Set(loaded.map((i) => i.url))
         }
       })
       .catch((err) => setError(err.message))
@@ -244,24 +246,25 @@ export default function ProductFormPage() {
         body: JSON.stringify({ images: existingImages }),
       })
 
-      // Subir imágenes nuevas (base64 local) a R2 en secuencia
+      // Subir imágenes: base64 locales y URLs R2 nuevas (ej. importadas desde TCG)
       for (let idx = 0; idx < images.length; idx++) {
         const img = images[idx]
-        // Las URLs que ya están en R2 o son externas no se re-suben
-        if (!img.url.startsWith('data:')) continue
 
-        const [meta, base64Data] = img.url.split(',')
-        const mimeType = meta.match(/:(.*?);/)?.[1] ?? 'image/jpeg'
-
-        await apiFetch(`/api/admin/products/${productId}/images`, {
-          method: 'POST',
-          body: JSON.stringify({
-            base64: base64Data,
-            mimeType,
-            isPrimary: img.isPrimary,
-            sortOrder: idx,
-          }),
-        })
+        if (img.url.startsWith('data:')) {
+          // Imagen local en base64 → subir a R2
+          const [meta, base64Data] = img.url.split(',')
+          const mimeType = meta.match(/:(.*?);/)?.[1] ?? 'image/jpeg'
+          await apiFetch(`/api/admin/products/${productId}/images`, {
+            method: 'POST',
+            body: JSON.stringify({ base64: base64Data, mimeType, isPrimary: img.isPrimary, sortOrder: idx }),
+          })
+        } else if (!savedImageUrlsRef.current.has(img.url)) {
+          // URL R2 nueva (importada desde TCG API, no estaba en BD al cargar el form)
+          await apiFetch(`/api/admin/products/${productId}/images`, {
+            method: 'POST',
+            body: JSON.stringify({ imageUrl: img.url, isPrimary: img.isPrimary, sortOrder: idx }),
+          })
+        }
       }
 
       navigate('/admin/productos')
