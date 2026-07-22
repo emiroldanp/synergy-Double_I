@@ -5,14 +5,22 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-let authToken: string | null = null
+// Almacenamos la función getToken de Clerk (no el token) para obtener siempre un token fresco
+let getTokenFn: (() => Promise<string | null>) | null = null
 
-export function setAuthToken(token: string | null) {
-  authToken = token
+export function setAuthToken(_token: string | null) {
+  // Mantenemos compatibilidad con código existente; la lógica real usa setGetTokenFn
 }
 
-api.interceptors.request.use((config) => {
-  if (authToken) config.headers.Authorization = `Bearer ${authToken}`
+export function setGetTokenFn(fn: (() => Promise<string | null>) | null) {
+  getTokenFn = fn
+}
+
+api.interceptors.request.use(async (config) => {
+  if (getTokenFn) {
+    const token = await getTokenFn()
+    if (token) config.headers.Authorization = `Bearer ${token}`
+  }
   return config
 })
 
