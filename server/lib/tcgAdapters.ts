@@ -97,7 +97,7 @@ export async function searchPokemon(query: string): Promise<TcgCardResult[]> {
     // La API de Pokémon TCG (Lucene) no soporta wildcards en frases con espacios.
     // Usamos solo el primer término + wildcard; pageSize grande cubre variantes (ex, vmax, etc.)
     const firstTerm = query.trim().split(/\s+/)[0]
-    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=50`
+    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=50&orderBy=-set.releaseDate`
     const res = await fetchWithTimeout(url, { headers })
 
     if (!res.ok) return []
