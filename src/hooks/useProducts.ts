@@ -4,6 +4,7 @@ import type { FilterState, Product } from '@/types'
 import { normalizeProduct, normalizeProductList } from '@/lib/normalizeProduct'
 
 const DEFAULT_FILTERS: FilterState = {
+  tab: 'sealed',
   franchise: [],
   productType: [],
   rarity: [],

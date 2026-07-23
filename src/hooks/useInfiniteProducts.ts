@@ -6,6 +6,7 @@ import { normalizeProductList } from '@/lib/normalizeProduct'
 const PAGE_SIZE = 12
 
 const DEFAULT_FILTERS: FilterState = {
+  tab: 'sealed',
   franchise: [],
   productType: [],
   rarity: [],
@@ -52,6 +53,7 @@ export function useInfiniteProducts(initialFilters: Partial<FilterState> = {}) {
       page: currentPage,
       limit: PAGE_SIZE,
       sortBy: filters.sortBy,
+      tab: filters.tab,
     }
     if (filters.search) params.search = filters.search
     if (filters.franchise.length) params.franchise = filters.franchise.join(',')

@@ -4,7 +4,6 @@ import { useSearchParams, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useInfiniteProducts } from '@/hooks/useInfiniteProducts'
 import type { FilterState, CatalogTab } from '@/types'
-import { SEALED_PRODUCT_TYPES } from '@/types'
 import { FilterPanel } from '@/components/ui/FilterPanel'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { Button } from '@/components/ui/Button'
@@ -21,19 +20,16 @@ const SORT_OPTIONS = [
 const VALID_FRANCHISES = ['pokemon', 'lorcana', 'magic', 'accesorios'] as const
 const VALID_SORTS = ['newest', 'price_asc', 'price_desc'] as const
 
-// Tipos de producto que activan el tab "sealed" cuando vienen por URL
-const SEALED_TYPES_SET = new Set(SEALED_PRODUCT_TYPES)
-
-function useInitialFiltersFromParams(): { filters: Partial<FilterState>; tab: CatalogTab } {
+function useInitialFiltersFromParams(): Partial<FilterState> {
   const [params] = useSearchParams()
   const { slug: franchiseFromPath } = useParams<{ slug?: string }>()
   const franchise = franchiseFromPath ?? params.get('franchise')
   const sort = params.get('sort')
-  const productType = params.get('productType')
   const tabParam = params.get('tab') as CatalogTab | null
 
-  const filters: Partial<FilterState> = {}
-  let tab: CatalogTab = tabParam === 'singles' ? 'singles' : 'sealed'
+  const filters: Partial<FilterState> = {
+    tab: tabParam === 'singles' ? 'singles' : 'sealed',
+  }
 
   if (franchise && VALID_FRANCHISES.includes(franchise as typeof VALID_FRANCHISES[number])) {
     filters.franchise = [franchise as FilterState['franchise'][number]]
@@ -41,43 +37,26 @@ function useInitialFiltersFromParams(): { filters: Partial<FilterState>; tab: Ca
   if (sort && VALID_SORTS.includes(sort as typeof VALID_SORTS[number])) {
     filters.sortBy = sort as FilterState['sortBy']
   }
-  if (productType) {
-    if (productType === 'carta') {
-      tab = 'singles'
-    } else if (SEALED_TYPES_SET.has(productType as any)) {
-      tab = 'sealed'
-      filters.productType = [productType as FilterState['productType'][number]]
-    }
-  }
 
-  return { filters, tab }
-}
-
-// Filtros de productType que se aplican automáticamente según el tab activo
-const TAB_PRODUCT_TYPES: Record<CatalogTab, FilterState['productType']> = {
-  sealed: [...SEALED_PRODUCT_TYPES] as FilterState['productType'],
-  singles: ['carta'],
+  return filters
 }
 
 export default function CatalogPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [availableRarities, setAvailableRarities] = useState<string[]>([])
-  const { filters: initialFilters, tab: initialTab } = useInitialFiltersFromParams()
-  const [activeTab, setActiveTab] = useState<CatalogTab>(initialTab)
+  const initialFilters = useInitialFiltersFromParams()
 
   const { products, totalProducts, hasMore, loadMore, loading, filters, updateFilter, resetFilters } =
-    useInfiniteProducts({
-      ...initialFilters,
-      productType: TAB_PRODUCT_TYPES[initialTab],
-    })
+    useInfiniteProducts(initialFilters)
 
-  // Al cambiar de tab: limpiar filtros y aplicar los tipos del tab nuevo
+  // El tab activo se deriva directamente del estado de filtros
+  const activeTab = filters.tab ?? 'sealed'
+
+  // Al cambiar de tab: limpiar filtros secundarios y actualizar el tab
   const handleTabChange = useCallback((tab: CatalogTab) => {
-    setActiveTab(tab)
     resetFilters()
-    // Espera un tick para que el reset se procese antes de aplicar el nuevo filtro de tab
     setTimeout(() => {
-      updateFilter('productType', TAB_PRODUCT_TYPES[tab])
+      updateFilter('tab', tab)
     }, 0)
   }, [resetFilters, updateFilter])
 

@@ -239,6 +239,7 @@ export interface Promotion {
 }
 
 export interface FilterState {
+  tab: CatalogTab
   franchise: Franchise[]
   productType: ProductType[]
   rarity: string[]
