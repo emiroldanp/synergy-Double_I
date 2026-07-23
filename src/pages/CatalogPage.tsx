@@ -1,14 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useSearchParams, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useInfiniteProducts } from '@/hooks/useInfiniteProducts'
-import type { FilterState } from '@/types'
+import type { FilterState, CatalogTab } from '@/types'
+import { SEALED_PRODUCT_TYPES } from '@/types'
 import { FilterPanel } from '@/components/ui/FilterPanel'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { Button } from '@/components/ui/Button'
 import { fadeUp, staggerContainer } from '@/lib/animations'
 import { productsApi } from '@/lib/api'
+import { cn } from '@/lib/utils'
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Más recientes' },
@@ -19,16 +21,20 @@ const SORT_OPTIONS = [
 const VALID_FRANCHISES = ['pokemon', 'lorcana', 'magic', 'accesorios'] as const
 const VALID_SORTS = ['newest', 'price_asc', 'price_desc'] as const
 
-function useInitialFiltersFromParams(): Partial<FilterState> {
+// Tipos de producto que activan el tab "sealed" cuando vienen por URL
+const SEALED_TYPES_SET = new Set(SEALED_PRODUCT_TYPES)
+
+function useInitialFiltersFromParams(): { filters: Partial<FilterState>; tab: CatalogTab } {
   const [params] = useSearchParams()
-  // La franquicia puede venir por ruta limpia (/catalogo/:franchise — el segmento
-  // dinámico se llama `slug`) o por query param de compatibilidad
-  // (/catalogo?franchise=x). La ruta limpia tiene prioridad.
   const { slug: franchiseFromPath } = useParams<{ slug?: string }>()
   const franchise = franchiseFromPath ?? params.get('franchise')
   const sort = params.get('sort')
   const productType = params.get('productType')
+  const tabParam = params.get('tab') as CatalogTab | null
+
   const filters: Partial<FilterState> = {}
+  let tab: CatalogTab = tabParam === 'singles' ? 'singles' : 'sealed'
+
   if (franchise && VALID_FRANCHISES.includes(franchise as typeof VALID_FRANCHISES[number])) {
     filters.franchise = [franchise as FilterState['franchise'][number]]
   }
@@ -36,22 +42,44 @@ function useInitialFiltersFromParams(): Partial<FilterState> {
     filters.sortBy = sort as FilterState['sortBy']
   }
   if (productType) {
-    // 'accessory' agrupa sleeve + playmat en la UI pero no existe en BD — expandir a ambos tipos
-    if (productType === 'accessory') {
-      filters.productType = ['sleeve', 'playmat']
-    } else {
+    if (productType === 'carta') {
+      tab = 'singles'
+    } else if (SEALED_TYPES_SET.has(productType as any)) {
+      tab = 'sealed'
       filters.productType = [productType as FilterState['productType'][number]]
     }
   }
-  return filters
+
+  return { filters, tab }
+}
+
+// Filtros de productType que se aplican automáticamente según el tab activo
+const TAB_PRODUCT_TYPES: Record<CatalogTab, FilterState['productType']> = {
+  sealed: [...SEALED_PRODUCT_TYPES] as FilterState['productType'],
+  singles: ['carta'],
 }
 
 export default function CatalogPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [availableRarities, setAvailableRarities] = useState<string[]>([])
-  const initialFilters = useInitialFiltersFromParams()
+  const { filters: initialFilters, tab: initialTab } = useInitialFiltersFromParams()
+  const [activeTab, setActiveTab] = useState<CatalogTab>(initialTab)
+
   const { products, totalProducts, hasMore, loadMore, loading, filters, updateFilter, resetFilters } =
-    useInfiniteProducts(initialFilters)
+    useInfiniteProducts({
+      ...initialFilters,
+      productType: TAB_PRODUCT_TYPES[initialTab],
+    })
+
+  // Al cambiar de tab: limpiar filtros y aplicar los tipos del tab nuevo
+  const handleTabChange = useCallback((tab: CatalogTab) => {
+    setActiveTab(tab)
+    resetFilters()
+    // Espera un tick para que el reset se procese antes de aplicar el nuevo filtro de tab
+    setTimeout(() => {
+      updateFilter('productType', TAB_PRODUCT_TYPES[tab])
+    }, 0)
+  }, [resetFilters, updateFilter])
 
   useEffect(() => {
     productsApi.getRarities()
@@ -109,6 +137,32 @@ export default function CatalogPage() {
               aria-hidden="true"
             />
           </motion.div>
+
+          {/* Tabs principales: Producto Cerrado / Singles */}
+          <div className="flex gap-1 mb-6 border-b border-navy/40">
+            <button
+              onClick={() => handleTabChange('sealed')}
+              className={cn(
+                'font-agency uppercase tracking-wider text-sm px-5 py-2.5 border-b-2 -mb-px transition-colors duration-200',
+                activeTab === 'sealed'
+                  ? 'border-dragon text-white'
+                  : 'border-transparent text-ash hover:text-frost'
+              )}
+            >
+              Producto Cerrado
+            </button>
+            <button
+              onClick={() => handleTabChange('singles')}
+              className={cn(
+                'font-agency uppercase tracking-wider text-sm px-5 py-2.5 border-b-2 -mb-px transition-colors duration-200',
+                activeTab === 'singles'
+                  ? 'border-dragon text-white'
+                  : 'border-transparent text-ash hover:text-frost'
+              )}
+            >
+              Singles
+            </button>
+          </div>
 
           {/* Search + Sort bar */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -185,6 +239,7 @@ export default function CatalogPage() {
               isMobileOpen={mobileFiltersOpen}
               onMobileClose={() => setMobileFiltersOpen(false)}
               availableRarities={availableRarities}
+              activeTab={activeTab}
             />
 
             <div className="flex-1 min-w-0">

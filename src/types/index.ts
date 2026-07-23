@@ -1,6 +1,40 @@
 export type Franchise = 'pokemon' | 'yugioh' | 'lorcana' | 'magic' | 'accesorios'
 
-export type ProductType = 'carta' | 'sleeve' | 'playmat' | 'etb' | 'display' | 'dado' | 'binder' | 'accessory'
+export type CatalogTab = 'sealed' | 'singles'
+
+// Tipos de producto cerrado (sealed)
+export const SEALED_PRODUCT_TYPES = [
+  'booster-box',
+  'etb',
+  'booster-bundle',
+  'ultra-premium',
+  'special-box',
+  'decks',
+  'sobres-sueltos',
+  'blisters',
+  'build-battle',
+  'tins',
+  'display', // legacy — mapear a booster-box vía script de migración
+] as const
+
+export type ProductType =
+  | 'carta'           // Singles
+  | 'booster-box'     // Producto cerrado
+  | 'etb'             // Producto cerrado
+  | 'booster-bundle'  // Producto cerrado
+  | 'ultra-premium'   // Producto cerrado
+  | 'special-box'     // Producto cerrado
+  | 'decks'           // Producto cerrado
+  | 'sobres-sueltos'  // Producto cerrado
+  | 'blisters'        // Producto cerrado
+  | 'build-battle'    // Producto cerrado
+  | 'tins'            // Producto cerrado
+  | 'display'         // Legacy → booster-box
+  | 'sleeve'          // Accesorio
+  | 'playmat'         // Accesorio
+  | 'dado'            // Accesorio
+  | 'binder'          // Accesorio
+  | 'accessory'       // Accesorio genérico
 
 export type Rarity =
   | 'comun'
