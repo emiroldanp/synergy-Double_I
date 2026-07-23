@@ -52,7 +52,7 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(query), 400)
+    debounceRef.current = setTimeout(() => search(query), 650)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [query, search])
 
