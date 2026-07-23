@@ -15,6 +15,7 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
       categorySlug,
       rarity,
       productType,
+      tab,
       edition,
       condition,
       variant,
@@ -32,6 +33,16 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
 
     // Solo productos activos
     const where: Prisma.ProductWhereInput = { isActive: true }
+
+    // Filtrado por tab: sealed excluye cartas y accesorios; singles muestra solo cartas
+    if (tab === 'sealed') {
+      where.AND = [
+        { NOT: { productType: 'carta' } },
+        ...(!franchise ? [{ category: { slug: { not: 'accesorios' } } }] : []),
+      ]
+    } else if (tab === 'singles') {
+      where.productType = 'carta'
+    }
 
     // franchise toma precedencia sobre categorySlug (valores: pokemon, yugioh, lorcana)
     if (franchise) {
