@@ -20,10 +20,19 @@ const SLUG_TO_FRANCHISE: Record<string, 'pokemon' | 'magic' | 'lorcana'> = {
 const ACCESSORY_SUBTYPES = ['Sleeve', 'Toploader', 'Binder', 'Playmats', 'Acrílicos'] as const
 
 const PRODUCT_TYPE_OPTIONS = [
-  { value: 'carta', label: 'Carta individual' },
-  { value: 'display', label: 'Display / Caja' },
-  { value: 'dado', label: 'Dado' },
-  { value: 'binder', label: 'Binder / Álbum' },
+  // Singles
+  { value: 'carta', label: 'Carta individual (Single)' },
+  // Producto cerrado
+  { value: 'booster-box', label: 'Booster Box' },
+  { value: 'etb', label: 'Elite Trainer Box' },
+  { value: 'booster-bundle', label: 'Booster Bundle' },
+  { value: 'ultra-premium', label: 'Ultra Premium Collection' },
+  { value: 'special-box', label: 'Special Box' },
+  { value: 'decks', label: 'Decks' },
+  { value: 'sobres-sueltos', label: 'Sobres Sueltos' },
+  { value: 'blisters', label: 'Blisters' },
+  { value: 'build-battle', label: 'Build & Battle' },
+  { value: 'tins', label: 'Tins' },
 ] as const
 
 // Esquema Zod para validar el formulario del producto

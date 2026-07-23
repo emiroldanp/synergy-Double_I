@@ -5,19 +5,42 @@ import {
   VARIANT_LABELS,
   LANGUAGE_LABELS,
 } from '@/lib/utils'
-import type { FilterState, Franchise, Variant, Language, ProductType } from '@/types'
+import type { FilterState, Franchise, Variant, Language, ProductType, CatalogTab } from '@/types'
 
 const STATIC_RARITIES = ['comun', 'poco_comun', 'rara', 'ultra_rara', 'secret_rare', 'full_art', 'gold_rare', 'prismatic'] as const
 
-const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
+// Tipos visibles en el filtro de producto cerrado (ordenados como Irving los definió)
+const SEALED_TYPE_OPTIONS: ProductType[] = [
+  'booster-box',
+  'etb',
+  'booster-bundle',
+  'ultra-premium',
+  'special-box',
+  'decks',
+  'sobres-sueltos',
+  'blisters',
+  'build-battle',
+  'tins',
+]
+
+const PRODUCT_TYPE_LABELS: Partial<Record<ProductType, string>> = {
   carta: 'Carta individual',
+  'booster-box': 'Booster Box',
+  etb: 'Elite Trainer Box',
+  'booster-bundle': 'Booster Bundle',
+  'ultra-premium': 'Ultra Premium Collection',
+  'special-box': 'Special Box',
+  decks: 'Decks',
+  'sobres-sueltos': 'Sobres Sueltos',
+  blisters: 'Blisters',
+  'build-battle': 'Build & Battle',
+  tins: 'Tins',
   sleeve: 'Sleeve / Protector',
   playmat: 'Playmat',
-  etb: 'Elite Trainer Box',
-  display: 'Display / Caja',
   dado: 'Dado',
   binder: 'Binder / Álbum',
   accessory: 'Accesorios',
+  display: 'Display / Caja',
 }
 
 interface FilterPanelProps {
@@ -27,6 +50,7 @@ interface FilterPanelProps {
   isMobileOpen?: boolean
   onMobileClose?: () => void
   availableRarities?: string[]
+  activeTab?: CatalogTab
 }
 
 function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -91,6 +115,7 @@ export function FilterPanel({
   isMobileOpen,
   onMobileClose,
   availableRarities = [],
+  activeTab = 'sealed',
 }: FilterPanelProps) {
   // Rarezas: lista estática + extras dinámicos que Irving haya registrado
   const extraRarities = availableRarities.filter((r) => !STATIC_RARITIES.includes(r as any))
@@ -120,14 +145,16 @@ export function FilterPanel({
         />
       </FilterSection>
 
-      <FilterSection title="Tipo de producto">
-        <CheckboxGroup<ProductType>
-          options={['carta', 'display', 'dado', 'binder', 'accessory']}
-          labels={PRODUCT_TYPE_LABELS}
-          selected={filters.productType}
-          onChange={(v) => onUpdate('productType', v)}
-        />
-      </FilterSection>
+      {activeTab === 'sealed' && (
+        <FilterSection title="Tipo de producto">
+          <CheckboxGroup<ProductType>
+            options={SEALED_TYPE_OPTIONS}
+            labels={PRODUCT_TYPE_LABELS as Record<ProductType, string>}
+            selected={filters.productType}
+            onChange={(v) => onUpdate('productType', v)}
+          />
+        </FilterSection>
+      )}
 
       <FilterSection title="Rareza">
         <CheckboxGroup<string>
