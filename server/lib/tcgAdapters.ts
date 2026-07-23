@@ -19,8 +19,9 @@ export interface TcgCardResult {
 }
 
 const TCG_TIMEOUT_MS = 5000
+// Los datos de cartas TCG son estáticos — 1 hora evita llamadas repetidas sin perder frescura
+const CACHE_TTL_MS = 60 * 60 * 1000
 
-// Cache en memoria con TTL de 2 minutos para evitar múltiples llamadas idénticas
 const cache = new Map<string, { data: TcgCardResult[]; expiresAt: number }>()
 
 function getCached(key: string): TcgCardResult[] | null {
@@ -31,7 +32,7 @@ function getCached(key: string): TcgCardResult[] | null {
 }
 
 function setCached(key: string, data: TcgCardResult[]): void {
-  cache.set(key, { data, expiresAt: Date.now() + 2 * 60 * 1000 })
+  cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS })
 }
 
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
@@ -97,7 +98,7 @@ export async function searchPokemon(query: string): Promise<TcgCardResult[]> {
     // La API de Pokémon TCG (Lucene) no soporta wildcards en frases con espacios.
     // Usamos solo el primer término + wildcard; pageSize grande cubre variantes (ex, vmax, etc.)
     const firstTerm = query.trim().split(/\s+/)[0]
-    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=50&orderBy=-set.releaseDate`
+    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=20&orderBy=-set.releaseDate`
     const res = await fetchWithTimeout(url, { headers })
 
     if (!res.ok) return []
