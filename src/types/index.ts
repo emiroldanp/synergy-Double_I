@@ -1,6 +1,6 @@
 export type Franchise = 'pokemon' | 'yugioh' | 'lorcana' | 'magic' | 'accesorios'
 
-export type CatalogTab = 'sealed' | 'singles'
+export type CatalogTab = 'sealed' | 'singles' | 'accesorios'
 
 // Tipos de producto cerrado (sealed)
 export const SEALED_PRODUCT_TYPES = [
@@ -15,6 +15,15 @@ export const SEALED_PRODUCT_TYPES = [
   'build-battle',
   'tins',
   'display', // legacy — mapear a booster-box vía script de migración
+] as const
+
+// Tipos de producto que se muestran en el tab Accesorios
+export const ACCESSORY_PRODUCT_TYPES = [
+  'sleeve',
+  'playmat',
+  'dado',
+  'binder',
+  'accessory',
 ] as const
 
 export type ProductType =
@@ -181,6 +190,7 @@ export interface Order {
   shippingCost: number
   total: number
   shippingOption?: ShippingOption
+  shippingMethod?: string | null
   trackingNumber?: string | null
   paymentMethod?: string | null
   paymentStatus?: 'pending' | 'awaiting_verification' | 'confirmed' | 'failed'

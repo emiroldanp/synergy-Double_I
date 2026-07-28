@@ -23,6 +23,9 @@ const SEALED_TYPE_OPTIONS: ProductType[] = [
   'tins',
 ]
 
+// Tipos visibles en el filtro de accesorios
+const ACCESSORY_TYPE_OPTIONS: ProductType[] = ['sleeve', 'playmat', 'dado', 'binder', 'accessory']
+
 const PRODUCT_TYPE_LABELS: Partial<Record<ProductType, string>> = {
   carta: 'Carta individual',
   'booster-box': 'Booster Box',
@@ -136,14 +139,16 @@ export function FilterPanel({
         </button>
       </div>
 
-      <FilterSection title="Franquicia">
-        <CheckboxGroup<Franchise>
-          options={['pokemon', 'lorcana', 'magic']}
-          labels={FRANCHISE_LABELS}
-          selected={filters.franchise}
-          onChange={(v) => onUpdate('franchise', v)}
-        />
-      </FilterSection>
+      {activeTab !== 'accesorios' && (
+        <FilterSection title="Franquicia">
+          <CheckboxGroup<Franchise>
+            options={['pokemon', 'lorcana', 'magic']}
+            labels={FRANCHISE_LABELS}
+            selected={filters.franchise}
+            onChange={(v) => onUpdate('franchise', v)}
+          />
+        </FilterSection>
+      )}
 
       {activeTab === 'sealed' && (
         <FilterSection title="Tipo de producto">
@@ -156,32 +161,47 @@ export function FilterPanel({
         </FilterSection>
       )}
 
-      <FilterSection title="Rareza">
-        <CheckboxGroup<string>
-          options={allRarities}
-          labels={rarityLabels}
-          selected={filters.rarity}
-          onChange={(v) => onUpdate('rarity', v)}
-        />
-      </FilterSection>
+      {activeTab === 'accesorios' && (
+        <FilterSection title="Tipo de accesorio">
+          <CheckboxGroup<ProductType>
+            options={ACCESSORY_TYPE_OPTIONS}
+            labels={PRODUCT_TYPE_LABELS as Record<ProductType, string>}
+            selected={filters.productType}
+            onChange={(v) => onUpdate('productType', v)}
+          />
+        </FilterSection>
+      )}
 
-      <FilterSection title="Variante">
-        <CheckboxGroup<Variant>
-          options={['holo', 'reverse_holo', 'standard']}
-          labels={VARIANT_LABELS}
-          selected={filters.variant}
-          onChange={(v) => onUpdate('variant', v)}
-        />
-      </FilterSection>
+      {activeTab !== 'accesorios' && (
+        <>
+          <FilterSection title="Rareza">
+            <CheckboxGroup<string>
+              options={allRarities}
+              labels={rarityLabels}
+              selected={filters.rarity}
+              onChange={(v) => onUpdate('rarity', v)}
+            />
+          </FilterSection>
 
-      <FilterSection title="Idioma">
-        <CheckboxGroup<Language>
-          options={['en', 'jp']}
-          labels={LANGUAGE_LABELS}
-          selected={filters.language}
-          onChange={(v) => onUpdate('language', v)}
-        />
-      </FilterSection>
+          <FilterSection title="Variante">
+            <CheckboxGroup<Variant>
+              options={['holo', 'reverse_holo', 'standard']}
+              labels={VARIANT_LABELS}
+              selected={filters.variant}
+              onChange={(v) => onUpdate('variant', v)}
+            />
+          </FilterSection>
+
+          <FilterSection title="Idioma">
+            <CheckboxGroup<Language>
+              options={['en', 'jp']}
+              labels={LANGUAGE_LABELS}
+              selected={filters.language}
+              onChange={(v) => onUpdate('language', v)}
+            />
+          </FilterSection>
+        </>
+      )}
 
       <FilterSection title="Precio (MXN)">
         <div className="flex gap-2">

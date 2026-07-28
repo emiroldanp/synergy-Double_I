@@ -28,7 +28,7 @@ function useInitialFiltersFromParams(): Partial<FilterState> {
   const tabParam = params.get('tab') as CatalogTab | null
 
   const filters: Partial<FilterState> = {
-    tab: tabParam === 'singles' ? 'singles' : 'sealed',
+    tab: tabParam === 'singles' || tabParam === 'accesorios' ? tabParam : 'sealed',
   }
 
   if (franchise && VALID_FRANCHISES.includes(franchise as typeof VALID_FRANCHISES[number])) {
@@ -69,6 +69,10 @@ export default function CatalogPage() {
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Depende de `loading`: el sentinel se desmonta mientras loading es true
+    // (p. ej. al cambiar de tab), así que hay que re-observarlo cuando remonta,
+    // incluso si hasMore/loadMore no cambiaron de valor entre una tab y otra.
+    if (loading) return
     const el = sentinelRef.current
     if (!el) return
     const observer = new IntersectionObserver(
@@ -79,7 +83,7 @@ export default function CatalogPage() {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMore, loadMore])
+  }, [loading, hasMore, loadMore])
 
   return (
     <>
@@ -140,6 +144,17 @@ export default function CatalogPage() {
               )}
             >
               Singles
+            </button>
+            <button
+              onClick={() => handleTabChange('accesorios')}
+              className={cn(
+                'font-agency uppercase tracking-wider text-sm px-5 py-2.5 border-b-2 -mb-px transition-colors duration-200',
+                activeTab === 'accesorios'
+                  ? 'border-dragon text-white'
+                  : 'border-transparent text-ash hover:text-frost'
+              )}
+            >
+              Accesorios
             </button>
           </div>
 
