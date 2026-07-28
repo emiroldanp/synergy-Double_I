@@ -2,6 +2,9 @@ import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../lib/prisma'
 import { Prisma } from '@prisma/client'
 
+// Tipos de producto que se muestran en el tab Accesorios del catálogo
+const ACCESSORY_PRODUCT_TYPES = ['sleeve', 'playmat', 'dado', 'binder', 'accessory']
+
 /**
  * GET /api/products
  * Lista productos activos con filtros opcionales y paginación básica.
@@ -34,14 +37,16 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
     // Solo productos activos
     const where: Prisma.ProductWhereInput = { isActive: true }
 
-    // Filtrado por tab: sealed excluye cartas y accesorios; singles muestra solo cartas
+    // Filtrado por tab: sealed excluye cartas y accesorios; singles muestra solo cartas;
+    // accesorios muestra solo los tipos de producto de accesorio
     if (tab === 'sealed') {
       where.AND = [
-        { NOT: { productType: 'carta' } },
-        ...(!franchise ? [{ category: { slug: { not: 'accesorios' } } }] : []),
+        { NOT: { productType: { in: ['carta', ...ACCESSORY_PRODUCT_TYPES] } } },
       ]
     } else if (tab === 'singles') {
       where.productType = 'carta'
+    } else if (tab === 'accesorios') {
+      where.productType = { in: ACCESSORY_PRODUCT_TYPES }
     }
 
     // franchise toma precedencia sobre categorySlug (valores: pokemon, yugioh, lorcana)

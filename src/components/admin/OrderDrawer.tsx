@@ -77,7 +77,14 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
   const customerName = order?.customer?.fullName ?? order?.guestName ?? null
 
   // Envío local CDMX/EDOMEX coordinado por WhatsApp
-  const isLocalWhatsapp = order?.shippingOption?.carrier === 'whatsapp_local'
+  const isLocalWhatsapp =
+    order?.shippingOption?.carrier === 'whatsapp_local' || order?.shippingMethod === 'whatsapp_local'
+
+  // Paquetería elegida por el cliente al momento del checkout
+  const shippingMethodLabel =
+    order?.shippingMethod === 'whatsapp_local'
+      ? 'Envío local (WhatsApp)'
+      : order?.shippingMethod || null
 
   const buildWhatsappUrl = (): string | null => {
     const phone = order?.customer?.phone
@@ -168,6 +175,12 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
                 {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
                 C.P. {order.shippingAddress.zipCode}
               </p>
+              {shippingMethodLabel && (
+                <p className="text-sm text-gray-600 mt-1">
+                  <span className="text-gray-500">Paquetería: </span>
+                  {shippingMethodLabel}
+                </p>
+              )}
             </div>
           )}
 
