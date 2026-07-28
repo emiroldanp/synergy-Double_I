@@ -20,6 +20,8 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<TcgCardResult[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
   const [apiWarning, setApiWarning] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [importingImage, setImportingImage] = useState(false)
@@ -29,6 +31,7 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   const search = useCallback(async (q: string) => {
     if (q.length < 2) {
       setResults([])
+      setHasMore(false)
       setOpen(false)
       return
     }
@@ -39,16 +42,32 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
     try {
       const { data } = await tcgApi.search(franchise, q)
       setResults(data.data ?? [])
+      setHasMore(data.hasMore ?? false)
       setApiWarning(data.warning ?? null)
       setOpen(true)
     } catch {
       setResults([])
+      setHasMore(false)
       setApiWarning('No se pudo conectar con la API. Ingresa los datos manualmente.')
       setOpen(true)
     } finally {
       setLoading(false)
     }
   }, [franchise])
+
+  const loadMore = useCallback(async () => {
+    if (query.length < 2 || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const { data } = await tcgApi.search(franchise, query, true)
+      setResults(data.data ?? [])
+      setHasMore(data.hasMore ?? false)
+    } catch {
+      // Si falla, dejamos los resultados que ya se mostraban
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [franchise, query, loadingMore])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -60,6 +79,7 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   useEffect(() => {
     setQuery('')
     setResults([])
+    setHasMore(false)
     setOpen(false)
     setApiWarning(null)
   }, [franchise])
@@ -163,6 +183,18 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
               </button>
             </li>
           ))}
+          {hasMore && (
+            <li className="border-t border-gray-700">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full px-3 py-2.5 text-center text-sm text-indigo-400 hover:bg-gray-700 hover:text-indigo-300 disabled:opacity-50"
+              >
+                {loadingMore ? 'Cargando…' : 'Mostrar más resultados'}
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </div>

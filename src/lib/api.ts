@@ -86,8 +86,8 @@ export const dashboardApi = {
 }
 
 export const tcgApi = {
-  search: (franchise: string, q: string) =>
-    api.get('/api/admin/tcg/search', { params: { franchise, q } }),
+  search: (franchise: string, q: string, full?: boolean) =>
+    api.get('/api/admin/tcg/search', { params: { franchise, q, ...(full ? { full: 1 } : {}) } }),
   getCard: (franchise: string, id: string) =>
     api.get('/api/admin/tcg/card', { params: { franchise, id } }),
   importImage: (imageUrl: string, productId?: string) =>

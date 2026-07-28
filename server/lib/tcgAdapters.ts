@@ -18,20 +18,29 @@ export interface TcgCardResult {
   metadata: Record<string, unknown>
 }
 
+export interface TcgSearchResult {
+  results: TcgCardResult[]
+  hasMore: boolean
+}
+
+// Resultados a mostrar de inicio; "mostrar más" pide hasta TCG_FULL_LIMIT
+const TCG_INITIAL_LIMIT = 20
+const TCG_FULL_LIMIT = 250
+
 const TCG_TIMEOUT_MS = 5000
 // Los datos de cartas TCG son estáticos — 1 hora evita llamadas repetidas sin perder frescura
 const CACHE_TTL_MS = 60 * 60 * 1000
 
-const cache = new Map<string, { data: TcgCardResult[]; expiresAt: number }>()
+const cache = new Map<string, { data: TcgSearchResult; expiresAt: number }>()
 
-function getCached(key: string): TcgCardResult[] | null {
+function getCached(key: string): TcgSearchResult | null {
   const entry = cache.get(key)
   if (entry && entry.expiresAt > Date.now()) return entry.data
   cache.delete(key)
   return null
 }
 
-function setCached(key: string, data: TcgCardResult[]): void {
+function setCached(key: string, data: TcgSearchResult): void {
   cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS })
 }
 
@@ -85,8 +94,9 @@ function normalizePokemon(card: any): TcgCardResult {
   }
 }
 
-export async function searchPokemon(query: string): Promise<TcgCardResult[]> {
-  const cacheKey = `pokemon:${query}`
+export async function searchPokemon(query: string, full = false): Promise<TcgSearchResult> {
+  const pageSize = full ? TCG_FULL_LIMIT : TCG_INITIAL_LIMIT
+  const cacheKey = `pokemon:${query}:${full ? 'full' : 'initial'}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
@@ -98,12 +108,14 @@ export async function searchPokemon(query: string): Promise<TcgCardResult[]> {
     // La API de Pokémon TCG (Lucene) no soporta wildcards en frases con espacios.
     // Usamos solo el primer término + wildcard; pageSize grande cubre variantes (ex, vmax, etc.)
     const firstTerm = query.trim().split(/\s+/)[0]
-    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=20&orderBy=-set.releaseDate`
+    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=${pageSize}&orderBy=-set.releaseDate`
     const res = await fetchWithTimeout(url, { headers })
 
-    if (!res.ok) return []
+    if (!res.ok) return { results: [], hasMore: false }
 
     const json = await res.json()
+    const totalCount: number = json.totalCount ?? 0
+
     // Filtrar resultados por el query completo (case-insensitive) para afinar sin romper la búsqueda
     const lowerQuery = query.toLowerCase()
     const all: TcgCardResult[] = (json.data ?? []).map(normalizePokemon)
@@ -111,14 +123,19 @@ export async function searchPokemon(query: string): Promise<TcgCardResult[]> {
 
     // Si el query tiene más de una palabra, intentar sub-filtrar por ellas
     const words = lowerQuery.split(/\s+/).slice(1)
-    const results = words.length
+    const filteredResults = words.length
       ? filtered.filter((c) => words.every((w) => c.name.toLowerCase().includes(w)))
       : filtered
 
-    setCached(cacheKey, results.length ? results : all.slice(0, 20))
-    return results.length ? results : all.slice(0, 20)
+    const results = filteredResults.length ? filteredResults : all
+    // hasMore: solo tiene sentido en la carga inicial — si ya se pidió el set completo, no hay más
+    const hasMore = !full && totalCount > all.length
+    const output: TcgSearchResult = { results, hasMore }
+
+    setCached(cacheKey, output)
+    return output
   } catch {
-    return []
+    return { results: [], hasMore: false }
   }
 }
 
@@ -184,23 +201,32 @@ function normalizeScryfall(card: any): TcgCardResult {
   }
 }
 
-export async function searchScryfall(query: string): Promise<TcgCardResult[]> {
+export async function searchScryfall(query: string, full = false): Promise<TcgSearchResult> {
+  // Scryfall ya devuelve hasta ~175 impresiones en una sola llamada (page size fijo de su API),
+  // así que basta con cachear el set completo una vez y recortar según lo que se pida.
   const cacheKey = `scryfall:${query}`
-  const cached = getCached(cacheKey)
-  if (cached) return cached
+  let all = getCached(cacheKey)
 
-  try {
-    const url = `https://api.scryfall.com/cards/search?q=name:${encodeURIComponent(query)}&unique=prints&order=released&dir=desc`
-    const res = await fetchWithTimeout(url, { headers: SCRYFALL_HEADERS })
+  if (!all) {
+    try {
+      const url = `https://api.scryfall.com/cards/search?q=name:${encodeURIComponent(query)}&unique=prints&order=released&dir=desc`
+      const res = await fetchWithTimeout(url, { headers: SCRYFALL_HEADERS })
 
-    if (!res.ok) return []
+      if (!res.ok) return { results: [], hasMore: false }
 
-    const json = await res.json()
-    const results = (json.data ?? []).slice(0, 20).map(normalizeScryfall)
-    setCached(cacheKey, results)
-    return results
-  } catch {
-    return []
+      const json = await res.json()
+      const results = (json.data ?? []).map(normalizeScryfall)
+      all = { results, hasMore: false }
+      setCached(cacheKey, all)
+    } catch {
+      return { results: [], hasMore: false }
+    }
+  }
+
+  const limit = full ? TCG_FULL_LIMIT : TCG_INITIAL_LIMIT
+  return {
+    results: all.results.slice(0, limit),
+    hasMore: !full && all.results.length > limit,
   }
 }
 
@@ -263,23 +289,32 @@ function normalizeLorcast(card: any): TcgCardResult {
   }
 }
 
-export async function searchLorcast(query: string): Promise<TcgCardResult[]> {
+export async function searchLorcast(query: string, full = false): Promise<TcgSearchResult> {
+  // Lorcast devuelve todas las coincidencias en una sola llamada — cacheamos el set
+  // completo una vez y recortamos según lo que se pida.
   const cacheKey = `lorcast:${query}`
-  const cached = getCached(cacheKey)
-  if (cached) return cached
+  let all = getCached(cacheKey)
 
-  try {
-    const url = `https://api.lorcast.com/v0/cards/search?q=${encodeURIComponent(query)}&sort=-released_at`
-    const res = await fetchWithTimeout(url)
+  if (!all) {
+    try {
+      const url = `https://api.lorcast.com/v0/cards/search?q=${encodeURIComponent(query)}&sort=-released_at`
+      const res = await fetchWithTimeout(url)
 
-    if (!res.ok) return []
+      if (!res.ok) return { results: [], hasMore: false }
 
-    const json = await res.json()
-    const results = (json.results ?? []).slice(0, 20).map(normalizeLorcast)
-    setCached(cacheKey, results)
-    return results
-  } catch {
-    return []
+      const json = await res.json()
+      const results = (json.results ?? []).map(normalizeLorcast)
+      all = { results, hasMore: false }
+      setCached(cacheKey, all)
+    } catch {
+      return { results: [], hasMore: false }
+    }
+  }
+
+  const limit = full ? TCG_FULL_LIMIT : TCG_INITIAL_LIMIT
+  return {
+    results: all.results.slice(0, limit),
+    hasMore: !full && all.results.length > limit,
   }
 }
 

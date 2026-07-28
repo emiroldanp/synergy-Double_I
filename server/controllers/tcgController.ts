@@ -24,17 +24,22 @@ function getFranchise(req: Request): Franchise | null {
 export async function searchCards(req: Request, res: Response, next: NextFunction) {
   const franchise = getFranchise(req)
   const q = (req.query.q as string | undefined)?.trim()
+  // full=1 pide el resto de resultados más allá de los primeros mostrados ("mostrar más")
+  const full = req.query.full === '1' || req.query.full === 'true'
 
   if (!franchise) return res.status(400).json({ error: 'franchise requerida: pokemon | magic | lorcana' })
   if (!q || q.length < 2) return res.status(400).json({ error: 'q debe tener al menos 2 caracteres' })
 
   let results: TcgCardResult[] = []
+  let hasMore = false
   let apiAvailable = true
 
   try {
-    if (franchise === 'pokemon') results = await searchPokemon(q)
-    else if (franchise === 'magic') results = await searchScryfall(q)
-    else results = await searchLorcast(q)
+    const out = franchise === 'pokemon' ? await searchPokemon(q, full)
+      : franchise === 'magic' ? await searchScryfall(q, full)
+      : await searchLorcast(q, full)
+    results = out.results
+    hasMore = out.hasMore
   } catch {
     apiAvailable = false
   }
@@ -43,11 +48,12 @@ export async function searchCards(req: Request, res: Response, next: NextFunctio
   if (!apiAvailable) {
     return res.json({
       data: [],
+      hasMore: false,
       warning: 'La API de la franquicia no está disponible temporalmente. Ingresa los datos manualmente.',
     })
   }
 
-  res.json({ data: results })
+  res.json({ data: results, hasMore })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
