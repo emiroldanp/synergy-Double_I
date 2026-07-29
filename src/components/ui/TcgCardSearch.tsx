@@ -19,6 +19,7 @@ const FRANCHISE_LABEL: Record<Franchise, string> = {
 export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<TcgCardResult[]>([])
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
@@ -31,6 +32,7 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   const search = useCallback(async (q: string) => {
     if (q.length < 2) {
       setResults([])
+      setPage(1)
       setHasMore(false)
       setOpen(false)
       return
@@ -40,13 +42,15 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
     setApiWarning(null)
 
     try {
-      const { data } = await tcgApi.search(franchise, q)
+      const { data } = await tcgApi.search(franchise, q, 1)
       setResults(data.data ?? [])
+      setPage(1)
       setHasMore(data.hasMore ?? false)
       setApiWarning(data.warning ?? null)
       setOpen(true)
     } catch {
       setResults([])
+      setPage(1)
       setHasMore(false)
       setApiWarning('No se pudo conectar con la API. Ingresa los datos manualmente.')
       setOpen(true)
@@ -58,16 +62,18 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   const loadMore = useCallback(async () => {
     if (query.length < 2 || loadingMore) return
     setLoadingMore(true)
+    const nextPage = page + 1
     try {
-      const { data } = await tcgApi.search(franchise, query, true)
-      setResults(data.data ?? [])
+      const { data } = await tcgApi.search(franchise, query, nextPage)
+      setResults((prev) => [...prev, ...(data.data ?? [])])
+      setPage(nextPage)
       setHasMore(data.hasMore ?? false)
     } catch {
       // Si falla, dejamos los resultados que ya se mostraban
     } finally {
       setLoadingMore(false)
     }
-  }, [franchise, query, loadingMore])
+  }, [franchise, query, loadingMore, page])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -79,6 +85,7 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   useEffect(() => {
     setQuery('')
     setResults([])
+    setPage(1)
     setHasMore(false)
     setOpen(false)
     setApiWarning(null)

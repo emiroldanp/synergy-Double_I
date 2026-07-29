@@ -23,9 +23,9 @@ export interface TcgSearchResult {
   hasMore: boolean
 }
 
-// Resultados a mostrar de inicio; "mostrar más" pide hasta TCG_FULL_LIMIT
-const TCG_INITIAL_LIMIT = 20
-const TCG_FULL_LIMIT = 250
+// Tamaño de cada página; "mostrar más" pide la siguiente página y se puede repetir
+// mientras la API tenga más resultados disponibles
+const TCG_PAGE_SIZE = 20
 
 const TCG_TIMEOUT_MS = 5000
 // Los datos de cartas TCG son estáticos — 1 hora evita llamadas repetidas sin perder frescura
@@ -94,9 +94,8 @@ function normalizePokemon(card: any): TcgCardResult {
   }
 }
 
-export async function searchPokemon(query: string, full = false): Promise<TcgSearchResult> {
-  const pageSize = full ? TCG_FULL_LIMIT : TCG_INITIAL_LIMIT
-  const cacheKey = `pokemon:${query}:${full ? 'full' : 'initial'}`
+export async function searchPokemon(query: string, page = 1): Promise<TcgSearchResult> {
+  const cacheKey = `pokemon:${query}:${page}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
@@ -108,7 +107,7 @@ export async function searchPokemon(query: string, full = false): Promise<TcgSea
     // La API de Pokémon TCG (Lucene) no soporta wildcards en frases con espacios.
     // Usamos solo el primer término + wildcard; pageSize grande cubre variantes (ex, vmax, etc.)
     const firstTerm = query.trim().split(/\s+/)[0]
-    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=${pageSize}&orderBy=-set.releaseDate`
+    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=${TCG_PAGE_SIZE}&page=${page}&orderBy=-set.releaseDate`
     const res = await fetchWithTimeout(url, { headers })
 
     if (!res.ok) return { results: [], hasMore: false }
@@ -128,8 +127,8 @@ export async function searchPokemon(query: string, full = false): Promise<TcgSea
       : filtered
 
     const results = filteredResults.length ? filteredResults : all
-    // hasMore: solo tiene sentido en la carga inicial — si ya se pidió el set completo, no hay más
-    const hasMore = !full && totalCount > all.length
+    // hasMore: sigue habiendo páginas mientras no se haya llegado al total real de la API
+    const hasMore = page * TCG_PAGE_SIZE < totalCount
     const output: TcgSearchResult = { results, hasMore }
 
     setCached(cacheKey, output)
@@ -201,9 +200,9 @@ function normalizeScryfall(card: any): TcgCardResult {
   }
 }
 
-export async function searchScryfall(query: string, full = false): Promise<TcgSearchResult> {
+export async function searchScryfall(query: string, page = 1): Promise<TcgSearchResult> {
   // Scryfall ya devuelve hasta ~175 impresiones en una sola llamada (page size fijo de su API),
-  // así que basta con cachear el set completo una vez y recortar según lo que se pida.
+  // así que basta con cachear el set completo una vez y paginar el corte que se muestra.
   const cacheKey = `scryfall:${query}`
   let all = getCached(cacheKey)
 
@@ -223,10 +222,11 @@ export async function searchScryfall(query: string, full = false): Promise<TcgSe
     }
   }
 
-  const limit = full ? TCG_FULL_LIMIT : TCG_INITIAL_LIMIT
+  const start = (page - 1) * TCG_PAGE_SIZE
+  const end = page * TCG_PAGE_SIZE
   return {
-    results: all.results.slice(0, limit),
-    hasMore: !full && all.results.length > limit,
+    results: all.results.slice(start, end),
+    hasMore: all.results.length > end,
   }
 }
 
@@ -289,9 +289,9 @@ function normalizeLorcast(card: any): TcgCardResult {
   }
 }
 
-export async function searchLorcast(query: string, full = false): Promise<TcgSearchResult> {
+export async function searchLorcast(query: string, page = 1): Promise<TcgSearchResult> {
   // Lorcast devuelve todas las coincidencias en una sola llamada — cacheamos el set
-  // completo una vez y recortamos según lo que se pida.
+  // completo una vez y paginamos el corte que se muestra.
   const cacheKey = `lorcast:${query}`
   let all = getCached(cacheKey)
 
@@ -311,10 +311,11 @@ export async function searchLorcast(query: string, full = false): Promise<TcgSea
     }
   }
 
-  const limit = full ? TCG_FULL_LIMIT : TCG_INITIAL_LIMIT
+  const start = (page - 1) * TCG_PAGE_SIZE
+  const end = page * TCG_PAGE_SIZE
   return {
-    results: all.results.slice(0, limit),
-    hasMore: !full && all.results.length > limit,
+    results: all.results.slice(start, end),
+    hasMore: all.results.length > end,
   }
 }
 

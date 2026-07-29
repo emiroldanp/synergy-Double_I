@@ -24,8 +24,10 @@ function getFranchise(req: Request): Franchise | null {
 export async function searchCards(req: Request, res: Response, next: NextFunction) {
   const franchise = getFranchise(req)
   const q = (req.query.q as string | undefined)?.trim()
-  // full=1 pide el resto de resultados más allá de los primeros mostrados ("mostrar más")
-  const full = req.query.full === '1' || req.query.full === 'true'
+  // page=N pide la siguiente tanda de resultados ("mostrar más"); se puede repetir
+  // mientras la respuesta siga indicando hasMore: true
+  const pageParam = parseInt(req.query.page as string, 10)
+  const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1
 
   if (!franchise) return res.status(400).json({ error: 'franchise requerida: pokemon | magic | lorcana' })
   if (!q || q.length < 2) return res.status(400).json({ error: 'q debe tener al menos 2 caracteres' })
@@ -35,9 +37,9 @@ export async function searchCards(req: Request, res: Response, next: NextFunctio
   let apiAvailable = true
 
   try {
-    const out = franchise === 'pokemon' ? await searchPokemon(q, full)
-      : franchise === 'magic' ? await searchScryfall(q, full)
-      : await searchLorcast(q, full)
+    const out = franchise === 'pokemon' ? await searchPokemon(q, page)
+      : franchise === 'magic' ? await searchScryfall(q, page)
+      : await searchLorcast(q, page)
     results = out.results
     hasMore = out.hasMore
   } catch {
