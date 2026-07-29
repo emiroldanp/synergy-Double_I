@@ -140,7 +140,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Envío</span>
               {isLocalWhatsapp ? (
-                <span className="text-green-600 font-medium">Local (WhatsApp) · Sin costo</span>
+                <span className="text-yellow-600 font-medium">Local (WhatsApp) · Cotizar con cliente</span>
               ) : (
                 <span className="text-gray-700">{formatMXN(order.shippingCost)}</span>
               )}

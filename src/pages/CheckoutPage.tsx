@@ -298,7 +298,7 @@ export default function CheckoutPage() {
                             <p className="font-exo text-xs text-ash mt-1">
                               Irving te contactará por WhatsApp para coordinar la entrega en tu zona.
                             </p>
-                            <p className="font-agency text-sm text-[#25D366] mt-2">Sin costo de envío</p>
+                            <p className="font-agency text-sm text-[#25D366] mt-2">Costo de envío a cotizar por WhatsApp</p>
                           </div>
                           <div className="w-4 h-4 rounded-full border-2 border-[#25D366] flex items-center justify-center flex-shrink-0">
                             <div className="w-2 h-2 rounded-full bg-[#25D366]" />
@@ -570,14 +570,14 @@ export default function CheckoutPage() {
                         <span className="text-ash">
                           {shipping.isLocal ? 'Envío local (WhatsApp)' : `Envío (${shipping.selected.service})`}
                         </span>
-                        <span className={shipping.isLocal ? 'text-[#25D366]' : 'text-frost'}>
-                          {shipping.isLocal ? 'Sin costo' : formatPrice(shipping.selected.price)}
+                        <span className="text-frost">
+                          {shipping.isLocal ? 'A cotizar por WhatsApp' : formatPrice(shipping.selected.price)}
                         </span>
                       </div>
                     )}
                     {shipping.isLocal && (
                       <p className="text-xs text-ash/60 font-exo mt-2 border-t border-navy/20 pt-2">
-                        Irving te contactará por WhatsApp para coordinar la entrega.
+                        Irving te contactará por WhatsApp para cotizar el envío y coordinar la entrega.
                       </p>
                     )}
                     {discountApplied && (
@@ -637,7 +637,9 @@ export default function CheckoutPage() {
                   {shipping.selected && (
                     <div className="flex justify-between text-ash">
                       <span>Envío</span>
-                      <span className="text-frost">{formatPrice(shipping.selected.price)}</span>
+                      <span className="text-frost">
+                        {shipping.isLocal ? 'A cotizar por WhatsApp' : formatPrice(shipping.selected.price)}
+                      </span>
                     </div>
                   )}
                   {discountApplied && (
