@@ -65,11 +65,18 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
     const nextPage = page + 1
     try {
       const { data } = await tcgApi.search(franchise, query, nextPage)
-      setResults((prev) => [...prev, ...(data.data ?? [])])
-      setPage(nextPage)
-      setHasMore(data.hasMore ?? false)
+      if (data.warning) {
+        // La API externa falló para esta página — no perdemos el progreso ya
+        // cargado; dejamos hasMore intacto para poder reintentar con el mismo botón.
+        setApiWarning(data.warning)
+      } else {
+        setResults((prev) => [...prev, ...(data.data ?? [])])
+        setPage(nextPage)
+        setHasMore(data.hasMore ?? false)
+        setApiWarning(null)
+      }
     } catch {
-      // Si falla, dejamos los resultados que ya se mostraban
+      setApiWarning('No se pudo conectar con la API. Intenta de nuevo.')
     } finally {
       setLoadingMore(false)
     }

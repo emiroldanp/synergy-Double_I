@@ -1,8 +1,16 @@
 /**
  * Adaptadores para las 3 APIs de cartas TCG.
  * Cada uno normaliza la respuesta al formato común TcgCardResult.
- * Si una API no responde, el adaptador devuelve array vacío en lugar de lanzar error.
+ *
+ * Las funciones de búsqueda (searchPokemon/searchScryfall/searchLorcast) NO
+ * atrapan errores de red/timeout/5xx internamente — los dejan propagar (después
+ * de reintentar con withRetry) para que el controlador los convierta en un
+ * `warning` visible en el admin. Antes se devolvía silenciosamente un array
+ * vacío, lo que hacía parecer que "mostrar más resultados" no hacía nada
+ * cuando en realidad la API pública fallaba (timeout / 500 intermitentes,
+ * comunes en pokemontcg.io sin verse como error explícito).
  */
+import { withRetry } from './retry'
 
 export interface TcgCardResult {
   externalId: string
@@ -99,43 +107,46 @@ export async function searchPokemon(query: string, page = 1): Promise<TcgSearchR
   const cached = getCached(cacheKey)
   if (cached) return cached
 
-  try {
-    const apiKey = process.env.POKEMON_TCG_API_KEY
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (apiKey) headers['X-Api-Key'] = apiKey
+  const apiKey = process.env.POKEMON_TCG_API_KEY
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (apiKey) headers['X-Api-Key'] = apiKey
 
-    // La API de Pokémon TCG (Lucene) no soporta wildcards en frases con espacios.
-    // Usamos solo el primer término + wildcard; pageSize grande cubre variantes (ex, vmax, etc.)
-    const firstTerm = query.trim().split(/\s+/)[0]
-    const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=${TCG_PAGE_SIZE}&page=${page}&orderBy=-set.releaseDate`
-    const res = await fetchWithTimeout(url, { headers })
+  // La API de Pokémon TCG (Lucene) no soporta wildcards en frases con espacios.
+  // Usamos solo el primer término + wildcard; pageSize grande cubre variantes (ex, vmax, etc.)
+  const firstTerm = query.trim().split(/\s+/)[0]
+  const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=${TCG_PAGE_SIZE}&page=${page}&orderBy=-set.releaseDate`
 
-    if (!res.ok) return { results: [], hasMore: false }
+  // pokemontcg.io es intermitente (timeouts / 500 esporádicos) — reintentamos
+  // antes de darlo por caído; es una lectura idempotente, segura de reintentar.
+  const json = await withRetry(
+    async () => {
+      const res = await fetchWithTimeout(url, { headers })
+      if (!res.ok) throw new Error(`Pokemon TCG API respondió ${res.status}`)
+      return res.json()
+    },
+    { label: 'Pokemon TCG search', shouldRetry: () => true }
+  )
 
-    const json = await res.json()
-    const totalCount: number = json.totalCount ?? 0
+  const totalCount: number = json.totalCount ?? 0
 
-    // Filtrar resultados por el query completo (case-insensitive) para afinar sin romper la búsqueda
-    const lowerQuery = query.toLowerCase()
-    const all: TcgCardResult[] = (json.data ?? []).map(normalizePokemon)
-    const filtered = all.filter((c) => c.name.toLowerCase().includes(lowerQuery.split(/\s+/)[0]))
+  // Filtrar resultados por el query completo (case-insensitive) para afinar sin romper la búsqueda
+  const lowerQuery = query.toLowerCase()
+  const all: TcgCardResult[] = (json.data ?? []).map(normalizePokemon)
+  const filtered = all.filter((c) => c.name.toLowerCase().includes(lowerQuery.split(/\s+/)[0]))
 
-    // Si el query tiene más de una palabra, intentar sub-filtrar por ellas
-    const words = lowerQuery.split(/\s+/).slice(1)
-    const filteredResults = words.length
-      ? filtered.filter((c) => words.every((w) => c.name.toLowerCase().includes(w)))
-      : filtered
+  // Si el query tiene más de una palabra, intentar sub-filtrar por ellas
+  const words = lowerQuery.split(/\s+/).slice(1)
+  const filteredResults = words.length
+    ? filtered.filter((c) => words.every((w) => c.name.toLowerCase().includes(w)))
+    : filtered
 
-    const results = filteredResults.length ? filteredResults : all
-    // hasMore: sigue habiendo páginas mientras no se haya llegado al total real de la API
-    const hasMore = page * TCG_PAGE_SIZE < totalCount
-    const output: TcgSearchResult = { results, hasMore }
+  const results = filteredResults.length ? filteredResults : all
+  // hasMore: sigue habiendo páginas mientras no se haya llegado al total real de la API
+  const hasMore = page * TCG_PAGE_SIZE < totalCount
+  const output: TcgSearchResult = { results, hasMore }
 
-    setCached(cacheKey, output)
-    return output
-  } catch {
-    return { results: [], hasMore: false }
-  }
+  setCached(cacheKey, output)
+  return output
 }
 
 export async function getPokemonCard(id: string): Promise<TcgCardResult | null> {
@@ -207,19 +218,23 @@ export async function searchScryfall(query: string, page = 1): Promise<TcgSearch
   let all = getCached(cacheKey)
 
   if (!all) {
-    try {
-      const url = `https://api.scryfall.com/cards/search?q=name:${encodeURIComponent(query)}&unique=prints&order=released&dir=desc`
-      const res = await fetchWithTimeout(url, { headers: SCRYFALL_HEADERS })
+    const url = `https://api.scryfall.com/cards/search?q=name:${encodeURIComponent(query)}&unique=prints&order=released&dir=desc`
 
-      if (!res.ok) return { results: [], hasMore: false }
+    const json = await withRetry(
+      async () => {
+        const res = await fetchWithTimeout(url, { headers: SCRYFALL_HEADERS })
+        // Scryfall responde 404 cuando el query no matchea ninguna carta —
+        // es un resultado vacío legítimo, no una falla de la API (no reintentar).
+        if (res.status === 404) return { data: [] }
+        if (!res.ok) throw new Error(`Scryfall API respondió ${res.status}`)
+        return res.json()
+      },
+      { label: 'Scryfall search', shouldRetry: () => true }
+    )
 
-      const json = await res.json()
-      const results = (json.data ?? []).map(normalizeScryfall)
-      all = { results, hasMore: false }
-      setCached(cacheKey, all)
-    } catch {
-      return { results: [], hasMore: false }
-    }
+    const results = (json.data ?? []).map(normalizeScryfall)
+    all = { results, hasMore: false }
+    setCached(cacheKey, all)
   }
 
   const start = (page - 1) * TCG_PAGE_SIZE
@@ -296,19 +311,20 @@ export async function searchLorcast(query: string, page = 1): Promise<TcgSearchR
   let all = getCached(cacheKey)
 
   if (!all) {
-    try {
-      const url = `https://api.lorcast.com/v0/cards/search?q=${encodeURIComponent(query)}&sort=-released_at`
-      const res = await fetchWithTimeout(url)
+    const url = `https://api.lorcast.com/v0/cards/search?q=${encodeURIComponent(query)}&sort=-released_at`
 
-      if (!res.ok) return { results: [], hasMore: false }
+    const json = await withRetry(
+      async () => {
+        const res = await fetchWithTimeout(url)
+        if (!res.ok) throw new Error(`Lorcast API respondió ${res.status}`)
+        return res.json()
+      },
+      { label: 'Lorcast search', shouldRetry: () => true }
+    )
 
-      const json = await res.json()
-      const results = (json.results ?? []).map(normalizeLorcast)
-      all = { results, hasMore: false }
-      setCached(cacheKey, all)
-    } catch {
-      return { results: [], hasMore: false }
-    }
+    const results = (json.results ?? []).map(normalizeLorcast)
+    all = { results, hasMore: false }
+    setCached(cacheKey, all)
   }
 
   const start = (page - 1) * TCG_PAGE_SIZE
