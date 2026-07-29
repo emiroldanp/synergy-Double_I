@@ -14,6 +14,12 @@ import { cn } from '@/lib/utils'
 
 const STEPS = ['Contacto', 'Dirección', 'Envío', 'Facturación', 'Pago']
 
+const BANK_NAME = import.meta.env.VITE_BANK_NAME || '[PLACEHOLDER — confirmar banco con Irving]'
+const BANK_HOLDER = import.meta.env.VITE_BANK_HOLDER || '[PLACEHOLDER — confirmar titular con Irving]'
+const BANK_CLABE = import.meta.env.VITE_BANK_CLABE || '[PLACEHOLDER — confirmar CLABE con Irving]'
+const BANK_ACCOUNT_NUMBER = import.meta.env.VITE_BANK_ACCOUNT_NUMBER || '[PLACEHOLDER — confirmar cuenta con Irving]'
+const BANK_BRANCH = import.meta.env.VITE_BANK_BRANCH || '[PLACEHOLDER — confirmar sucursal con Irving]'
+
 function formatEta(days: unknown): string | null {
   if (typeof days === 'number' && days >= 1) {
     return days === 1 ? '1 día hábil' : `${days} días hábiles`
@@ -64,6 +70,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0)
   const [contact, setContact] = useState<ContactFormData | null>(null)
   const [address, setAddress] = useState<AddressFormData | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'transferencia_directa' | 'mercado_pago'>('transferencia_directa')
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
   const [discountCode, setDiscountCode] = useState('')
@@ -160,10 +167,19 @@ export default function CheckoutPage() {
           ? { rfc: cfdiValues.rfc!, razonSocial: cfdiValues.razonSocial!, cfdiUse: cfdiValues.usoCfdi! }
           : null,
         discountCode: discountApplied?.code ?? null,
+        paymentMethod,
       }
 
       const res = await ordersApi.create(orderPayload)
       const orderId: string = res.data?.data?.orderId ?? res.data?.orderId
+
+      // Transferencia directa: el pedido se queda en "pending" esperando el comprobante,
+      // Irving lo confirma manualmente desde el admin — no pasa por Mercado Pago.
+      if (paymentMethod === 'transferencia_directa') {
+        clearCart()
+        navigate(`/pedido/transferencia?orderId=${orderId}`, { state: { orderId, contact } })
+        return
+      }
 
       // Crear preferencia de pago en Mercado Pago y redirigir al checkout de MP.
       // El carrito se limpia al volver desde MP a /pedido/confirmacion (back_url).
@@ -420,14 +436,86 @@ export default function CheckoutPage() {
               {step === 4 && (
                 <div className="bg-deep border border-navy/40 p-6">
                   <h2 className="font-agency text-white uppercase tracking-wider text-lg mb-4">Pago</h2>
-                  <div className="bg-abyss border border-navy/30 p-6 text-center mb-6">
-                    <p className="font-agency text-white uppercase tracking-wider text-sm mb-2">
-                      Pago con Mercado Pago
-                    </p>
-                    <p className="font-exo text-ash text-xs">
-                      Al confirmar el pedido te redirigiremos al checkout seguro de Mercado Pago para que pagues con tarjeta, OXXO o transferencia (SPEI).
-                    </p>
+
+                  {/* Selector de método de pago */}
+                  <div className="space-y-3 mb-6">
+                    <label className={cn(
+                      'flex items-center justify-between gap-3 border p-4 cursor-pointer transition-colors',
+                      paymentMethod === 'transferencia_directa' ? 'border-dragon bg-abyss' : 'border-navy/30'
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          'w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0',
+                          paymentMethod === 'transferencia_directa' ? 'border-dragon' : 'border-navy/60'
+                        )}>
+                          {paymentMethod === 'transferencia_directa' && <div className="w-2 h-2 rounded-full bg-dragon" />}
+                        </div>
+                        <div>
+                          <p className="font-agency text-sm text-white tracking-wide uppercase">1. Transferencia directa</p>
+                          <p className="font-exo text-xs text-ash">Sin comisión — transfiere directo y envía tu comprobante</p>
+                        </div>
+                      </div>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        className="sr-only"
+                        checked={paymentMethod === 'transferencia_directa'}
+                        onChange={() => setPaymentMethod('transferencia_directa')}
+                      />
+                    </label>
+
+                    <label className={cn(
+                      'flex items-center justify-between gap-3 border p-4 cursor-pointer transition-colors',
+                      paymentMethod === 'mercado_pago' ? 'border-dragon bg-abyss' : 'border-navy/30'
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          'w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0',
+                          paymentMethod === 'mercado_pago' ? 'border-dragon' : 'border-navy/60'
+                        )}>
+                          {paymentMethod === 'mercado_pago' && <div className="w-2 h-2 rounded-full bg-dragon" />}
+                        </div>
+                        <div>
+                          <p className="font-agency text-sm text-white tracking-wide uppercase">2. Mercado Pago</p>
+                          <p className="font-exo text-xs text-ash">Tarjeta, OXXO o SPEI vía Mercado Pago</p>
+                        </div>
+                      </div>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        className="sr-only"
+                        checked={paymentMethod === 'mercado_pago'}
+                        onChange={() => setPaymentMethod('mercado_pago')}
+                      />
+                    </label>
                   </div>
+
+                  {paymentMethod === 'transferencia_directa' ? (
+                    <div className="bg-abyss border border-navy/30 p-6 mb-6">
+                      <p className="font-agency text-white uppercase tracking-wider text-sm mb-3">
+                        Datos para tu transferencia
+                      </p>
+                      <div className="space-y-1.5 font-exo text-sm">
+                        <p className="text-ash">Banco: <span className="text-frost">{BANK_NAME}</span></p>
+                        <p className="text-ash">Titular: <span className="text-frost">{BANK_HOLDER}</span></p>
+                        <p className="text-ash">CLABE: <span className="text-frost">{BANK_CLABE}</span></p>
+                        <p className="text-ash">Cuenta: <span className="text-frost">{BANK_ACCOUNT_NUMBER}</span></p>
+                        <p className="text-ash">Sucursal: <span className="text-frost">{BANK_BRANCH}</span></p>
+                      </div>
+                      <p className="font-exo text-ash text-xs mt-4">
+                        Al confirmar tu pedido, transfiere el total y envíanos el comprobante por WhatsApp o correo para verificar tu pago.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-abyss border border-navy/30 p-6 text-center mb-6">
+                      <p className="font-agency text-white uppercase tracking-wider text-sm mb-2">
+                        Pago con Mercado Pago
+                      </p>
+                      <p className="font-exo text-ash text-xs">
+                        Al confirmar el pedido te redirigiremos al checkout seguro de Mercado Pago para que pagues con tarjeta, OXXO o transferencia (SPEI).
+                      </p>
+                    </div>
+                  )}
                   {/* Campo de código de descuento */}
                   <div className="border border-navy/30 p-4 mb-4">
                     <h3 className="font-agency text-sm text-ash uppercase tracking-wider mb-3">Código de descuento</h3>

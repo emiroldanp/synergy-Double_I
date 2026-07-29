@@ -23,6 +23,7 @@ const createOrderSchema = z.object({
     cfdiUse: z.string().min(1),
   }).optional().nullable(),
   discountCode: z.string().max(50).optional().nullable(),
+  paymentMethod: z.enum(['mercado_pago', 'transferencia_directa']).optional(),
 })
 
 /**
@@ -36,7 +37,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
     if (!parsed.success) {
       return res.status(400).json({ error: 'Datos de orden inválidos', details: parsed.error.flatten().fieldErrors })
     }
-    const { customerId, guestEmail, guestName, guestPhone, shippingAddress, shippingMethod, shippingCost, items, requiresInvoice, invoiceData, discountCode } = parsed.data
+    const { customerId, guestEmail, guestName, guestPhone, shippingAddress, shippingMethod, shippingCost, items, requiresInvoice, invoiceData, discountCode, paymentMethod } = parsed.data
 
     // Crear orden e items en una sola transacción (validación de stock incluida para eliminar TOCTOU)
     const order = await prisma.$transaction(async (tx) => {
@@ -96,6 +97,9 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
           discountCodeId: resolvedDiscountCodeId,
           discountAmount: new Prisma.Decimal(discountAmount),
           total: new Prisma.Decimal(total),
+          // Transferencia directa se guarda desde la creación — no pasa por Mercado Pago,
+          // así que no hay webhook que la sobreescriba luego (ver confirmOrderPayment)
+          paymentMethod: paymentMethod === 'transferencia_directa' ? 'transferencia_directa' : null,
           requiresInvoice,
           items: {
             create: resolvedItems,

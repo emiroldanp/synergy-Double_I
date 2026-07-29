@@ -13,6 +13,7 @@ const CartPage = lazy(() => import('@/pages/CartPage'))
 const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'))
 const OrderConfirmationPage = lazy(() => import('@/pages/OrderConfirmationPage'))
 const OrderPendingPage = lazy(() => import('@/pages/OrderPendingPage'))
+const OrderTransferPendingPage = lazy(() => import('@/pages/OrderTransferPendingPage'))
 const AccountPage = lazy(() => import('@/pages/AccountPage'))
 const BlogPage = lazy(() => import('@/pages/BlogPage'))
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'))
@@ -109,6 +110,7 @@ function AppContent() {
         <Route path="/checkout" element={<Layout><CheckoutPage /></Layout>} />
         <Route path="/pedido/confirmacion" element={<Layout><OrderConfirmationPage /></Layout>} />
         <Route path="/pedido/pendiente" element={<Layout><OrderPendingPage /></Layout>} />
+        <Route path="/pedido/transferencia" element={<Layout><OrderTransferPendingPage /></Layout>} />
         <Route path="/mi-cuenta" element={<Layout><AccountPage /></Layout>} />
         <Route path="/blog" element={<Layout><BlogPage /></Layout>} />
         <Route path="/blog/:slug" element={<Layout><BlogPostPage /></Layout>} />
