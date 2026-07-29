@@ -171,9 +171,9 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
               <h4 className="text-sm font-semibold text-gray-700 mb-1">Dirección de envío</h4>
               <p className="text-sm text-gray-600">
                 {order.shippingAddress.street} {order.shippingAddress.number},{' '}
-                {order.shippingAddress.neighborhood},{' '}
+                {order.shippingAddress.colonia},{' '}
                 {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
-                C.P. {order.shippingAddress.zipCode}
+                C.P. {order.shippingAddress.zip}
               </p>
               {shippingMethodLabel && (
                 <p className="text-sm text-gray-600 mt-1">

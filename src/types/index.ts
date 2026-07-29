@@ -174,10 +174,10 @@ export interface OrderItem {
 export interface ShippingAddress {
   street: string
   number?: string
-  neighborhood?: string
+  colonia?: string
   city: string
   state: string
-  zipCode: string
+  zip: string
 }
 
 export interface Order {
