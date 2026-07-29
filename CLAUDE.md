@@ -40,6 +40,15 @@ Stack estándar Synergy **más** Express.js backend obligatorio en este proyecto
 
 ---
 
+## Infraestructura de despliegue (IMPORTANTE — no volver a preguntar esto)
+
+- **Backend (Express):** Node app en Hostinger, dominio `api.doubleicards.com`. **Se autodespliega solo con cada push a `main`** (no requiere acción manual, no hay que verificar ni reiniciar nada en el panel de Hostinger tras un push). Entry file: `server/dist/index.js`. Env vars del backend viven en Hostinger (Environment variables), no en GitHub.
+- **Frontend (Vite estático):** se compila y sube por FTP vía `.github/workflows/deploy.yml`. `push dev` → `staging.doubleicards.com`; `push main` → `doubleicards.com`.
+- **Variables `VITE_*` del frontend:** se inyectan en el paso "Build" del workflow desde **GitHub Secrets** (`gh secret set NOMBRE -b "valor"`), no desde el `.env` local (que es solo para dev y está en `.gitignore`). Si se agrega una `VITE_*` nueva hay que: 1) agregarla al bloque `env:` del step Build en `deploy.yml`, y 2) crear el secret en GitHub con el valor real — si falta el secret, el build cae al fallback hardcodeado en el código (placeholder) sin avisar.
+- **CORS:** `FRONTEND_URL` en Hostinger acepta varios orígenes separados por coma (`https://doubleicards.com,https://staging.doubleicards.com`).
+
+---
+
 ## Arquitectura frontend relevante (2026-05-18)
 
 Componentes y contextos clave que no son evidentes del árbol de archivos:
