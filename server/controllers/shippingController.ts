@@ -25,6 +25,11 @@ interface QuoteRequestBody {
   sessionId: string
 }
 
+// Colchón de seguridad sobre la cotización de Skydropx: el precio final al
+// generar la guía puede variar por el tipo de caja real usada, embalaje, etc.
+// Este margen hace que Irving no absorba esa variación de su bolsillo.
+const SHIPPING_SAFETY_MARGIN = 0.12
+
 // Cache simple del access token de Skydropx Pro.
 // El token tiene TTL declarado en expires_in (segundos); refrescamos
 // con un margen de 60 s para evitar usarlo justo en el límite.
@@ -188,13 +193,15 @@ export async function quoteShipping(req: Request, res: Response, next: NextFunct
         const attrs = q.attributes || q
         // provider_display_name viene con casing natural ("FedEx", "Estafeta");
         // provider_name es el slug ("fedex", "estafeta") — fallback si no está.
+        const basePrice = Number(attrs.total || attrs.amount_local || attrs.total_pricing || 0)
         return {
           carrier: attrs.provider_display_name
             || attrs.carrier_name
             || attrs.provider_name
             || attrs.carrier,
           service: attrs.provider_service_name || attrs.service_level_name || attrs.service,
-          price: Number(attrs.total || attrs.amount_local || attrs.total_pricing || 0),
+          // Precio con colchón de seguridad ya incluido — redondeado a pesos enteros
+          price: Math.ceil(basePrice * (1 + SHIPPING_SAFETY_MARGIN)),
           eta: attrs.days || attrs.days_transit,
         }
       })

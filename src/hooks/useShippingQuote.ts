@@ -3,12 +3,20 @@ import type { ShippingOption } from '@/types'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
-// Dimensiones estándar para tarjetas TCG selladas (ETB, booster bundle, etc.)
-const DEFAULT_PARCEL = {
-  weight: 0.5,
-  length: 30,
-  width: 22,
-  height: 8,
+// Tamaños de caja según cantidad de piezas en el carrito. Antes se cotizaba
+// siempre con una sola caja fija sin importar el pedido, lo que hacía que la
+// cotización mostrada al cliente no se pareciera en nada al costo real que
+// Irving termina pagando al generar la guía con un pedido grande/pesado.
+// Valores iniciales — ajustar con datos reales de Irving conforme los tenga.
+const PARCEL_TIERS = [
+  { maxQuantity: 2, parcel: { weight: 0.5, length: 30, width: 22, height: 8 } },
+  { maxQuantity: 6, parcel: { weight: 1.5, length: 35, width: 25, height: 15 } },
+  { maxQuantity: Infinity, parcel: { weight: 3, length: 40, width: 30, height: 20 } },
+]
+
+function getParcelForQuantity(totalQuantity: number) {
+  const tier = PARCEL_TIERS.find((t) => totalQuantity <= t.maxQuantity)
+  return tier!.parcel
 }
 
 // Estados que califican como zona local (coordinar envío por WhatsApp con Irving)
@@ -42,14 +50,17 @@ export function useShippingQuote() {
   const [selected, setSelected] = useState<ShippingOption | null>(null)
   const [isLocal, setIsLocal] = useState(false)
 
-  const fetchQuote = async (address: {
-    street: string
-    number: string
-    colonia: string
-    city: string
-    state: string
-    zip: string
-  }) => {
+  const fetchQuote = async (
+    address: {
+      street: string
+      number: string
+      colonia: string
+      city: string
+      state: string
+      zip: string
+    },
+    totalQuantity: number
+  ) => {
     // Zona local → skip Skydropx, mostrar opción WhatsApp directamente
     if (isLocalZone(address.state)) {
       setIsLocal(true)
@@ -77,7 +88,7 @@ export function useShippingQuote() {
             state: address.state,
             zip_code: address.zip,
           },
-          parcel: DEFAULT_PARCEL,
+          parcel: getParcelForQuantity(totalQuantity),
           sessionId: crypto.randomUUID(),
         }),
       })

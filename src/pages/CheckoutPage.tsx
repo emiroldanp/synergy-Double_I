@@ -79,6 +79,7 @@ export default function CheckoutPage() {
   const [discountError, setDiscountError] = useState<string | null>(null)
   const [discountApplied, setDiscountApplied] = useState<{ code: string; amount: number } | null>(null)
   const { items, subtotal, clearCart } = useCart()
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0)
   const shipping = useShippingQuote()
   const { user, isSignedIn } = useAuth()
   const navigate = useNavigate()
@@ -128,7 +129,7 @@ export default function CheckoutPage() {
 
   const handleAddress = addressForm.handleSubmit((data) => {
     setAddress(data)
-    shipping.fetchQuote(data)
+    shipping.fetchQuote(data, totalQuantity)
     setStep(2)
   })
 
@@ -324,7 +325,7 @@ export default function CheckoutPage() {
                   {!shipping.isLocal && shipping.status === 'error' && (
                     <div className="text-center py-6">
                       <p className="font-exo text-crimson text-sm mb-3">No pudimos cotizar el envío. Intenta de nuevo.</p>
-                      <button onClick={() => address && shipping.fetchQuote(address)} className="btn-secondary text-xs px-4 py-2">
+                      <button onClick={() => address && shipping.fetchQuote(address, totalQuantity)} className="btn-secondary text-xs px-4 py-2">
                         Reintentar
                       </button>
                     </div>
