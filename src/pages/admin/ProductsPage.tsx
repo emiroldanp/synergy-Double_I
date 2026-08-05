@@ -3,23 +3,35 @@ import { useNavigate } from 'react-router-dom'
 import { useAdminApi } from '../../hooks/useAdminApi'
 import StatusBadge from '../../components/admin/StatusBadge'
 import ConfirmModal from '../../components/admin/ConfirmModal'
-import { AdminProduct } from '../../types'
+import { AdminProduct, Category } from '../../types'
 import { PaginatedResponse } from '../../types/admin'
 import { formatPrice as formatMXN } from '../../lib/utils'
+
+type TypeFilter = '' | 'singles' | 'sealed'
 
 export default function ProductsPage() {
   const { apiFetch } = useAdminApi()
   const navigate = useNavigate()
 
   const [products, setProducts] = useState<AdminProduct[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<AdminProduct | null>(null)
   const PAGE_SIZE = 20
+
+  // Categorías (franquicias) para el filtro — mismo endpoint público que usa el form de producto
+  useEffect(() => {
+    apiFetch<{ data: Category[] }>('/api/products/categories')
+      .then((res) => setCategories(res.data))
+      .catch(() => { /* el filtro simplemente queda vacío si falla */ })
+  }, [apiFetch])
 
   // Debounce de búsqueda
   useEffect(() => {
@@ -33,6 +45,8 @@ export default function ProductsPage() {
       page: String(page),
       limit: String(PAGE_SIZE),
       ...(debouncedSearch && { search: debouncedSearch }),
+      ...(categoryId && { categoryId }),
+      ...(typeFilter && { type: typeFilter }),
     })
     apiFetch<PaginatedResponse<AdminProduct>>(`/api/admin/products?${params}`)
       .then((res) => {
@@ -41,16 +55,16 @@ export default function ProductsPage() {
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
-  }, [page, debouncedSearch, apiFetch])
+  }, [page, debouncedSearch, categoryId, typeFilter, apiFetch])
 
   useEffect(() => {
     fetchProducts()
   }, [fetchProducts])
 
-  // Resetear a página 1 cuando cambia la búsqueda
+  // Resetear a página 1 cuando cambian los filtros
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch])
+  }, [debouncedSearch, categoryId, typeFilter])
 
   const handleToggleActive = async (product: AdminProduct) => {
     try {
@@ -85,14 +99,33 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       {/* Barra de herramientas */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <input
           type="text"
           placeholder="Buscar productos..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 min-w-[180px] border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <select
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todas las franquicias</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todos los tipos</option>
+          <option value="singles">Singles</option>
+          <option value="sealed">Producto cerrado</option>
+        </select>
         <button
           onClick={() => navigate('/admin/productos/nuevo')}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors whitespace-nowrap"

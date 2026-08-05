@@ -42,7 +42,7 @@ function brevoHeaders() {
 /**
  * GET /api/admin/products
  * Lista todos los productos (activos e inactivos) con paginación.
- * Query params: page (default 1), limit (default 20)
+ * Query params: page (default 1), limit (default 20), categoryId, type ('singles' | 'sealed')
  */
 export async function listProducts(req: Request, res: Response, next: NextFunction) {
   try {
@@ -50,17 +50,26 @@ export async function listProducts(req: Request, res: Response, next: NextFuncti
     const limit = Math.min(100, parseInt(req.query.limit as string) || 20)
     const skip = (page - 1) * limit
     const search = (req.query.search as string | undefined)?.trim()
+    const categoryId = (req.query.categoryId as string | undefined)?.trim()
+    // 'carta' = single individual; cualquier otro productType (booster-box, etb, etc.) = producto cerrado
+    const type = (req.query.type as string | undefined)?.trim()
 
-    const where: Prisma.ProductWhereInput = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { slug: { contains: search, mode: 'insensitive' } },
-            { setName: { contains: search, mode: 'insensitive' } },
-            { cardNumber: { contains: search, mode: 'insensitive' } },
-          ],
-        }
-      : {}
+    const conditions: Prisma.ProductWhereInput[] = []
+    if (search) {
+      conditions.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { slug: { contains: search, mode: 'insensitive' } },
+          { setName: { contains: search, mode: 'insensitive' } },
+          { cardNumber: { contains: search, mode: 'insensitive' } },
+        ],
+      })
+    }
+    if (categoryId) conditions.push({ categoryId })
+    if (type === 'singles') conditions.push({ productType: 'carta' })
+    if (type === 'sealed') conditions.push({ productType: { not: 'carta' } })
+
+    const where: Prisma.ProductWhereInput = conditions.length ? { AND: conditions } : {}
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
