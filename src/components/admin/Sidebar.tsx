@@ -9,6 +9,7 @@ const navItems = [
   { to: '/admin/suscriptores', label: 'Suscriptores', icon: '📧' },
   { to: '/admin/blog', label: 'Blog', icon: '✏️' },
   { to: '/admin/banners', label: 'Banners', icon: '🖼️' },
+  { to: '/admin/promociones', label: 'Promociones', icon: '📣' },
   { to: '/admin/descuentos', label: 'Descuentos', icon: '🏷️' },
 ]
 

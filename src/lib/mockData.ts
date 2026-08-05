@@ -1,4 +1,4 @@
-import type { Product, BlogPost, Promotion, Order } from '@/types'
+import type { Product, BlogPost, Order } from '@/types'
 
 const PLACEHOLDER_CARD = 'https://placehold.co/300x420/1E0E40/6BB8EC?text=TCG+Card'
 const PLACEHOLDER_WIDE = 'https://placehold.co/800x400/1E0E40/6BB8EC?text=Double-I+TCG'
@@ -387,30 +387,6 @@ export const MOCK_PRODUCTS: Product[] = [
     isActive: true,
     createdAt: new Date(Date.now() - 13 * 86400000).toISOString(),
     salesCount: 4,
-  },
-]
-
-export const MOCK_PROMOTIONS: Promotion[] = [
-  {
-    id: '1',
-    title: '¡Semana Pokémon!',
-    description: '15% de descuento en todas las cartas Pokémon hasta el domingo',
-    discountType: 'porcentaje',
-    discountValue: 15,
-    validFrom: new Date().toISOString(),
-    validTo: new Date(Date.now() + 7 * 86400000).toISOString(),
-    isActive: true,
-    image: PLACEHOLDER_WIDE,
-  },
-  {
-    id: '2',
-    title: 'Envío gratis en compras +$800',
-    description: 'En pedidos mayores a $800 MXN, el envío corre por nuestra cuenta',
-    discountType: 'monto',
-    discountValue: 0,
-    validFrom: new Date().toISOString(),
-    validTo: new Date(Date.now() + 30 * 86400000).toISOString(),
-    isActive: true,
   },
 ]
 

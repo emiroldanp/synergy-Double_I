@@ -12,10 +12,12 @@ import { invoicesRoutes } from './routes/invoices'
 import { emailRoutes } from './routes/email'
 import { adminRoutes } from './routes/admin'
 import { bannerAdminRoutes } from './routes/banners'
+import { promotionAdminRoutes } from './routes/promotions'
 import { productsRoutes } from './routes/products'
 import { blogRoutes } from './routes/blog'
 import { discountCodesRoutes } from './routes/discountCodes'
 import { listPublicBanners } from './controllers/bannersController'
+import { listPublicPromotions } from './controllers/promotionsController'
 import { errorHandler } from './middleware/errorHandler'
 
 const app = express()
@@ -105,6 +107,7 @@ app.use(express.json({ limit: '100kb' }))
 app.use('/api/products', generalLimiter, productsRoutes)
 app.use('/api/blog', generalLimiter, blogRoutes)
 app.get('/api/banners', generalLimiter, listPublicBanners)
+app.get('/api/promotions', generalLimiter, listPublicPromotions)
 app.use('/api/shipping', generalLimiter, shippingRoutes)
 app.use('/api/orders', orderLimiter, ordersRoutes)
 app.use('/api/discount-codes', generalLimiter, discountCodesRoutes)
@@ -117,6 +120,7 @@ app.use('/api/invoices', generalLimiter, invoicesRoutes)
 
 // Banners admin — acepta rol admin y banner_editor (debe ir antes que adminRoutes)
 app.use('/api/admin/banners', generalLimiter, bannerAdminRoutes)
+app.use('/api/admin/promotions', generalLimiter, promotionAdminRoutes)
 
 // Panel de administración — requiere Clerk + rol admin
 app.use('/api/admin', generalLimiter, adminRoutes)

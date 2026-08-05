@@ -238,14 +238,12 @@ export interface BlogPost {
 
 export interface Promotion {
   id: string
+  badgeLabel: string
   title: string
   description: string
-  discountType: 'monto' | 'porcentaje'
-  discountValue: number
-  validFrom: string
-  validTo: string
+  ctaHref: string
   isActive: boolean
-  image?: string
+  sortOrder?: number
 }
 
 export interface FilterState {

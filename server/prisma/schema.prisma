@@ -250,3 +250,19 @@ model BannerSlide {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// Tarjetas de promoción de la homepage (ej. "¡Semana Pokémon! −15%").
+// Son solo un anuncio visual — no aplican descuentos automáticamente en
+// checkout; si el descuento es real, Irving debe crear también un
+// DiscountCode con el mismo % para que el cliente pueda usarlo.
+model Promotion {
+  id          String   @id @default(cuid())
+  badgeLabel  String   @default("Oferta especial")
+  title       String
+  description String
+  ctaHref     String   @default("/catalogo")
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

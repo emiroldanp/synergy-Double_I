@@ -1,8 +1,20 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MOCK_PROMOTIONS } from '@/lib/mockData'
+import type { Promotion } from '@/types'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 export function PromotionsSection() {
-  const active = MOCK_PROMOTIONS.filter((p) => p.isActive)
+  const [promotions, setPromotions] = useState<Promotion[]>([])
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/promotions`)
+      .then((r) => r.json())
+      .then((json) => setPromotions((json.data as Promotion[]) ?? []))
+      .catch(() => { /* sin promos activas si falla, la sección simplemente no se muestra */ })
+  }, [])
+
+  const active = promotions.filter((p) => p.isActive)
   if (active.length === 0) return null
 
   return (
@@ -24,9 +36,7 @@ export function PromotionsSection() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <span className="badge-base bg-crimson/20 border border-crimson/40 text-crimson mb-2 inline-block">
-                      {promo.discountType === 'porcentaje'
-                        ? `−${promo.discountValue}%`
-                        : 'Oferta especial'}
+                      {promo.badgeLabel}
                     </span>
                     <h3 className="font-agency text-lg text-white uppercase tracking-wide">
                       {promo.title}
@@ -36,7 +46,7 @@ export function PromotionsSection() {
                     </p>
                   </div>
                   <Link
-                    to="/catalogo"
+                    to={promo.ctaHref}
                     className="flex-shrink-0 font-agency text-xs uppercase tracking-wider text-crimson hover:text-flame transition-colors mt-1"
                   >
                     Ver →
