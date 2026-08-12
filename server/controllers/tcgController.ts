@@ -9,6 +9,7 @@ import {
   getLorcastCard,
   TcgCardResult,
 } from '../lib/tcgAdapters'
+import { syncPokemonCards } from '../scripts/syncPokemonCards'
 
 type Franchise = 'pokemon' | 'magic' | 'lorcana'
 
@@ -141,4 +142,21 @@ export async function importCardImage(req: Request, res: Response, next: NextFun
     }
     next(error)
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/admin/tcg/sync/pokemon
+// Dispara el sync del mirror local en segundo plano — permite a Emiliano
+// actualizarlo sin necesitar acceso SSH cuando salga un set nuevo.
+// ─────────────────────────────────────────────────────────────────────────────
+export async function triggerPokemonSync(req: Request, res: Response, next: NextFunction) {
+  res.json({
+    data: {
+      message: 'Sincronización iniciada en segundo plano — tarda unos minutos. Revisa los logs del servidor para ver el progreso.',
+    },
+  })
+
+  syncPokemonCards().catch((err) => {
+    console.error('[tcg] sync manual de Pokémon falló:', err)
+  })
 }

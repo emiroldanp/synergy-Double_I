@@ -28,6 +28,7 @@ import {
   searchCards,
   getCardDetail,
   importCardImage,
+  triggerPokemonSync,
 } from '../controllers/tcgController'
 import {
   listDiscountCodes,
@@ -77,6 +78,7 @@ adminRoutes.delete('/blog/:id', deletePost)
 adminRoutes.get('/tcg/search', searchCards)
 adminRoutes.get('/tcg/card', getCardDetail)
 adminRoutes.post('/tcg/import-image', importCardImage)
+adminRoutes.post('/tcg/sync/pokemon', triggerPokemonSync)
 
 // --- Códigos de descuento ---
 adminRoutes.get('/discount-codes', listDiscountCodes)

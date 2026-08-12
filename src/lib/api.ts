@@ -92,6 +92,7 @@ export const tcgApi = {
     api.get('/api/admin/tcg/card', { params: { franchise, id } }),
   importImage: (imageUrl: string, productId?: string) =>
     api.post('/api/admin/tcg/import-image', { imageUrl, productId }),
+  syncPokemon: () => api.post('/api/admin/tcg/sync/pokemon'),
 }
 
 export const discountCodesApi = {
