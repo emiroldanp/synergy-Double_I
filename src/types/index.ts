@@ -107,7 +107,7 @@ export interface Product {
   salesCount?: number
   // Campos TCG — presentes solo en productos importados desde API
   externalId?: string | null
-  externalSource?: 'pokemontcg' | 'scryfall' | 'lorcast' | null
+  externalSource?: 'pokemontcg' | 'scryfall' | 'lorcast' | 'tcgdex' | null
   tcgMetadata?: Record<string, unknown> | null
   marketPriceUsd?: number | null
   externalUrl?: string | null
@@ -116,14 +116,14 @@ export interface Product {
 export interface AdminProduct extends Omit<Product, 'images'> {
   images: ProductImage[]
   externalId?: string | null
-  externalSource?: 'pokemontcg' | 'scryfall' | 'lorcast' | null
+  externalSource?: 'pokemontcg' | 'scryfall' | 'lorcast' | 'tcgdex' | null
   tcgMetadata?: Record<string, unknown> | null
   marketPriceUsd?: number | null
 }
 
 export interface TcgCardResult {
   externalId: string
-  externalSource: 'pokemontcg' | 'scryfall' | 'lorcast'
+  externalSource: 'pokemontcg' | 'scryfall' | 'lorcast' | 'tcgdex'
   name: string
   cardNumber: string | null
   setName: string | null

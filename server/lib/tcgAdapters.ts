@@ -11,10 +11,11 @@
  * comunes en pokemontcg.io sin verse como error explícito).
  */
 import { withRetry } from './retry'
+import { prisma } from './prisma'
 
 export interface TcgCardResult {
   externalId: string
-  externalSource: 'pokemontcg' | 'scryfall' | 'lorcast'
+  externalSource: 'pokemontcg' | 'scryfall' | 'lorcast' | 'tcgdex'
   name: string
   cardNumber: string | null
   setName: string | null
@@ -102,51 +103,125 @@ function normalizePokemon(card: any): TcgCardResult {
   }
 }
 
+function normalizePokemonCacheRow(row: {
+  id: string
+  name: string
+  cardNumber: string | null
+  setName: string | null
+  rarity: string | null
+  imageUrl: string | null
+  imageSmallUrl: string | null
+  externalUrl: string | null
+  metadata: unknown
+}): TcgCardResult {
+  return {
+    externalId: row.id,
+    externalSource: 'pokemontcg',
+    name: row.name,
+    cardNumber: row.cardNumber,
+    setName: row.setName,
+    rarity: row.rarity,
+    language: 'en',
+    imageUrl: row.imageUrl,
+    // El mirror local no trae precio (el dataset de GitHub no lo incluye) —
+    // se consulta en vivo solo al seleccionar la carta, ver getPokemonCard().
+    marketPriceUsd: null,
+    externalUrl: row.externalUrl,
+    metadata: { ...(row.metadata as Record<string, unknown>), imageSmall: row.imageSmallUrl },
+  }
+}
+
+async function searchPokemonLocal(query: string, page: number): Promise<TcgSearchResult> {
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  const where = { AND: words.map((w) => ({ nameLower: { contains: w } })) }
+  const skip = (page - 1) * TCG_PAGE_SIZE
+
+  const [rows, total] = await Promise.all([
+    prisma.pokemonCardCache.findMany({
+      where,
+      orderBy: { releaseDate: 'desc' },
+      skip,
+      take: TCG_PAGE_SIZE,
+    }),
+    prisma.pokemonCardCache.count({ where }),
+  ])
+
+  return {
+    results: rows.map(normalizePokemonCacheRow),
+    hasMore: skip + rows.length < total,
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TCGdex (api.tcgdex.net/v2/graphql) — respaldo en vivo para Pokémon cuando el
+// mirror local no tiene la carta (ej. set recién salido, aún no sincronizado)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TCGDEX_GRAPHQL_URL = 'https://api.tcgdex.net/v2/graphql'
+
+function normalizeTcgdex(card: any): TcgCardResult {
+  return {
+    externalId: card.id,
+    externalSource: 'tcgdex',
+    name: card.name,
+    cardNumber: card.localId ?? null,
+    setName: card.set?.name ?? null,
+    rarity: card.rarity && card.rarity !== 'None' ? card.rarity : null,
+    language: 'en',
+    imageUrl: card.image ? `${card.image}/high.png` : null,
+    // TCGdex no expone precio de mercado en esta consulta — es un respaldo
+    // ocasional, no la fuente principal, así que se acepta sin precio de ref.
+    marketPriceUsd: null,
+    externalUrl: null,
+    metadata: { category: card.category },
+  }
+}
+
+async function searchTcgdexPokemon(query: string, page: number): Promise<TcgSearchResult> {
+  const cacheKey = `tcgdex:${query}`
+  let all = getCached(cacheKey)
+
+  if (!all) {
+    const body = {
+      query: `query($name: String!) { cards(filters: { name: $name }) { id localId name image rarity category set { name } } }`,
+      variables: { name: query.trim() },
+    }
+
+    const json = await withRetry(
+      async () => {
+        const res = await fetchWithTimeout(TCGDEX_GRAPHQL_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        if (!res.ok) throw new Error(`TCGdex API respondió ${res.status}`)
+        const parsed = await res.json()
+        if (parsed.errors) throw new Error(`TCGdex GraphQL error: ${parsed.errors[0]?.message}`)
+        return parsed
+      },
+      { label: 'TCGdex search (respaldo Pokémon)', shouldRetry: () => true }
+    )
+
+    const results: TcgCardResult[] = (json.data?.cards ?? []).map(normalizeTcgdex)
+    all = { results, hasMore: false }
+    setCached(cacheKey, all)
+  }
+
+  const start = (page - 1) * TCG_PAGE_SIZE
+  const end = page * TCG_PAGE_SIZE
+  return {
+    results: all.results.slice(start, end),
+    hasMore: all.results.length > end,
+  }
+}
+
 export async function searchPokemon(query: string, page = 1): Promise<TcgSearchResult> {
-  const cacheKey = `pokemon:${query}:${page}`
-  const cached = getCached(cacheKey)
-  if (cached) return cached
+  const local = await searchPokemonLocal(query, page)
+  if (local.results.length > 0) return local
 
-  const apiKey = process.env.POKEMON_TCG_API_KEY
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (apiKey) headers['X-Api-Key'] = apiKey
-
-  // La API de Pokémon TCG (Lucene) no soporta wildcards en frases con espacios.
-  // Usamos solo el primer término + wildcard; pageSize grande cubre variantes (ex, vmax, etc.)
-  const firstTerm = query.trim().split(/\s+/)[0]
-  const url = `https://api.pokemontcg.io/v2/cards?q=name:${encodeURIComponent(firstTerm)}*&pageSize=${TCG_PAGE_SIZE}&page=${page}&orderBy=-set.releaseDate`
-
-  // pokemontcg.io es intermitente (timeouts / 500 esporádicos) — reintentamos
-  // antes de darlo por caído; es una lectura idempotente, segura de reintentar.
-  const json = await withRetry(
-    async () => {
-      const res = await fetchWithTimeout(url, { headers })
-      if (!res.ok) throw new Error(`Pokemon TCG API respondió ${res.status}`)
-      return res.json()
-    },
-    { label: 'Pokemon TCG search', shouldRetry: () => true }
-  )
-
-  const totalCount: number = json.totalCount ?? 0
-
-  // Filtrar resultados por el query completo (case-insensitive) para afinar sin romper la búsqueda
-  const lowerQuery = query.toLowerCase()
-  const all: TcgCardResult[] = (json.data ?? []).map(normalizePokemon)
-  const filtered = all.filter((c) => c.name.toLowerCase().includes(lowerQuery.split(/\s+/)[0]))
-
-  // Si el query tiene más de una palabra, intentar sub-filtrar por ellas
-  const words = lowerQuery.split(/\s+/).slice(1)
-  const filteredResults = words.length
-    ? filtered.filter((c) => words.every((w) => c.name.toLowerCase().includes(w)))
-    : filtered
-
-  const results = filteredResults.length ? filteredResults : all
-  // hasMore: sigue habiendo páginas mientras no se haya llegado al total real de la API
-  const hasMore = page * TCG_PAGE_SIZE < totalCount
-  const output: TcgSearchResult = { results, hasMore }
-
-  setCached(cacheKey, output)
-  return output
+  // Sin coincidencias en el mirror local (carta de un set aún no sincronizado,
+  // o mirror recién creado y sin poblar todavía) — respaldo en vivo.
+  return searchTcgdexPokemon(query, page)
 }
 
 export async function getPokemonCard(id: string): Promise<TcgCardResult | null> {
