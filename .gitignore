@@ -30,6 +30,9 @@ npm-debug.log*
 # Claude Code internal
 .claude/
 
+# Worktrees locales de desarrollo (Claude Code)
+.worktrees/
+
 # Vite cache
 .vite/
 
