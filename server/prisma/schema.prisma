@@ -266,3 +266,21 @@ model Promotion {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model PokemonCardCache {
+  id            String    @id
+  name          String
+  nameLower     String
+  cardNumber    String?
+  setName       String?
+  setSeries     String?
+  rarity        String?
+  imageUrl      String?
+  imageSmallUrl String?
+  externalUrl   String?
+  releaseDate   DateTime?
+  metadata      Json?
+  syncedAt      DateTime  @default(now())
+
+  @@index([nameLower])
+}
