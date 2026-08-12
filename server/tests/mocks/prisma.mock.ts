@@ -36,6 +36,11 @@ export const prismaMock = {
   shippingQuote: {
     create: jest.fn(),
   },
+  pokemonCardCache: {
+    findMany: jest.fn(),
+    count: jest.fn(),
+    upsert: jest.fn(),
+  },
   systemConfig: {
     findUnique: jest.fn(),
     upsert: jest.fn(),
