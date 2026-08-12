@@ -20,10 +20,22 @@ const prisma = new PrismaClient({ adapter })
 const DATASET_BASE = 'https://raw.githubusercontent.com/PokemonTCG/pokemon-tcg-data/master'
 const UPSERT_BATCH_SIZE = 50
 
+// Este job corre en segundo plano (no es una request de usuario), así que el
+// timeout es más generoso que el de tcgAdapters.ts (5s) — hay que dar tiempo a
+// descargar el JSON de cartas de un set completo sin cortar la conexión de más.
+const SYNC_FETCH_TIMEOUT_MS = 15000
+
 async function fetchJson<T>(url: string): Promise<T> {
   return withRetry(
     async () => {
-      const res = await fetch(url)
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), SYNC_FETCH_TIMEOUT_MS)
+      let res: Response
+      try {
+        res = await fetch(url, { signal: controller.signal })
+      } finally {
+        clearTimeout(timer)
+      }
       if (!res.ok) throw new Error(`Dataset de GitHub respondió ${res.status} en ${url}`)
       return res.json() as Promise<T>
     },

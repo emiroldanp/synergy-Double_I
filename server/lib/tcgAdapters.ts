@@ -139,7 +139,7 @@ async function searchPokemonLocal(query: string, page: number): Promise<TcgSearc
   const [rows, total] = await Promise.all([
     prisma.pokemonCardCache.findMany({
       where,
-      orderBy: { releaseDate: 'desc' },
+      orderBy: [{ releaseDate: 'desc' }, { id: 'asc' }],
       skip,
       take: TCG_PAGE_SIZE,
     }),
@@ -220,7 +220,10 @@ export async function searchPokemon(query: string, page = 1): Promise<TcgSearchR
   if (local.results.length > 0) return local
 
   // Sin coincidencias en el mirror local (carta de un set aún no sincronizado,
-  // o mirror recién creado y sin poblar todavía) — respaldo en vivo.
+  // o mirror recién creado y sin poblar todavía) — respaldo en vivo. Se deja
+  // esta señal en logs porque este mismo plan existe por una falla silenciosa
+  // anterior: un mirror vacío o sin sincronizar debe ser visible para el equipo.
+  console.warn(`[tcg] mirror local de Pokémon sin resultados para "${query}" — usando respaldo TCGdex`)
   return searchTcgdexPokemon(query, page)
 }
 

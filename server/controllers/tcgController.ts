@@ -9,7 +9,6 @@ import {
   getLorcastCard,
   TcgCardResult,
 } from '../lib/tcgAdapters'
-import { syncPokemonCards } from '../scripts/syncPokemonCards'
 
 type Franchise = 'pokemon' | 'magic' | 'lorcana'
 
@@ -149,14 +148,31 @@ export async function importCardImage(req: Request, res: Response, next: NextFun
 // Dispara el sync del mirror local en segundo plano — permite a Emiliano
 // actualizarlo sin necesitar acceso SSH cuando salga un set nuevo.
 // ─────────────────────────────────────────────────────────────────────────────
+// El import de syncPokemonCards se hace perezoso (dentro del handler) porque ese
+// módulo carga dotenv y abre un pool real de Prisma/Postgres a nivel de módulo —
+// si fuera un import estático, correría dentro del proceso de Jest en cada test run
+// (vía admin.test.ts → routes/admin → tcgController), filtrando credenciales reales
+// y esquivando los mocks de prisma.mock.ts.
+let pokemonSyncInFlight = false
+
 export async function triggerPokemonSync(req: Request, res: Response, next: NextFunction) {
+  if (pokemonSyncInFlight) {
+    return res.status(409).json({ error: 'Ya hay una sincronización en curso. Esperá a que termine.' })
+  }
+
   res.json({
     data: {
       message: 'Sincronización iniciada en segundo plano — tarda unos minutos. Revisa los logs del servidor para ver el progreso.',
     },
   })
 
-  syncPokemonCards().catch((err) => {
-    console.error('[tcg] sync manual de Pokémon falló:', err)
-  })
+  pokemonSyncInFlight = true
+  const { syncPokemonCards } = await import('../scripts/syncPokemonCards')
+  syncPokemonCards()
+    .catch((err) => {
+      console.error('[tcg] sync manual de Pokémon falló:', err)
+    })
+    .finally(() => {
+      pokemonSyncInFlight = false
+    })
 }
