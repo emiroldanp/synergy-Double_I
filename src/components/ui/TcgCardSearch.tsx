@@ -26,6 +26,7 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   const [apiWarning, setApiWarning] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [importingImage, setImportingImage] = useState(false)
+  const [fetchingPrice, setFetchingPrice] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -112,16 +113,35 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   async function handleSelect(card: TcgCardResult) {
     setOpen(false)
     setQuery(card.name)
-    onSelect(card)
+
+    let finalCard = card
+
+    // Las cartas del mirror local (Pokémon) no traen precio — se consulta en
+    // vivo solo aquí, una sola vez, no en cada tecla del buscador.
+    if (card.externalSource === 'pokemontcg' && card.marketPriceUsd == null) {
+      setFetchingPrice(true)
+      try {
+        const { data } = await tcgApi.getCard('pokemon', card.externalId)
+        if (data.data?.marketPriceUsd != null) {
+          finalCard = { ...card, marketPriceUsd: data.data.marketPriceUsd }
+        }
+      } catch {
+        // Sin precio de referencia disponible — no bloquea la selección
+      } finally {
+        setFetchingPrice(false)
+      }
+    }
+
+    onSelect(finalCard)
 
     // Descargar imagen a R2 si hay URL externa
-    if (card.imageUrl && onImageImported) {
+    if (finalCard.imageUrl && onImageImported) {
       setImportingImage(true)
       try {
-        const { data } = await tcgApi.importImage(card.imageUrl)
+        const { data } = await tcgApi.importImage(finalCard.imageUrl)
         if (data.data?.url) onImageImported(data.data.url)
       } catch {
-        // Si falla la descarga, no bloquemos — el admin puede subir imagen manualmente
+        // Si falla la descarga, no bloqueemos — el admin puede subir imagen manualmente
       } finally {
         setImportingImage(false)
       }
@@ -155,6 +175,10 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
 
       {importingImage && (
         <p className="mt-1 text-xs text-indigo-400">Descargando imagen al servidor…</p>
+      )}
+
+      {fetchingPrice && (
+        <p className="mt-1 text-xs text-indigo-400">Consultando precio de referencia…</p>
       )}
 
       {apiWarning && (
