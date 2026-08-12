@@ -101,6 +101,8 @@ export default function ProductFormPage() {
   })
 
   const nameValue = watch('name')
+  const setNameValue = watch('setName')
+  const cardNumberValue = watch('cardNumber')
   const slugValue = watch('slug')
   const categoryId = watch('categoryId')
   const selectedCategory = categories.find((c) => c.id === categoryId)
@@ -128,8 +130,6 @@ export default function ProductFormPage() {
       metadata: card.metadata,
       marketPriceUsd: card.marketPriceUsd,
     })
-    // El slug se regenera desde el nombre si no fue tocado manualmente
-    if (!slugTouched) setValue('slug', slugify(card.name))
   }
 
   // Agrega la imagen descargada a R2 al estado de imágenes del formulario
@@ -140,13 +140,17 @@ export default function ProductFormPage() {
     })
   }
 
-  // Auto-generar slug desde el nombre, solo si el usuario no lo ha editado manualmente
+  // Auto-generar slug desde nombre + set + número de carta (si el usuario no lo ha
+  // editado manualmente). Incluir set/número evita colisiones de slug entre cartas
+  // con el mismo nombre en distintos sets (muy común en TCG — ej. "Pikachu" aparece
+  // en decenas de sets), que antes causaban un error 500 al guardar.
   const [slugTouched, setSlugTouched] = useState(false)
   useEffect(() => {
     if (!slugTouched && nameValue) {
-      setValue('slug', slugify(nameValue))
+      const slugParts = [nameValue, setNameValue, cardNumberValue].filter(Boolean)
+      setValue('slug', slugify(slugParts.join(' ')))
     }
-  }, [nameValue, slugTouched, setValue])
+  }, [nameValue, setNameValue, cardNumberValue, slugTouched, setValue])
 
   // Cargar categorías
   useEffect(() => {
