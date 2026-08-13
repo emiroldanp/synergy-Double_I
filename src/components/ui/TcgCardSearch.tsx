@@ -27,8 +27,12 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   const [open, setOpen] = useState(false)
   const [importingImage, setImportingImage] = useState(false)
   const [fetchingPrice, setFetchingPrice] = useState(false)
+  const [noImageAvailable, setNoImageAvailable] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  // Evita que el setQuery(card.name) de handleSelect dispare una búsqueda
+  // nueva (reabriendo el desplegable con otra lista) apenas se selecciona algo
+  const skipNextSearchRef = useRef(false)
 
   const search = useCallback(async (q: string) => {
     if (q.length < 2) {
@@ -41,6 +45,7 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
 
     setLoading(true)
     setApiWarning(null)
+    setNoImageAvailable(false)
 
     try {
       const { data } = await tcgApi.search(franchise, q, 1)
@@ -84,6 +89,10 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
   }, [franchise, query, loadingMore, page])
 
   useEffect(() => {
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false
+      return
+    }
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => search(query), 650)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
@@ -112,6 +121,8 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
 
   async function handleSelect(card: TcgCardResult) {
     setOpen(false)
+    setNoImageAvailable(false)
+    skipNextSearchRef.current = true
     setQuery(card.name)
 
     let finalCard = card
@@ -145,6 +156,11 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
       } finally {
         setImportingImage(false)
       }
+    } else if (!finalCard.imageUrl) {
+      // La fuente no tiene imagen para esta carta puntual (pasa con algunas
+      // promos en TCGdex) — no es un error, pero el admin necesita saberlo
+      // para no pensar que quedó "colgado" cargando.
+      setNoImageAvailable(true)
     }
   }
 
@@ -179,6 +195,12 @@ export function TcgCardSearch({ franchise, onSelect, onImageImported }: Props) {
 
       {fetchingPrice && (
         <p className="mt-1 text-xs text-indigo-400">Consultando precio de referencia…</p>
+      )}
+
+      {noImageAvailable && (
+        <p className="mt-1 text-xs text-yellow-400">
+          Esta carta no tiene imagen disponible en las fuentes — sube una manualmente.
+        </p>
       )}
 
       {apiWarning && (
