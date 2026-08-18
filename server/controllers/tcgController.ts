@@ -106,7 +106,14 @@ export async function importCardImage(req: Request, res: Response, next: NextFun
 
     let httpRes: Awaited<ReturnType<typeof fetch>>
     try {
-      httpRes = await fetch(imageUrl, { signal: controller.signal })
+      // Scryfall (cards.scryfall.io) rechaza con 400 cualquier request sin un
+      // User-Agent descriptivo ("Your User-Agent header is currently set to
+      // default or generic value") — el fetch nativo de Node no manda uno por
+      // defecto, así que hay que declararlo explícitamente aquí.
+      httpRes = await fetch(imageUrl, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'DoubleICards/1.0 hola@doubleicards.com' },
+      })
     } finally {
       clearTimeout(timer)
     }
