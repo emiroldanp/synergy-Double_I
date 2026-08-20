@@ -1,5 +1,6 @@
 import request from 'supertest'
 import express from 'express'
+import { Prisma } from '@prisma/client'
 import { prismaMock } from './mocks/prisma.mock'
 // POST /api/orders es una ruta pública (checkout de invitado) — no requiere
 // Clerk, así que no hace falta mockearlo aquí.
@@ -36,7 +37,7 @@ describe('POST /api/orders — promociones automáticas', () => {
 
   it('aplica envío gratis automático cuando el subtotal alcanza el mínimo', async () => {
     prismaMock.promotion.findMany.mockResolvedValue([
-      { id: 'promo_envio', title: 'Envío gratis', type: 'free_shipping', categoryId: null, value: null, minAmount: 1000, startsAt: null, endsAt: null },
+      { id: 'promo_envio', title: 'Envío gratis', type: 'free_shipping', categoryId: null, value: null, minAmount: new Prisma.Decimal(1000), startsAt: null, endsAt: null },
     ] as any)
 
     const res = await request(app).post('/api/orders').send(basePayload()).expect(201)
@@ -49,7 +50,7 @@ describe('POST /api/orders — promociones automáticas', () => {
 
   it('no aplica ninguna promoción si el subtotal no alcanza el mínimo', async () => {
     prismaMock.promotion.findMany.mockResolvedValue([
-      { id: 'promo_envio', title: 'Envío gratis', type: 'free_shipping', categoryId: null, value: null, minAmount: 5000, startsAt: null, endsAt: null },
+      { id: 'promo_envio', title: 'Envío gratis', type: 'free_shipping', categoryId: null, value: null, minAmount: new Prisma.Decimal(5000), startsAt: null, endsAt: null },
     ] as any)
 
     await request(app).post('/api/orders').send(basePayload()).expect(201)
@@ -61,7 +62,7 @@ describe('POST /api/orders — promociones automáticas', () => {
 
   it('un código de descuento gana sobre una promoción automática que también califica', async () => {
     prismaMock.promotion.findMany.mockResolvedValue([
-      { id: 'promo_envio', title: 'Envío gratis', type: 'free_shipping', categoryId: null, value: null, minAmount: 1000, startsAt: null, endsAt: null },
+      { id: 'promo_envio', title: 'Envío gratis', type: 'free_shipping', categoryId: null, value: null, minAmount: new Prisma.Decimal(1000), startsAt: null, endsAt: null },
     ] as any)
     prismaMock.discountCode.findUnique.mockResolvedValue({
       id: 'code_1', code: 'PROMO10', type: 'fixed', value: 100, minAmount: null, usageLimit: null, usageCount: 0, isActive: true, expiresAt: null,
@@ -78,7 +79,7 @@ describe('POST /api/orders — promociones automáticas', () => {
 
   it('aplica un descuento de porcentaje automático y calcula el total correctamente', async () => {
     prismaMock.promotion.findMany.mockResolvedValue([
-      { id: 'promo_10pct', title: '10% off', type: 'percentage_off', categoryId: null, value: 10, minAmount: 1000, startsAt: null, endsAt: null },
+      { id: 'promo_10pct', title: '10% off', type: 'percentage_off', categoryId: null, value: new Prisma.Decimal(10), minAmount: new Prisma.Decimal(1000), startsAt: null, endsAt: null },
     ] as any)
 
     await request(app).post('/api/orders').send(basePayload()).expect(201)

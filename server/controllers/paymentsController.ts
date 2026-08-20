@@ -55,14 +55,32 @@ export async function createPreference(req: Request, res: Response, next: NextFu
     const client = getMpClient()
     const preferenceClient = new Preference(client)
 
-    // Construir items para Mercado Pago
-    const mpItems = order.items.map((item) => ({
-      id: item.productId,
-      title: item.product.name,
-      quantity: item.quantity,
-      unit_price: Number(item.unitPrice),
-      currency_id: 'MXN',
-    }))
+    const discountAmount = Number(order.discountAmount || 0)
+
+    // Construir items para Mercado Pago. Si hay un descuento (código o promoción
+    // automática), no se puede prorratear entre líneas de forma segura sin riesgo
+    // de redondeo — se colapsa a una sola línea "Productos" con el neto exacto,
+    // que siempre cuadra con order.total porque usa los mismos valores Decimal
+    // que ya calculó createOrder (subtotal - discountAmount).
+    let mpItems: { id: string; title: string; quantity: number; unit_price: number; currency_id: string }[]
+    if (discountAmount > 0) {
+      const netSubtotal = Number(order.subtotal) - discountAmount
+      mpItems = [{
+        id: 'items',
+        title: 'Productos',
+        quantity: 1,
+        unit_price: Math.max(0, Math.round(netSubtotal * 100) / 100),
+        currency_id: 'MXN',
+      }]
+    } else {
+      mpItems = order.items.map((item) => ({
+        id: item.productId,
+        title: item.product.name,
+        quantity: item.quantity,
+        unit_price: Number(item.unitPrice),
+        currency_id: 'MXN',
+      }))
+    }
 
     // Agregar el costo de envío como item adicional para que se sume al total
     // cobrado por Mercado Pago. Aparece como una línea más en el checkout.

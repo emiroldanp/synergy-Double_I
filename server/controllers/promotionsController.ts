@@ -20,7 +20,7 @@ const evaluateSchema = z.object({
   items: z.array(z.object({
     productId: z.string().min(1),
     quantity: z.number().int().min(1),
-  })).min(1, 'items no puede estar vacío'),
+  })).min(1, 'items no puede estar vacío').max(100, 'Demasiados items'),
   shippingCost: z.number().min(0).optional(),
 })
 
@@ -100,8 +100,8 @@ const ruleFieldsSchema = {
   sortOrder: z.number().int().optional(),
   type: z.enum(['free_shipping', 'percentage_off', 'fixed_off']).nullable().optional(),
   categoryId: z.string().nullable().optional(),
-  value: z.number().positive().nullable().optional(),
-  minAmount: z.number().positive().nullable().optional(),
+  value: z.coerce.number().positive().nullable().optional(),
+  minAmount: z.coerce.number().positive().nullable().optional(),
   startsAt: z.string().nullable().optional(),
   endsAt: z.string().nullable().optional(),
 }

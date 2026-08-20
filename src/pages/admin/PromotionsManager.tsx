@@ -370,7 +370,7 @@ export default function PromotionsManager() {
                         type="date"
                         value={editing.endsAt ? editing.endsAt.slice(0, 10) : ''}
                         onChange={(e) =>
-                          setEditing((prev) => prev && ({ ...prev, endsAt: e.target.value ? new Date(e.target.value).toISOString() : null }))
+                          setEditing((prev) => prev && ({ ...prev, endsAt: e.target.value ? new Date(`${e.target.value}T23:59:59.999Z`).toISOString() : null }))
                         }
                         className="input-dark w-full text-sm"
                       />

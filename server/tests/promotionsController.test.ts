@@ -1,5 +1,6 @@
 import request from 'supertest'
 import express from 'express'
+import { Prisma } from '@prisma/client'
 import { prismaMock } from './mocks/prisma.mock'
 
 jest.mock('@clerk/express', () => ({
@@ -25,7 +26,7 @@ describe('POST /api/promotions/evaluate', () => {
     prismaMock.promotion.findMany.mockResolvedValue([
       {
         id: 'promo_1', title: '15% Lorcana', type: 'percentage_off', categoryId: 'cat_lorcana',
-        value: 15, minAmount: null, startsAt: null, endsAt: null,
+        value: new Prisma.Decimal(15), minAmount: null, startsAt: null, endsAt: null,
       },
     ] as any)
 
@@ -53,6 +54,11 @@ describe('POST /api/promotions/evaluate', () => {
 
   it('rechaza items vacíos', async () => {
     await request(app).post('/api/promotions/evaluate').send({ items: [] }).expect(400)
+  })
+
+  it('rechaza más de 100 items', async () => {
+    const items = Array.from({ length: 101 }, (_, i) => ({ productId: `prod_${i}`, quantity: 1 }))
+    await request(app).post('/api/promotions/evaluate').send({ items }).expect(400)
   })
 })
 
@@ -82,5 +88,27 @@ describe('POST /api/admin/promotions — validación de reglas', () => {
       .send({ title: 'X', description: 'Y', type: 'free_shipping', minAmount: 3500 })
       .expect(201)
     expect(prismaMock.promotion.create).toHaveBeenCalled()
+  })
+})
+
+describe('PATCH /api/admin/promotions/:id', () => {
+  afterEach(() => jest.clearAllMocks())
+
+  it('acepta value y minAmount como strings (round-trip real de un GET, donde Prisma Decimal serializa a string)', async () => {
+    prismaMock.promotion.update.mockResolvedValue({
+      id: 'promo_1',
+      title: 'X',
+      description: 'Y',
+      type: 'percentage_off',
+      value: '15',
+      minAmount: '1000',
+    } as any)
+
+    const res = await request(app)
+      .patch('/api/admin/promotions/promo_1')
+      .send({ title: 'X', description: 'Y', type: 'percentage_off', value: '15', minAmount: '1000' })
+
+    expect(res.status).toBe(200)
+    expect(prismaMock.promotion.update).toHaveBeenCalled()
   })
 })

@@ -28,6 +28,7 @@ function calcDiscountAmount(type: 'percentage_off' | 'fixed_off', value: number,
   return Math.min(base, value)
 }
 
+/** Ventana de vigencia inclusiva en ambos extremos: `now === startsAt` y `now === endsAt` califican. */
 function isWithinDateWindow(rule: PromotionRule, now: Date): boolean {
   if (rule.startsAt && rule.startsAt > now) return false
   if (rule.endsAt && rule.endsAt < now) return false
