@@ -17,7 +17,7 @@ import { productsRoutes } from './routes/products'
 import { blogRoutes } from './routes/blog'
 import { discountCodesRoutes } from './routes/discountCodes'
 import { listPublicBanners } from './controllers/bannersController'
-import { listPublicPromotions } from './controllers/promotionsController'
+import { promotionsPublicRoutes } from './routes/promotionsPublic'
 import { errorHandler } from './middleware/errorHandler'
 
 const app = express()
@@ -107,7 +107,7 @@ app.use(express.json({ limit: '100kb' }))
 app.use('/api/products', generalLimiter, productsRoutes)
 app.use('/api/blog', generalLimiter, blogRoutes)
 app.get('/api/banners', generalLimiter, listPublicBanners)
-app.get('/api/promotions', generalLimiter, listPublicPromotions)
+app.use('/api/promotions', generalLimiter, promotionsPublicRoutes)
 app.use('/api/shipping', generalLimiter, shippingRoutes)
 app.use('/api/orders', orderLimiter, ordersRoutes)
 app.use('/api/discount-codes', generalLimiter, discountCodesRoutes)
