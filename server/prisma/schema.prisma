@@ -16,6 +16,7 @@ model Category {
   createdAt   DateTime   @default(now())
   products    Product[]
   blogPosts   BlogPost[]
+  promotions  Promotion[]
 }
 
 enum Edition {
@@ -159,6 +160,8 @@ model Order {
   discountCodeId   String?
   discountCode     DiscountCode? @relation(fields: [discountCodeId], references: [id], onDelete: SetNull)
   discountAmount   Decimal       @default(0) @db.Decimal(10, 2)
+  promotionId      String?
+  promotion        Promotion?    @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   items            OrderItem[]
@@ -251,20 +254,36 @@ model BannerSlide {
   updatedAt DateTime @updatedAt
 }
 
+enum PromotionType {
+  free_shipping
+  percentage_off
+  fixed_off
+}
+
 // Tarjetas de promoción de la homepage (ej. "¡Semana Pokémon! −15%").
-// Son solo un anuncio visual — no aplican descuentos automáticamente en
-// checkout; si el descuento es real, Irving debe crear también un
-// DiscountCode con el mismo % para que el cliente pueda usarlo.
+// Ahora con soporte para reglas funcionales que aplican automáticamente
+// en checkout. type: null significa "solo banner visual" (compatibilidad
+// con promociones existentes que nunca tuvieron impacto real).
 model Promotion {
-  id          String   @id @default(cuid())
-  badgeLabel  String   @default("Oferta especial")
+  id          String        @id @default(cuid())
+  badgeLabel  String        @default("Oferta especial")
   title       String
   description String
-  ctaHref     String   @default("/catalogo")
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  ctaHref     String        @default("/catalogo")
+  isActive    Boolean       @default(true)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  // Regla funcional — type: null significa "solo banner visual" (compatibilidad
+  // con promociones existentes que nunca tuvieron impacto real en el checkout)
+  type        PromotionType?
+  categoryId  String?
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  value       Decimal?      @db.Decimal(10, 2) // % (0-100) o monto fijo; null para free_shipping
+  minAmount   Decimal?      @db.Decimal(10, 2) // subtotal mínimo (carrito o categoría, según scope) para activar la regla
+  startsAt    DateTime?
+  endsAt      DateTime?
+  orders      Order[]
 }
 
 model PokemonCardCache {
