@@ -574,6 +574,11 @@ export default function CheckoutPage() {
                     {discountError && (
                       <p className="text-xs text-crimson mt-2">{discountError}</p>
                     )}
+                    {!discountApplied && appliedPromotion && (
+                      <p className="text-xs text-ash/70 mt-2">
+                        Ya tienes "{appliedPromotion.title}" aplicada. Los códigos de descuento no se pueden combinar con promociones — si usas uno, reemplazará a la promoción actual.
+                      </p>
+                    )}
                   </div>
                   <div className="border border-navy/30 p-4 mb-6">
                     <h3 className="font-agency text-sm text-ash uppercase tracking-wider mb-3">Resumen final</h3>
