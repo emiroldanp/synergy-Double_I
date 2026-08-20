@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Helmet } from 'react-helmet-async'
-import type { Promotion } from '@/types'
+import type { Promotion, Category } from '@/types'
 import { useAdminApi } from '@/hooks/useAdminApi'
 
 const EMPTY_PROMOTION: Omit<Promotion, 'id'> = {
@@ -9,6 +9,18 @@ const EMPTY_PROMOTION: Omit<Promotion, 'id'> = {
   description: '',
   ctaHref: '/catalogo',
   isActive: true,
+  type: null,
+  categoryId: null,
+  value: null,
+  minAmount: null,
+  startsAt: null,
+  endsAt: null,
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  free_shipping: 'Envío gratis',
+  percentage_off: '% de descuento',
+  fixed_off: 'Monto fijo de descuento',
 }
 
 export default function PromotionsManager() {
@@ -20,6 +32,13 @@ export default function PromotionsManager() {
   const [editing, setEditing] = useState<Promotion | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    apiFetch<{ data: Category[] }>('/api/products/categories')
+      .then((res) => setCategories(res.data))
+      .catch(() => { /* si falla, el selector de categoría queda vacío — no bloquea el resto del form */ })
+  }, [apiFetch])
 
   const fetchPromotions = useCallback(async () => {
     setLoading(true)
@@ -114,9 +133,9 @@ export default function PromotionsManager() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Promociones de la homepage</h1>
             <p className="text-gray-500 text-sm">
-              Administra las tarjetas de promoción debajo del hero. No aplican descuentos
-              automáticamente — si es un descuento real, crea también un código en{' '}
-              <span className="font-medium">Descuentos</span> con el mismo valor.
+              Administra las tarjetas de promoción debajo del hero. Las que tengan un
+              tipo de regla (envío gratis o descuento) se aplican solas en el
+              checkout — nunca se combinan entre sí ni con un código de descuento.
             </p>
           </div>
           <button onClick={openNew} className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap">
@@ -154,6 +173,12 @@ export default function PromotionsManager() {
                   <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-red-600 bg-red-50 border border-red-200 rounded px-2 py-0.5 mb-1">
                     {promo.badgeLabel}
                   </span>
+                  {promo.type && (
+                    <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5 mb-1 ml-1">
+                      {TYPE_LABELS[promo.type]}
+                      {promo.minAmount ? ` desde $${promo.minAmount}` : ''}
+                    </span>
+                  )}
                   <p className="text-sm font-medium text-gray-900 truncate">{promo.title || '(Sin título)'}</p>
                   <p className="text-xs text-gray-500 truncate mt-0.5">{promo.description}</p>
                   <p className="text-xs text-gray-400 mt-0.5">Enlace: {promo.ctaHref}</p>
@@ -236,6 +261,123 @@ export default function PromotionsManager() {
                   />
                 </div>
               ))}
+
+              <div className="border-t border-navy/40 pt-4">
+                <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
+                  Tipo de promoción
+                </label>
+                <select
+                  value={editing.type ?? ''}
+                  onChange={(e) => {
+                    const type = (e.target.value || null) as Promotion['type']
+                    setEditing((prev) => prev && ({
+                      ...prev,
+                      type,
+                      // Envío gratis nunca es por categoría — se limpia si cambian el tipo
+                      categoryId: type === 'free_shipping' ? null : prev.categoryId,
+                      value: type === 'free_shipping' ? null : prev.value,
+                    }))
+                  }}
+                  className="input-dark w-full text-sm cursor-pointer"
+                >
+                  <option value="">Solo banner (visual)</option>
+                  <option value="free_shipping">Envío gratis</option>
+                  <option value="percentage_off">% de descuento</option>
+                  <option value="fixed_off">Monto fijo de descuento</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {editing.type
+                    ? 'Esta promoción se aplicará sola en el checkout — no se puede combinar con un código de descuento.'
+                    : 'Solo se muestra como anuncio — no aplica ningún descuento.'}
+                </p>
+              </div>
+
+              {editing.type && editing.type !== 'free_shipping' && (
+                <>
+                  <div>
+                    <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
+                      Aplica a
+                    </label>
+                    <select
+                      value={editing.categoryId ?? ''}
+                      onChange={(e) =>
+                        setEditing((prev) => prev && ({ ...prev, categoryId: e.target.value || null }))
+                      }
+                      className="input-dark w-full text-sm cursor-pointer"
+                    >
+                      <option value="">Todo el carrito</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
+                      Valor ({editing.type === 'percentage_off' ? '%' : '$ MXN'})
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={editing.type === 'percentage_off' ? 100 : undefined}
+                      value={editing.value ?? ''}
+                      onChange={(e) =>
+                        setEditing((prev) => prev && ({ ...prev, value: e.target.value ? Number(e.target.value) : null }))
+                      }
+                      className="input-dark w-full text-sm"
+                    />
+                  </div>
+                </>
+              )}
+
+              {editing.type && (
+                <>
+                  <div>
+                    <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
+                      Monto mínimo de compra (opcional)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={editing.minAmount ?? ''}
+                      placeholder="3500"
+                      onChange={(e) =>
+                        setEditing((prev) => prev && ({ ...prev, minAmount: e.target.value ? Number(e.target.value) : null }))
+                      }
+                      className="input-dark w-full text-sm"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
+                        Vigencia desde (opcional)
+                      </label>
+                      <input
+                        type="date"
+                        value={editing.startsAt ? editing.startsAt.slice(0, 10) : ''}
+                        onChange={(e) =>
+                          setEditing((prev) => prev && ({ ...prev, startsAt: e.target.value ? new Date(e.target.value).toISOString() : null }))
+                        }
+                        className="input-dark w-full text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
+                        Vigencia hasta (opcional)
+                      </label>
+                      <input
+                        type="date"
+                        value={editing.endsAt ? editing.endsAt.slice(0, 10) : ''}
+                        onChange={(e) =>
+                          setEditing((prev) => prev && ({ ...prev, endsAt: e.target.value ? new Date(e.target.value).toISOString() : null }))
+                        }
+                        className="input-dark w-full text-sm"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
