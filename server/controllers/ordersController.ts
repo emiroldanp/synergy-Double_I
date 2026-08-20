@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma'
 import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { calcDiscount, isCodeValid } from './discountCodesController'
+import { evaluatePromotions, type PromotionRule, type CartLineForPromotion, type PromotionRuleType } from '../lib/promotionsEngine'
 
 const createOrderSchema = z.object({
   customerId: z.string().optional().nullable(),
@@ -42,7 +43,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
     // Crear orden e items en una sola transacción (validación de stock incluida para eliminar TOCTOU)
     const order = await prisma.$transaction(async (tx) => {
       // 1. Validar stock y obtener precios desde la BD — nunca del cliente
-      const resolvedItems: { productId: string; quantity: number; unitPrice: Prisma.Decimal; subtotal: Prisma.Decimal }[] = []
+      const resolvedItems: { productId: string; quantity: number; unitPrice: Prisma.Decimal; subtotal: Prisma.Decimal; categoryId: string }[] = []
       for (const item of items) {
         const product = await tx.product.findUnique({ where: { id: item.productId } })
         if (!product || !product.isActive) throw new Error(`Producto ${item.productId} no disponible`)
@@ -53,15 +54,20 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
           quantity: item.quantity,
           unitPrice,
           subtotal: new Prisma.Decimal(Number(unitPrice) * item.quantity),
+          categoryId: product.categoryId,
         })
       }
 
       // 2. Calcular subtotal desde precios de BD
       const subtotal = resolvedItems.reduce((sum, i) => sum + Number(i.unitPrice) * i.quantity, 0)
 
-      // 3. Validar y aplicar código de descuento (server-side — nunca confiar en el cliente)
+      // 3. Validar y aplicar código de descuento, O evaluar promociones automáticas
+      // — son mutuamente excluyentes: si el cliente aplicó un código, se ignoran
+      // las promociones automáticas (el código es una elección explícita del cliente).
       let discountAmount = 0
       let resolvedDiscountCodeId: string | null = null
+      let resolvedPromotionId: string | null = null
+      let effectiveShippingCost = shippingCost || 0
 
       if (discountCode) {
         const codeRecord = await tx.discountCode.findUnique({
@@ -79,9 +85,35 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
           where: { id: codeRecord.id },
           data: { usageCount: { increment: 1 } },
         })
+      } else {
+        const cartLines: CartLineForPromotion[] = resolvedItems.map((i) => ({
+          categoryId: i.categoryId,
+          lineSubtotal: Number(i.subtotal),
+        }))
+        const rows = await tx.promotion.findMany({
+          where: { isActive: true, type: { not: null } },
+          orderBy: { sortOrder: 'asc' },
+        })
+        const rules: PromotionRule[] = rows.map((r) => ({
+          id: r.id,
+          title: r.title,
+          type: r.type as PromotionRuleType,
+          categoryId: r.categoryId,
+          value: r.value != null ? Number(r.value) : null,
+          minAmount: r.minAmount != null ? Number(r.minAmount) : null,
+          startsAt: r.startsAt,
+          endsAt: r.endsAt,
+        }))
+
+        const effect = evaluatePromotions(rules, cartLines, subtotal, effectiveShippingCost)
+        if (effect) {
+          resolvedPromotionId = effect.promotionId
+          discountAmount = effect.discountAmount
+          if (effect.freeShipping) effectiveShippingCost = 0
+        }
       }
 
-      const total = subtotal + (shippingCost || 0) - discountAmount
+      const total = subtotal + effectiveShippingCost - discountAmount
 
       // 4. Crear orden e items
       const newOrder = await tx.order.create({
@@ -92,9 +124,10 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
           guestPhone: guestPhone || null,
           shippingAddress,
           shippingMethod: shippingMethod || null,
-          shippingCost: new Prisma.Decimal(shippingCost || 0),
+          shippingCost: new Prisma.Decimal(effectiveShippingCost),
           subtotal: new Prisma.Decimal(subtotal),
           discountCodeId: resolvedDiscountCodeId,
+          promotionId: resolvedPromotionId,
           discountAmount: new Prisma.Decimal(discountAmount),
           total: new Prisma.Decimal(total),
           // Transferencia directa se guarda desde la creación — no pasa por Mercado Pago,
@@ -102,7 +135,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
           paymentMethod: paymentMethod === 'transferencia_directa' ? 'transferencia_directa' : null,
           requiresInvoice,
           items: {
-            create: resolvedItems,
+            create: resolvedItems.map(({ categoryId, ...item }) => item),
           },
         },
       })
