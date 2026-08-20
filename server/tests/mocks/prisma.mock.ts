@@ -45,6 +45,19 @@ export const prismaMock = {
     findUnique: jest.fn(),
     upsert: jest.fn(),
   },
+  discountCode: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+  },
+  promotion: {
+    findMany: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  category: {
+    findMany: jest.fn(),
+  },
   $transaction: jest.fn(),
 }
 
