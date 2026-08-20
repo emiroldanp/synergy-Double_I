@@ -75,7 +75,6 @@ export default function CheckoutPage() {
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
   const [discountCode, setDiscountCode] = useState('')
-  const [discountAmount, setDiscountAmount] = useState(0)
   const [discountValidating, setDiscountValidating] = useState(false)
   const [discountError, setDiscountError] = useState<string | null>(null)
   const [discountApplied, setDiscountApplied] = useState<{ code: string; amount: number } | null>(null)
@@ -112,13 +111,11 @@ export default function CheckoutPage() {
     try {
       const res = await discountCodesApi.validate(discountCode.trim(), subtotal)
       const { discountAmount: amount } = res.data?.data ?? res.data
-      setDiscountAmount(amount)
       setDiscountApplied({ code: discountCode.trim().toUpperCase(), amount })
       setDiscountError(null)
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? 'Código inválido'
       setDiscountError(msg)
-      setDiscountAmount(0)
       setDiscountApplied(null)
     } finally {
       setDiscountValidating(false)
@@ -127,7 +124,6 @@ export default function CheckoutPage() {
 
   const removeDiscount = () => {
     setDiscountCode('')
-    setDiscountAmount(0)
     setDiscountApplied(null)
     setDiscountError(null)
   }
