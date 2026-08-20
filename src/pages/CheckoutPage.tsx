@@ -83,7 +83,7 @@ export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0)
   const shipping = useShippingQuote()
-  const effectiveShippingCost = appliedPromotion?.freeShipping ? 0 : (shipping.selected?.price ?? 0)
+  const effectiveShippingCost = !discountApplied && appliedPromotion?.freeShipping ? 0 : (shipping.selected?.price ?? 0)
   const effectiveDiscountAmount = discountApplied ? discountApplied.amount : (appliedPromotion?.discountAmount ?? 0)
   const { user, isSignedIn } = useAuth()
   const navigate = useNavigate()
@@ -595,7 +595,7 @@ export default function CheckoutPage() {
                         <span className="text-frost">
                           {shipping.isLocal
                             ? 'A cotizar por WhatsApp'
-                            : appliedPromotion?.freeShipping
+                            : !discountApplied && appliedPromotion?.freeShipping
                               ? <><span className="line-through text-ash/50 mr-1.5">{formatPrice(shipping.selected.price)}</span>GRATIS</>
                               : formatPrice(shipping.selected.price)}
                         </span>
@@ -674,7 +674,7 @@ export default function CheckoutPage() {
                       <span className="text-frost">
                         {shipping.isLocal
                           ? 'A cotizar por WhatsApp'
-                          : appliedPromotion?.freeShipping
+                          : !discountApplied && appliedPromotion?.freeShipping
                             ? <><span className="line-through text-ash/50 mr-1.5">{formatPrice(shipping.selected.price)}</span>GRATIS</>
                             : formatPrice(shipping.selected.price)}
                       </span>
