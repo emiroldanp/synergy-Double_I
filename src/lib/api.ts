@@ -95,6 +95,11 @@ export const tcgApi = {
   syncPokemon: () => api.post('/api/admin/tcg/sync/pokemon'),
 }
 
+export const promotionsApi = {
+  evaluate: (items: { productId: string; quantity: number }[], shippingCost?: number) =>
+    api.post('/api/promotions/evaluate', { items, shippingCost }),
+}
+
 export const discountCodesApi = {
   validate: (code: string, subtotal: number) =>
     api.post('/api/discount-codes/validate', { code, subtotal }),

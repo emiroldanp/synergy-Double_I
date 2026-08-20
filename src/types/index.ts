@@ -244,6 +244,19 @@ export interface Promotion {
   ctaHref: string
   isActive: boolean
   sortOrder?: number
+  type?: 'free_shipping' | 'percentage_off' | 'fixed_off' | null
+  categoryId?: string | null
+  value?: number | null
+  minAmount?: number | null
+  startsAt?: string | null
+  endsAt?: string | null
+}
+
+export interface AppliedPromotion {
+  id: string
+  title: string
+  discountAmount: number
+  freeShipping: boolean
 }
 
 export interface FilterState {
