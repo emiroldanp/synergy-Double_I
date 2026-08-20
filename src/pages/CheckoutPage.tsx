@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,9 +6,10 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '@/hooks/useCart'
 import { useShippingQuote } from '@/hooks/useShippingQuote'
 import { useAuth } from '@/hooks/useAuth'
-import { ordersApi, paymentsApi, discountCodesApi } from '@/lib/api'
+import { ordersApi, paymentsApi, discountCodesApi, promotionsApi } from '@/lib/api'
 import { contactSchema, addressSchema, cfdiSchema } from '@/lib/schemas/checkout'
 import type { ContactFormData, AddressFormData, CfdiFormData } from '@/lib/schemas/checkout'
+import type { AppliedPromotion } from '@/types'
 import { formatPrice, CFDI_USES } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
@@ -78,11 +79,31 @@ export default function CheckoutPage() {
   const [discountValidating, setDiscountValidating] = useState(false)
   const [discountError, setDiscountError] = useState<string | null>(null)
   const [discountApplied, setDiscountApplied] = useState<{ code: string; amount: number } | null>(null)
+  const [appliedPromotion, setAppliedPromotion] = useState<AppliedPromotion | null>(null)
   const { items, subtotal, clearCart } = useCart()
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0)
   const shipping = useShippingQuote()
+  const effectiveShippingCost = appliedPromotion?.freeShipping ? 0 : (shipping.selected?.price ?? 0)
+  const effectiveDiscountAmount = discountApplied ? discountApplied.amount : (appliedPromotion?.discountAmount ?? 0)
   const { user, isSignedIn } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    // Las promociones automáticas y los códigos de descuento no se combinan —
+    // si el cliente ya aplicó un código, no mostramos ni evaluamos promociones.
+    if (discountApplied || !shipping.selected || items.length === 0) {
+      setAppliedPromotion(null)
+      return
+    }
+    const effectiveShippingCostForEval = shipping.isLocal ? 0 : shipping.selected.price
+    promotionsApi
+      .evaluate(items.map((i) => ({ productId: i.product.id, quantity: i.quantity })), effectiveShippingCostForEval)
+      .then((res) => {
+        const promo = res.data?.data?.promotion ?? res.data?.promotion ?? null
+        setAppliedPromotion(promo)
+      })
+      .catch(() => setAppliedPromotion(null))
+  }, [items, shipping.selected, shipping.isLocal, discountApplied])
 
   const applyDiscount = async () => {
     if (!discountCode.trim()) return
@@ -572,7 +593,11 @@ export default function CheckoutPage() {
                           {shipping.isLocal ? 'Envío local (WhatsApp)' : `Envío (${shipping.selected.service})`}
                         </span>
                         <span className="text-frost">
-                          {shipping.isLocal ? 'A cotizar por WhatsApp' : formatPrice(shipping.selected.price)}
+                          {shipping.isLocal
+                            ? 'A cotizar por WhatsApp'
+                            : appliedPromotion?.freeShipping
+                              ? <><span className="line-through text-ash/50 mr-1.5">{formatPrice(shipping.selected.price)}</span>GRATIS</>
+                              : formatPrice(shipping.selected.price)}
                         </span>
                       </div>
                     )}
@@ -587,10 +612,18 @@ export default function CheckoutPage() {
                         <span className="text-dragon">−${discountApplied.amount.toFixed(2)}</span>
                       </div>
                     )}
+                    {!discountApplied && appliedPromotion && (
+                      <div className="flex justify-between text-xs font-exo py-1">
+                        <span className="text-ash">🎉 {appliedPromotion.title}</span>
+                        <span className="text-dragon">
+                          {appliedPromotion.freeShipping ? 'Envío gratis' : `−$${appliedPromotion.discountAmount.toFixed(2)}`}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between mt-2 pt-2 border-t border-navy/40">
                       <span className="font-agency text-sm text-ash uppercase">Total</span>
                       <span className="font-agency text-lg text-white">
-                        {formatPrice(subtotal + (shipping.selected?.price ?? 0) - discountAmount)}
+                        {formatPrice(subtotal + effectiveShippingCost - effectiveDiscountAmount)}
                       </span>
                     </div>
                   </div>
@@ -639,7 +672,11 @@ export default function CheckoutPage() {
                     <div className="flex justify-between text-ash">
                       <span>Envío</span>
                       <span className="text-frost">
-                        {shipping.isLocal ? 'A cotizar por WhatsApp' : formatPrice(shipping.selected.price)}
+                        {shipping.isLocal
+                          ? 'A cotizar por WhatsApp'
+                          : appliedPromotion?.freeShipping
+                            ? <><span className="line-through text-ash/50 mr-1.5">{formatPrice(shipping.selected.price)}</span>GRATIS</>
+                            : formatPrice(shipping.selected.price)}
                       </span>
                     </div>
                   )}
@@ -649,9 +686,17 @@ export default function CheckoutPage() {
                       <span className="text-dragon">−${discountApplied.amount.toFixed(2)}</span>
                     </div>
                   )}
+                  {!discountApplied && appliedPromotion && (
+                    <div className="flex justify-between text-ash">
+                      <span>🎉 {appliedPromotion.title}</span>
+                      <span className="text-dragon">
+                        {appliedPromotion.freeShipping ? 'Envío gratis' : `−$${appliedPromotion.discountAmount.toFixed(2)}`}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-agency text-sm pt-2 border-t border-navy/40 mt-2">
                     <span className="text-ash uppercase">Total</span>
-                    <span className="text-white">{formatPrice(subtotal + (shipping.selected?.price ?? 0) - discountAmount)}</span>
+                    <span className="text-white">{formatPrice(subtotal + effectiveShippingCost - effectiveDiscountAmount)}</span>
                   </div>
                 </div>
               </div>
