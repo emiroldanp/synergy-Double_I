@@ -79,73 +79,81 @@ export default function AccountPage() {
             Hola, <span className="text-frost">{user?.firstName || user?.emailAddresses?.[0]?.emailAddress}</span>
           </p>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <h2 className="font-agency text-sm text-ash uppercase tracking-widest mb-4">Historial de pedidos</h2>
-              {ordersLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-dragon" />
-                </div>
-              ) : orders.length === 0 ? (
-                <div className="bg-deep border border-navy/40 p-10 text-center">
-                  <p className="font-exo text-ash text-sm">Aún no tienes pedidos.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {orders.map((order) => (
-                    <div key={order.id} className="bg-deep border border-navy/40 p-5">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div>
-                          <p className="font-agency text-sm text-white tracking-wide">{order.orderNumber}</p>
-                          <p className="font-exo text-xs text-ash mt-0.5">
-                            {new Date(order.createdAt).toLocaleDateString('es-MX', {
-                              year: 'numeric', month: 'long', day: 'numeric',
-                            })}
-                          </p>
-                        </div>
-                        <span
-                          className="badge-base text-xs"
-                          style={{
-                            backgroundColor: ORDER_STATUS_COLORS[order.status!] + '22',
-                            border: `1px solid ${ORDER_STATUS_COLORS[order.status!]}44`,
-                            color: ORDER_STATUS_COLORS[order.status!],
-                          }}
-                        >
-                          {ORDER_STATUS_LABELS[order.status!]}
-                        </span>
+          {/* Historial de pedidos — sección de ancho completo, en grid para
+              aprovechar el espacio (antes vivía comprimida en 2/3 de una
+              grilla de 3 columnas junto al perfil). */}
+          <section>
+            <h2 className="font-agency text-sm text-ash uppercase tracking-widest mb-4">Historial de pedidos</h2>
+            {ordersLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-dragon" />
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="bg-deep border border-navy/40 p-10 text-center">
+                <p className="font-exo text-ash text-sm">Aún no tienes pedidos.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {orders.map((order) => (
+                  <div key={order.id} className="bg-deep border border-navy/40 p-5">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div>
+                        <p className="font-agency text-sm text-white tracking-wide">{order.orderNumber}</p>
+                        <p className="font-exo text-xs text-ash mt-0.5">
+                          {new Date(order.createdAt).toLocaleDateString('es-MX', {
+                            year: 'numeric', month: 'long', day: 'numeric',
+                          })}
+                        </p>
                       </div>
-                      <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-                        {order.items.map((item) => (
-                          <img key={item.productId} src={item.image} alt={item.name} loading="lazy" className="w-12 h-16 object-cover flex-shrink-0" />
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        {order.trackingNumber && (
-                          <p className="font-exo text-xs text-ash">
-                            Guía: <span className="text-dragon">{order.trackingNumber}</span>
-                          </p>
-                        )}
-                        <span className="font-agency text-sm text-white ml-auto">{formatPrice(order.total)}</span>
-                      </div>
+                      <span
+                        className="badge-base text-xs"
+                        style={{
+                          backgroundColor: ORDER_STATUS_COLORS[order.status!] + '22',
+                          border: `1px solid ${ORDER_STATUS_COLORS[order.status!]}44`,
+                          color: ORDER_STATUS_COLORS[order.status!],
+                        }}
+                      >
+                        {ORDER_STATUS_LABELS[order.status!]}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+                      {order.items.map((item) => (
+                        <img key={item.productId} src={item.image} alt={item.name} loading="lazy" className="w-12 h-16 object-cover flex-shrink-0" />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      {order.trackingNumber && (
+                        <p className="font-exo text-xs text-ash">
+                          Guía: <span className="text-dragon">{order.trackingNumber}</span>
+                        </p>
+                      )}
+                      <span className="font-agency text-sm text-white ml-auto">{formatPrice(order.total)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
-            <div>
-              <h2 className="font-agency text-sm text-ash uppercase tracking-widest mb-4">Datos de perfil</h2>
+          {/* Datos de perfil — el widget de Clerk trae su propia navegación
+              interna (Perfil / Seguridad) en dos paneles, así que necesita
+              ancho real para no verse apretado; ya no se mete en una columna
+              de 1/3. Sin encabezado propio para no duplicar el que ya trae
+              el widget. */}
+          <section className="mt-12">
+            <div className="max-w-3xl">
               {ClerkUserProfile ? (
                 <Suspense fallback={<div className="text-ash font-exo text-sm">Cargando...</div>}>
                   <ClerkUserProfile />
                 </Suspense>
               ) : (
                 <div className="bg-deep border border-navy/40 p-6">
+                  <h2 className="font-agency text-sm text-ash uppercase tracking-widest mb-4">Datos de perfil</h2>
                   <p className="font-exo text-ash text-xs">Perfil disponible cuando Clerk esté configurado.</p>
                 </div>
               )}
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </>
