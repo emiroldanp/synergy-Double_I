@@ -75,4 +75,18 @@ describe('POST /api/orders — promociones automáticas', () => {
     expect(createCall.data.discountCodeId).toBe('code_1')
     expect(Number(createCall.data.shippingCost)).toBe(150)
   })
+
+  it('aplica un descuento de porcentaje automático y calcula el total correctamente', async () => {
+    prismaMock.promotion.findMany.mockResolvedValue([
+      { id: 'promo_10pct', title: '10% off', type: 'percentage_off', categoryId: null, value: 10, minAmount: 1000, startsAt: null, endsAt: null },
+    ] as any)
+
+    await request(app).post('/api/orders').send(basePayload()).expect(201)
+
+    const createCall = prismaMock.order.create.mock.calls[0][0]
+    expect(createCall.data.promotionId).toBe('promo_10pct')
+    expect(Number(createCall.data.discountAmount)).toBe(200) // 10% de 2000 (baseItem.price=2000, qty=1)
+    expect(Number(createCall.data.shippingCost)).toBe(150) // percentage_off no toca el envío
+    expect(Number(createCall.data.total)).toBe(1950) // 2000 + 150 - 200
+  })
 })
