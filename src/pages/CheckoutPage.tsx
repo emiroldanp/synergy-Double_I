@@ -90,19 +90,43 @@ export default function CheckoutPage() {
   useEffect(() => {
     // Las promociones automáticas y los códigos de descuento no se combinan —
     // si el cliente ya aplicó un código, no mostramos ni evaluamos promociones.
-    if (discountApplied || !shipping.selected || items.length === 0) {
+    if (discountApplied || items.length === 0) {
       setAppliedPromotion(null)
       return
     }
-    const effectiveShippingCostForEval = shipping.isLocal ? 0 : shipping.selected.price
+
+    // Envío local (WhatsApp): shipping.selected ya viene fijo en $0 apenas se
+    // manda la dirección — se puede evaluar de inmediato.
+    if (shipping.isLocal) {
+      if (!shipping.selected) {
+        setAppliedPromotion(null)
+        return
+      }
+      promotionsApi
+        .evaluate(items.map((i) => ({ productId: i.product.id, quantity: i.quantity })), 0)
+        .then((res) => setAppliedPromotion(res.data?.data?.promotion ?? res.data?.promotion ?? null))
+        .catch(() => setAppliedPromotion(null))
+      return
+    }
+
+    // Envío foráneo: se evalúa en cuanto llegan las cotizaciones de Skydropx,
+    // sin esperar a que el cliente elija paquetería — así, si aplica envío
+    // gratis, se puede seleccionar la más barata sola y saltarse el paso de
+    // "elegir paquetería" (no tiene sentido pedirle elegir si no le cuesta).
+    if (shipping.status !== 'success' || shipping.options.length === 0) {
+      setAppliedPromotion(null)
+      return
+    }
+    const cheapest = shipping.options.reduce((min, o) => (o.price < min.price ? o : min), shipping.options[0])
     promotionsApi
-      .evaluate(items.map((i) => ({ productId: i.product.id, quantity: i.quantity })), effectiveShippingCostForEval)
+      .evaluate(items.map((i) => ({ productId: i.product.id, quantity: i.quantity })), cheapest.price)
       .then((res) => {
         const promo = res.data?.data?.promotion ?? res.data?.promotion ?? null
         setAppliedPromotion(promo)
+        if (promo?.freeShipping) shipping.setSelected(cheapest)
       })
       .catch(() => setAppliedPromotion(null))
-  }, [items, shipping.selected, shipping.isLocal, discountApplied])
+  }, [items, shipping.status, shipping.options, shipping.selected, shipping.isLocal, discountApplied])
 
   const applyDiscount = async () => {
     if (!discountCode.trim()) return
@@ -347,7 +371,17 @@ export default function CheckoutPage() {
                       </button>
                     </div>
                   )}
-                  {!shipping.isLocal && shipping.status === 'success' && (
+                  {!shipping.isLocal && shipping.status === 'success' && appliedPromotion?.freeShipping && shipping.selected && (
+                    <div className="border border-dragon/50 bg-royal/10 p-4">
+                      <p className="font-agency text-sm text-white tracking-wide uppercase mb-1">
+                        🎉 Envío gratis aplicado
+                      </p>
+                      <p className="font-exo text-xs text-ash">
+                        Tu pedido calificó para "{appliedPromotion.title}" — no necesitas elegir paquetería, nosotros nos encargamos del envío sin costo para ti.
+                      </p>
+                    </div>
+                  )}
+                  {!shipping.isLocal && shipping.status === 'success' && !appliedPromotion?.freeShipping && (
                     <div className="space-y-3">
                       {shipping.options.map((opt) => (
                         <label
