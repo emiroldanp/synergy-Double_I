@@ -75,6 +75,13 @@ export function useShippingQuote() {
     setOptions([])
     setSelected(null)
 
+    // Límite de espera del lado del cliente — el backend puede tardar hasta
+    // ~10s cotizando con Skydropx; si por lo que sea la respuesta nunca llega
+    // (conexión colgada, proxy intermedio, etc.), esto evita que la pantalla
+    // se quede pegada en "Cotizando envíos..." para siempre sin mostrar error.
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 20000)
+
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/shipping/quote`, {
         method: 'POST',
@@ -91,6 +98,7 @@ export function useShippingQuote() {
           parcel: getParcelForQuantity(totalQuantity),
           sessionId: crypto.randomUUID(),
         }),
+        signal: controller.signal,
       })
 
       if (!res.ok) {
@@ -116,6 +124,8 @@ export function useShippingQuote() {
       setStatus('success')
     } catch {
       setStatus('error')
+    } finally {
+      clearTimeout(timeoutId)
     }
   }
 
