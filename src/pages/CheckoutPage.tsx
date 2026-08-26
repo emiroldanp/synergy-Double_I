@@ -130,6 +130,18 @@ export default function CheckoutPage() {
 
   const applyDiscount = async () => {
     if (!discountCode.trim()) return
+    // Los códigos y las promociones automáticas no se combinan — si ya hay
+    // una promoción aplicada, se le pide confirmación explícita al cliente
+    // antes de reemplazarla (evita que "pierda" el envío gratis sin darse cuenta).
+    if (appliedPromotion) {
+      const benefit = appliedPromotion.freeShipping
+        ? 'el envío gratis'
+        : `el descuento de $${appliedPromotion.discountAmount.toFixed(2)}`
+      const confirmed = window.confirm(
+        `Ya tienes "${appliedPromotion.title}" aplicada. Si usas este código, perderás ${benefit} — no se pueden combinar. ¿Quieres continuar?`
+      )
+      if (!confirmed) return
+    }
     setDiscountValidating(true)
     setDiscountError(null)
     try {
