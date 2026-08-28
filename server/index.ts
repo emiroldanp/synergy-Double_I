@@ -97,8 +97,9 @@ const generalLimiter = rateLimit({
 // — debe registrarse ANTES de express.json()
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }))
 
-// Subida de imágenes en base64 (admin) — límite elevado solo para esa ruta, antes del parser global
+// Subida de imágenes en base64 (admin) — límite elevado solo para esas rutas, antes del parser global
 app.use('/api/admin/products', express.json({ limit: '10mb' }))
+app.use('/api/admin/banners', express.json({ limit: '10mb' }))
 
 // Parseo de JSON — límite conservador para el resto de las rutas
 app.use(express.json({ limit: '100kb' }))

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import type { BannerSlide } from '@/types'
 import { useAdminApi } from '@/hooks/useAdminApi'
+import { compressImageForUpload } from '@/lib/imageCompression'
 
 const EMPTY_SLIDE: Omit<BannerSlide, 'id'> = {
   imageUrl: '',
@@ -90,18 +91,32 @@ export default function BannerManager() {
     }
   }
 
+  // El backend acepta hasta 10mb de JSON; en base64 eso equivale a ~7mb de archivo original.
+  const MAX_UPLOAD_BYTES = 7 * 1024 * 1024
+
   const handleFileUpload = async (file: File) => {
     setUploading(true)
     try {
+      // Redimensiona/recomprime en el navegador antes de subir — evita banners
+      // pesados sin optimizar y reduce el riesgo de topar el límite del backend.
+      const optimized = await compressImageForUpload(file)
+
+      if (optimized.size > MAX_UPLOAD_BYTES) {
+        alert(
+          `La imagen pesa ${(optimized.size / (1024 * 1024)).toFixed(1)}MB incluso después de optimizarla y el máximo permitido es 7MB. Prueba con una imagen de menor resolución.`
+        )
+        return
+      }
+
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = () => resolve((reader.result as string).split(',')[1])
         reader.onerror = reject
-        reader.readAsDataURL(file)
+        reader.readAsDataURL(optimized)
       })
       const res = await apiFetch<{ url: string }>('/api/admin/banners/upload-image', {
         method: 'POST',
-        body: JSON.stringify({ base64, mimeType: file.type }),
+        body: JSON.stringify({ base64, mimeType: optimized.type }),
       })
       setEditing((prev) => prev && ({ ...prev, imageUrl: res.url }))
     } catch (err: unknown) {
