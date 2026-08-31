@@ -99,8 +99,8 @@ export function HeroBanner() {
           transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
           className="absolute inset-0"
         >
-          {/* Background image — usa imageUrlMobile en pantallas chicas si existe, si no cae a imageUrl */}
-          <picture>
+          {/* Background image — arranca debajo del navbar (mismo alto que el pt del contenido) para que no quede tapada */}
+          <picture className="absolute inset-x-0 bottom-0 top-20 md:top-24 lg:top-28 xl:top-32 2xl:top-36 block">
             {slide.imageUrlMobile && (
               <source media="(max-width: 767px)" srcSet={slide.imageUrlMobile} />
             )}
