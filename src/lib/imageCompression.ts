@@ -1,4 +1,7 @@
-const MAX_DIMENSION = 1920
+// 2560px — el banner del héroe ocupa el ancho completo de la pantalla, así que
+// necesita más resolución que un thumbnail para no verse borroso al escalar
+// en monitores grandes o pantallas retina.
+const MAX_DIMENSION = 2560
 const JPEG_QUALITY = 0.82
 const SKIP_BELOW_BYTES = 1.5 * 1024 * 1024
 
