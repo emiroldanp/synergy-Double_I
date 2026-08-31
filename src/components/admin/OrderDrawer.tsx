@@ -72,9 +72,11 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
 
   const canMarkPaid = order?.paymentStatus === 'pending' || order?.paymentStatus === 'awaiting_verification'
 
-  // Obtener email del cliente (usuario registrado o invitado)
+  // Obtener email/teléfono del cliente (usuario registrado o invitado) — el teléfono
+  // es obligatorio en el checkout, pero solo vive en guestPhone si no hay cuenta.
   const customerEmail = order?.customer?.email ?? order?.guestEmail ?? '—'
   const customerName = order?.customer?.fullName ?? order?.guestName ?? null
+  const customerPhone = order?.customer?.phone ?? order?.guestPhone ?? null
 
   // Envío local CDMX/EDOMEX coordinado por WhatsApp
   const isLocalWhatsapp =
@@ -87,7 +89,7 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
       : order?.shippingMethod || null
 
   const buildWhatsappUrl = (): string | null => {
-    const phone = order?.customer?.phone
+    const phone = customerPhone
     if (!phone) return null
     const name = customerName ?? customerEmail
     const items = (order?.items ?? [])
@@ -118,6 +120,18 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
             <p className="text-sm text-gray-500">{customerEmail}</p>
             {customerName && (
               <p className="text-sm text-gray-400">{customerName}</p>
+            )}
+            {customerPhone ? (
+              <a
+                href={`https://wa.me/${customerPhone.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-green-600 hover:text-green-700 hover:underline"
+              >
+                {customerPhone}
+              </a>
+            ) : (
+              <p className="text-sm text-red-500">Sin teléfono</p>
             )}
           </div>
           <button
@@ -190,11 +204,24 @@ export default function OrderDrawer({ order, onClose, onUpdated }: OrderDrawerPr
               <h4 className="text-sm font-semibold text-gray-700 mb-2">Productos</h4>
               <div className="space-y-2">
                 {order.items.map((item, i) => (
-                  <div key={item.id ?? i} className="flex justify-between text-sm">
-                    <span className="text-gray-700">
+                  <div key={item.id ?? i} className="flex items-center gap-3 text-sm">
+                    <div className="w-10 h-10 flex-shrink-0 bg-gray-100 rounded overflow-hidden border border-gray-200">
+                      {item.product?.images?.[0] ? (
+                        <img
+                          src={item.product.images[0]}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[8px] text-gray-400 uppercase text-center leading-tight px-0.5">
+                          Sin foto
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-gray-700 flex-1 min-w-0 truncate">
                       {item.product?.name ?? `Producto ${i + 1}`} × {item.quantity}
                     </span>
-                    <span className="text-gray-900">{formatMXN(item.subtotal ?? item.price * item.quantity)}</span>
+                    <span className="text-gray-900 flex-shrink-0">{formatMXN(item.subtotal ?? item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>

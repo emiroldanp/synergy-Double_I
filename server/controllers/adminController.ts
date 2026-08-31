@@ -410,7 +410,15 @@ export async function listOrders(req: Request, res: Response, next: NextFunction
         orderBy: { createdAt: 'desc' },
         include: {
           items: {
-            include: { product: { select: { name: true, price: true } } },
+            include: {
+              product: {
+                select: {
+                  name: true,
+                  price: true,
+                  images: { where: { isPrimary: true }, take: 1, select: { url: true } },
+                },
+              },
+            },
           },
           customer: true,
           invoice: {
@@ -424,6 +432,12 @@ export async function listOrders(req: Request, res: Response, next: NextFunction
     const mapped = orders.map((o) => ({
       ...o,
       status: STATUS_TO_FRONTEND[o.orderStatus] ?? o.orderStatus,
+      items: o.items.map((item) => ({
+        ...item,
+        product: item.product
+          ? { ...item.product, images: item.product.images.map((img) => img.url) }
+          : null,
+      })),
     }))
     res.json({ data: mapped, meta: { page, limit, total } })
   } catch (error) {

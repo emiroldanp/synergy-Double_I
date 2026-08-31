@@ -168,7 +168,7 @@ export interface OrderItem {
   quantity: number
   subtotal?: number
   image?: string
-  product?: { name: string; slug?: string } | null
+  product?: { name: string; slug?: string; images?: string[] } | null
 }
 
 export interface ShippingAddress {
@@ -196,6 +196,7 @@ export interface Order {
   paymentStatus?: 'pending' | 'awaiting_verification' | 'confirmed' | 'failed'
   guestEmail?: string | null
   guestName?: string | null
+  guestPhone?: string | null
   shippingAddress?: ShippingAddress | null
   createdAt: string
   customer?: Customer | null
