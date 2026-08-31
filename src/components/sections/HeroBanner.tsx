@@ -99,13 +99,18 @@ export function HeroBanner() {
           transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
           className="absolute inset-0"
         >
-          {/* Background image */}
-          <img
-            src={slide.imageUrl}
-            alt=""
-            aria-hidden="true"
-            className="w-full h-full object-cover"
-          />
+          {/* Background image — usa imageUrlMobile en pantallas chicas si existe, si no cae a imageUrl */}
+          <picture>
+            {slide.imageUrlMobile && (
+              <source media="(max-width: 767px)" srcSet={slide.imageUrlMobile} />
+            )}
+            <img
+              src={slide.imageUrl}
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-cover"
+            />
+          </picture>
           {/* Dark overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-void/90 via-void/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-transparent" />
@@ -120,7 +125,7 @@ export function HeroBanner() {
           </div>
 
           {/* Content — pt iguala la altura del navbar en cada breakpoint para centrar en el área visible */}
-          <div className="absolute inset-0 flex items-center pt-24 md:pt-32 lg:pt-44 xl:pt-52 2xl:pt-60">
+          <div className="absolute inset-0 flex items-center pt-20 md:pt-24 lg:pt-28 xl:pt-32 2xl:pt-36">
             <div className="page-container">
               <div className="max-w-2xl">
                 <motion.div

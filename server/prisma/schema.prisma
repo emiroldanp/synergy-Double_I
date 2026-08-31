@@ -242,16 +242,17 @@ model SystemConfig {
 }
 
 model BannerSlide {
-  id        String   @id @default(cuid())
-  imageUrl  String
-  title     String
-  subtitle  String
-  ctaLabel  String   @default("Ver ahora")
-  ctaHref   String   @default("/catalogo")
-  isActive  Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  imageUrl       String
+  imageUrlMobile String?
+  title          String
+  subtitle       String
+  ctaLabel       String   @default("Ver ahora")
+  ctaHref        String   @default("/catalogo")
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 enum PromotionType {

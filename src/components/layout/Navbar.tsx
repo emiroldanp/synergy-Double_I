@@ -123,7 +123,7 @@ export function Navbar() {
         <div className="page-container">
           <div className={cn(
             'flex items-center justify-between transition-all duration-300',
-            scrolled || !isHome ? 'h-16 md:h-[4.5rem]' : 'h-24 md:h-32 lg:h-44 xl:h-52 2xl:h-60'
+            scrolled || !isHome ? 'h-16 md:h-[4.5rem]' : 'h-20 md:h-24 lg:h-28 xl:h-32 2xl:h-36'
           )}>
             {/* Logo */}
             <Link
@@ -136,7 +136,7 @@ export function Navbar() {
                 alt="Double-I TCG"
                 className={cn(
                   'w-auto drop-shadow-[0_0_12px_rgba(107,184,236,0.5)] group-hover:drop-shadow-[0_0_20px_rgba(107,184,236,0.8)] transition-all duration-300',
-                  scrolled || !isHome ? 'h-10 md:h-12' : 'h-20 md:h-28 lg:h-40 xl:h-48 2xl:h-56'
+                  scrolled || !isHome ? 'h-10 md:h-12' : 'h-16 md:h-20 lg:h-24 xl:h-28 2xl:h-32'
                 )}
               />
               <div className={cn(

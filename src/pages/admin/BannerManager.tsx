@@ -6,6 +6,7 @@ import { compressImageForUpload } from '@/lib/imageCompression'
 
 const EMPTY_SLIDE: Omit<BannerSlide, 'id'> = {
   imageUrl: '',
+  imageUrlMobile: '',
   title: '',
   subtitle: '',
   ctaLabel: 'Ver ahora',
@@ -22,8 +23,9 @@ export default function BannerManager() {
   const [editing, setEditing] = useState<BannerSlide | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const [uploading, setUploading] = useState<'imageUrl' | 'imageUrlMobile' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputMobileRef = useRef<HTMLInputElement>(null)
 
   const fetchSlides = useCallback(async () => {
     setLoading(true)
@@ -94,8 +96,8 @@ export default function BannerManager() {
   // El backend acepta hasta 10mb de JSON; en base64 eso equivale a ~7mb de archivo original.
   const MAX_UPLOAD_BYTES = 7 * 1024 * 1024
 
-  const handleFileUpload = async (file: File) => {
-    setUploading(true)
+  const handleFileUpload = async (file: File, field: 'imageUrl' | 'imageUrlMobile') => {
+    setUploading(field)
     try {
       // Redimensiona/recomprime en el navegador antes de subir — evita banners
       // pesados sin optimizar y reduce el riesgo de topar el límite del backend.
@@ -118,11 +120,11 @@ export default function BannerManager() {
         method: 'POST',
         body: JSON.stringify({ base64, mimeType: optimized.type }),
       })
-      setEditing((prev) => prev && ({ ...prev, imageUrl: res.url }))
+      setEditing((prev) => prev && ({ ...prev, [field]: res.url }))
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Error al subir imagen')
     } finally {
-      setUploading(false)
+      setUploading(null)
     }
   }
 
@@ -260,10 +262,10 @@ export default function BannerManager() {
             </h2>
 
             <div className="space-y-4">
-              {/* Imagen — upload desde computadora o URL manual */}
+              {/* Imagen desktop — upload desde computadora o URL manual */}
               <div>
                 <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
-                  Imagen del banner
+                  Imagen del banner (desktop)
                 </label>
                 {editing.imageUrl && (
                   <div className="mb-2 relative w-full h-28 border border-navy/40 overflow-hidden">
@@ -278,10 +280,10 @@ export default function BannerManager() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
+                    disabled={uploading !== null}
                     className="font-agency text-xs px-4 py-2 border border-navy/50 text-ash hover:text-white hover:border-white/40 transition-colors disabled:opacity-50 flex-shrink-0"
                   >
-                    {uploading ? 'Subiendo...' : 'Subir imagen'}
+                    {uploading === 'imageUrl' ? 'Subiendo...' : 'Subir imagen'}
                   </button>
                   <input
                     type="text"
@@ -300,7 +302,56 @@ export default function BannerManager() {
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0]
-                    if (file) handleFileUpload(file)
+                    if (file) handleFileUpload(file, 'imageUrl')
+                    e.target.value = ''
+                  }}
+                />
+              </div>
+
+              {/* Imagen mobile — opcional, evita que object-cover recorte mal en pantallas chicas */}
+              <div>
+                <label className="block font-agency text-xs text-ash uppercase tracking-wider mb-1.5">
+                  Imagen del banner (mobile — opcional)
+                </label>
+                <p className="text-[11px] text-ash/70 mb-1.5">
+                  Si no se sube, en mobile se usa la imagen de desktop (puede recortarse mal).
+                </p>
+                {editing.imageUrlMobile && (
+                  <div className="mb-2 relative w-full max-w-[160px] h-40 border border-navy/40 overflow-hidden">
+                    <img
+                      src={editing.imageUrlMobile}
+                      alt="Preview mobile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputMobileRef.current?.click()}
+                    disabled={uploading !== null}
+                    className="font-agency text-xs px-4 py-2 border border-navy/50 text-ash hover:text-white hover:border-white/40 transition-colors disabled:opacity-50 flex-shrink-0"
+                  >
+                    {uploading === 'imageUrlMobile' ? 'Subiendo...' : 'Subir imagen'}
+                  </button>
+                  <input
+                    type="text"
+                    value={editing.imageUrlMobile ?? ''}
+                    onChange={(e) =>
+                      setEditing((prev) => prev && ({ ...prev, imageUrlMobile: e.target.value }))
+                    }
+                    placeholder="O pega una URL: https://..."
+                    className="input-dark flex-1 text-sm"
+                  />
+                </div>
+                <input
+                  ref={fileInputMobileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'imageUrlMobile')
                     e.target.value = ''
                   }}
                 />
@@ -342,8 +393,8 @@ export default function BannerManager() {
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button onClick={saveEdit} disabled={saving || uploading} className="btn-primary flex-1 text-sm py-2.5 disabled:opacity-50">
-                {uploading ? 'Subiendo imagen...' : saving ? 'Guardando...' : 'Guardar'}
+              <button onClick={saveEdit} disabled={saving || uploading !== null} className="btn-primary flex-1 text-sm py-2.5 disabled:opacity-50">
+                {uploading !== null ? 'Subiendo imagen...' : saving ? 'Guardando...' : 'Guardar'}
               </button>
               <button
                 onClick={() => setEditing(null)}

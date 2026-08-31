@@ -28,13 +28,14 @@ export async function listAllBanners(req: Request, res: Response, next: NextFunc
 /** POST /api/admin/banners */
 export async function createBanner(req: Request, res: Response, next: NextFunction) {
   try {
-    const { imageUrl, title, subtitle, ctaLabel, ctaHref, isActive, sortOrder } = req.body
+    const { imageUrl, imageUrlMobile, title, subtitle, ctaLabel, ctaHref, isActive, sortOrder } = req.body
     if (!imageUrl || !title || !subtitle) {
       return res.status(400).json({ error: 'imageUrl, title y subtitle son requeridos' })
     }
     const slide = await prisma.bannerSlide.create({
       data: {
         imageUrl,
+        imageUrlMobile: imageUrlMobile || null,
         title,
         subtitle,
         ctaLabel: ctaLabel ?? 'Ver ahora',
@@ -53,11 +54,12 @@ export async function createBanner(req: Request, res: Response, next: NextFuncti
 export async function updateBanner(req: Request, res: Response, next: NextFunction) {
   try {
     const id = String(req.params.id)
-    const { imageUrl, title, subtitle, ctaLabel, ctaHref, isActive, sortOrder } = req.body
+    const { imageUrl, imageUrlMobile, title, subtitle, ctaLabel, ctaHref, isActive, sortOrder } = req.body
     const slide = await prisma.bannerSlide.update({
       where: { id },
       data: {
         ...(imageUrl !== undefined && { imageUrl }),
+        ...(imageUrlMobile !== undefined && { imageUrlMobile: imageUrlMobile || null }),
         ...(title !== undefined && { title }),
         ...(subtitle !== undefined && { subtitle }),
         ...(ctaLabel !== undefined && { ctaLabel }),

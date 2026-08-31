@@ -278,6 +278,7 @@ export interface FilterState {
 export interface BannerSlide {
   id: string
   imageUrl: string
+  imageUrlMobile?: string | null
   title: string
   subtitle: string
   ctaLabel: string
