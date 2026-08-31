@@ -3,7 +3,11 @@ import MercadoPagoConfig, { Preference, Payment } from 'mercadopago'
 import { prisma } from '../lib/prisma'
 import { Prisma } from '@prisma/client'
 import { createInvoice } from './invoicesController'
-import { sendOrderConfirmationEmail, sendPaymentVerificationEmail } from './emailController'
+import {
+  sendOrderConfirmationEmail,
+  sendPaymentVerificationEmail,
+  sendAdminSaleNotificationEmail,
+} from './emailController'
 import { withRetry } from '../lib/retry'
 import crypto from 'crypto'
 
@@ -197,6 +201,10 @@ export async function confirmOrderPayment(params: {
 
   await sendOrderConfirmationEmail(orderId).catch((err) =>
     console.error(`Error al enviar email de confirmación para orden ${orderId}:`, err)
+  )
+
+  await sendAdminSaleNotificationEmail(orderId).catch((err) =>
+    console.error(`Error al enviar notificación de venta al admin para orden ${orderId}:`, err)
   )
 }
 

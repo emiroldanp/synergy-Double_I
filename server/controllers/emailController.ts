@@ -184,6 +184,69 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
 }
 
 /**
+ * Función interna — se llama desde el webhook de Mercado Pago tras confirmar el pago.
+ * Notifica a la tienda (Irving) que se completó una venta, para que la atienda.
+ * Requiere ADMIN_NOTIFICATION_EMAIL en las env vars de Hostinger; si no está
+ * configurada, se omite silenciosamente (no debe romper la confirmación del pedido).
+ */
+export async function sendAdminSaleNotificationEmail(orderId: string): Promise<void> {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL
+  if (!adminEmail) {
+    console.error('sendAdminSaleNotificationEmail: falta ADMIN_NOTIFICATION_EMAIL en las env vars')
+    return
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      items: { include: { product: { select: { name: true } } } },
+      customer: true,
+    },
+  })
+
+  if (!order) {
+    console.error(`sendAdminSaleNotificationEmail: orden no encontrada ${orderId}`)
+    return
+  }
+
+  const buyerName = order.guestName || order.customer?.fullName || 'Cliente'
+  const buyerEmail = order.guestEmail || order.customer?.email || 'sin email'
+  const orderLabel = `#${orderId.slice(0, 8).toUpperCase()}`
+  const itemsText = order.items.map((i) => `- ${i.product.name} x${i.quantity}`).join('\n')
+
+  await withRetry(
+    () =>
+      axios.post(
+        `${BREVO_API}/smtp/email`,
+        {
+          to: [{ email: adminEmail, name: 'Double-I Cards' }],
+          sender: {
+            email: process.env.BREVO_SENDER_EMAIL,
+            name: process.env.BREVO_SENDER_NAME,
+          },
+          subject: `🛒 Nueva venta ${orderLabel} — $${Number(order.total).toFixed(2)} MXN`,
+          textContent: [
+            `¡Se completó una venta!`,
+            ``,
+            `Pedido: ${orderLabel}`,
+            `Cliente: ${buyerName} (${buyerEmail})`,
+            ``,
+            `Productos:`,
+            itemsText,
+            ``,
+            `Total: $${Number(order.total).toFixed(2)} MXN`,
+            `Método de pago: ${order.paymentMethod || 'N/D'}`,
+            ``,
+            `Revísalo en el panel admin de doubleicards.com.`,
+          ].join('\n'),
+        },
+        { headers: brevoHeaders() }
+      ),
+    { label: 'Brevo notificación de venta a admin' }
+  )
+}
+
+/**
  * Función interna — se llama desde el webhook de Mercado Pago cuando un pago
  * llegó en OXXO o transferencia SPEI y la orden queda en 'awaiting_verification'.
  *
