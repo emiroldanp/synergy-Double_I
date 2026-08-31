@@ -83,121 +83,123 @@ export function HeroBanner() {
 
   return (
     <section
-      className="relative w-full overflow-hidden bg-void"
-      style={{ height: 'min(90vh, 700px)' }}
+      className="relative w-full overflow-hidden bg-void pt-20 md:pt-24 lg:pt-28 xl:pt-32 2xl:pt-36"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <AnimatePresence initial={false} custom={dir} mode="popLayout">
-        <motion.div
-          key={slide.id}
-          custom={dir}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
-          className="absolute inset-0"
-        >
-          {/* Background image — arranca debajo del navbar (mismo alto que el pt del contenido) para que no quede tapada */}
-          <picture className="absolute inset-x-0 bottom-0 top-20 md:top-24 lg:top-28 xl:top-32 2xl:top-36 block">
-            {slide.imageUrlMobile && (
-              <source media="(max-width: 767px)" srcSet={slide.imageUrlMobile} />
-            )}
-            <img
-              src={slide.imageUrl}
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full object-cover"
-            />
-          </picture>
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-void/90 via-void/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-transparent" />
+      {/* Caja del tamaño real del banner — arranca debajo del navbar gracias al pt-* de la sección, no se recorta */}
+      <div className="relative w-full overflow-hidden" style={{ height: 'min(90vh, 700px)' }}>
+        <AnimatePresence initial={false} custom={dir} mode="popLayout">
+          <motion.div
+            key={slide.id}
+            custom={dir}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute inset-0"
+          >
+            {/* Background image */}
+            <picture className="absolute inset-0 block">
+              {slide.imageUrlMobile && (
+                <source media="(max-width: 767px)" srcSet={slide.imageUrlMobile} />
+              )}
+              <img
+                src={slide.imageUrl}
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-cover"
+              />
+            </picture>
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-void/90 via-void/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-transparent" />
 
-          {/* Logo watermark top-right */}
-          <div className="absolute top-8 right-8 pointer-events-none" aria-hidden="true">
-            <img
-              src="/logo-color.png"
-              alt=""
-              className="h-16 md:h-20 w-auto opacity-10"
-            />
-          </div>
+            {/* Logo watermark top-right */}
+            <div className="absolute top-8 right-8 pointer-events-none" aria-hidden="true">
+              <img
+                src="/logo-color.png"
+                alt=""
+                className="h-16 md:h-20 w-auto opacity-10"
+              />
+            </div>
 
-          {/* Content — pt iguala la altura del navbar en cada breakpoint para centrar en el área visible */}
-          <div className="absolute inset-0 flex items-center pt-20 md:pt-24 lg:pt-28 xl:pt-32 2xl:pt-36">
-            <div className="page-container">
-              <div className="max-w-2xl">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
-                >
-                  <div className="inline-flex items-center gap-2 mb-4">
-                    <span className="h-px w-8 bg-dragon" />
-                    <span className="font-agency text-xs text-dragon uppercase tracking-[0.3em]">
-                      Double-I TCG
-                    </span>
-                  </div>
-
-                  <h1 className="font-agency text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-none mb-4">
-                    {slide.title}
-                  </h1>
-
-                  <p className="font-exo text-frost/80 text-base md:text-lg max-w-xl leading-relaxed mb-8">
-                    {slide.subtitle}
-                  </p>
-
-                  <Link
-                    to={slide.ctaHref}
-                    className="btn-primary text-center inline-block text-sm px-8 py-4"
+            {/* Content */}
+            <div className="absolute inset-0 flex items-center">
+              <div className="page-container">
+                <div className="max-w-2xl">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
                   >
-                    {slide.ctaLabel}
-                  </Link>
-                </motion.div>
+                    <div className="inline-flex items-center gap-2 mb-4">
+                      <span className="h-px w-8 bg-dragon" />
+                      <span className="font-agency text-xs text-dragon uppercase tracking-[0.3em]">
+                        Double-I TCG
+                      </span>
+                    </div>
+
+                    <h1 className="font-agency text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-none mb-4">
+                      {slide.title}
+                    </h1>
+
+                    <p className="font-exo text-frost/80 text-base md:text-lg max-w-xl leading-relaxed mb-8">
+                      {slide.subtitle}
+                    </p>
+
+                    <Link
+                      to={slide.ctaHref}
+                      className="btn-primary text-center inline-block text-sm px-8 py-4"
+                    >
+                      {slide.ctaLabel}
+                    </Link>
+                  </motion.div>
+                </div>
               </div>
             </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
 
-      {/* Navigation arrows */}
-      {slides.length > 1 && (
-        <>
-          <button
-            onClick={prev}
-            aria-label="Slide anterior"
-            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-void/60 border border-navy/60 hover:border-dragon/60 hover:text-dragon text-ash transition-all"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={next}
-            aria-label="Siguiente slide"
-            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-void/60 border border-navy/60 hover:border-dragon/60 hover:text-dragon text-ash transition-all"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+        {/* Navigation arrows */}
+        {slides.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              aria-label="Slide anterior"
+              className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-void/60 border border-navy/60 hover:border-dragon/60 hover:text-dragon text-ash transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={next}
+              aria-label="Siguiente slide"
+              className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-void/60 border border-navy/60 hover:border-dragon/60 hover:text-dragon text-ash transition-all"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
 
-          {/* Dots */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => go(i, i > index ? 1 : -1)}
-                aria-label={`Ir al slide ${i + 1}`}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  i === index ? 'bg-dragon w-6' : 'bg-white/40 hover:bg-white/70'
-                }`}
-              />
-            ))}
-          </div>
-        </>
-      )}
+            {/* Dots */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => go(i, i > index ? 1 : -1)}
+                  aria-label={`Ir al slide ${i + 1}`}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    i === index ? 'bg-dragon w-6' : 'bg-white/40 hover:bg-white/70'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </section>
   )
 }
