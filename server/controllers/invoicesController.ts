@@ -179,6 +179,7 @@ async function sendInvoiceEmail(
       textContent: `Hola, tu factura CFDI para el pedido ${orderLabel} está lista.\n\nDescarga tu PDF: ${pdfUrl}\nDescarga tu XML: ${xmlUrl}\n\nGracias por tu compra en Double-I TCG.`,
       htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;color:#333">
+          <img src="https://pub-c0ec2ca658064853a766252fdca0ebf1.r2.dev/logo-negro.png" alt="Double-I Cards" width="110" style="display:block;margin:0 0 20px;">
           <h2 style="color:#111;margin-bottom:8px">Tu factura está lista</h2>
           <p style="color:#555;margin-bottom:20px">Pedido <strong>${orderLabel}</strong></p>
           <p>Descarga tus archivos CFDI:</p>

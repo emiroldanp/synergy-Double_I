@@ -372,6 +372,7 @@ export async function sendPaymentVerificationEmail(
           htmlContent: templateId
             ? undefined
             : `
+              <img src="https://pub-c0ec2ca658064853a766252fdca0ebf1.r2.dev/logo-color.png" alt="Double-I Cards" width="110" style="display:block;margin:0 0 16px;">
               <p>Hola ${recipientName},</p>
               <p>Recibimos la notificación de tu pago por <strong>${methodLabel}</strong> para el pedido <strong>#${orderId}</strong>. Estamos verificando en nuestra cuenta antes de preparar tu envío.</p>
               <p>Para agilizar la verificación, envíanos tu <strong>comprobante de pago</strong> por WhatsApp${whatsapp ? ` al <strong>${whatsapp}</strong>` : ''}.</p>
@@ -440,6 +441,7 @@ export async function sendOrderShippedEmail(orderId: string): Promise<void> {
           htmlContent: templateId
             ? undefined
             : `
+              <img src="https://pub-c0ec2ca658064853a766252fdca0ebf1.r2.dev/logo-color.png" alt="Double-I Cards" width="110" style="display:block;margin:0 0 16px;">
               <p>Hola ${recipientName},</p>
               <p>¡Buenas noticias! Tu pedido <strong>#${orderId}</strong> ya fue enviado vía <strong>${carrier}</strong>.</p>
               <p>Tu número de guía es: <strong>${order.trackingNumber}</strong></p>
@@ -455,6 +457,69 @@ export async function sendOrderShippedEmail(orderId: string): Promise<void> {
         { headers: brevoHeaders() }
       ),
     { label: 'Brevo pedido enviado' }
+  )
+}
+
+/**
+ * Función interna — se llama desde updateOrder (adminController.ts) cuando
+ * Irving cancela un pedido desde el panel admin.
+ *
+ * El correo informa al cliente que su pedido fue cancelado. Si el pedido ya
+ * tenía el pago confirmado, se le indica que será reembolsado (el reembolso
+ * en sí se gestiona manualmente por Irving desde Mercado Pago).
+ */
+export async function sendOrderCancelledEmail(orderId: string): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { customer: true },
+  })
+
+  if (!order) {
+    console.error(`sendOrderCancelledEmail: orden no encontrada ${orderId}`)
+    return
+  }
+
+  const recipientEmail = order.guestEmail || order.customer?.email
+  const recipientName = order.guestName || 'Cliente'
+
+  if (!recipientEmail) {
+    console.error(`sendOrderCancelledEmail: sin email para orden ${orderId}`)
+    return
+  }
+
+  const wasPaid = order.paymentStatus === 'confirmed'
+  const templateId = parseInt(process.env.BREVO_ORDER_CANCELLED_TEMPLATE_ID || '0', 10)
+
+  await withRetry(
+    () =>
+      axios.post(
+        `${BREVO_API}/smtp/email`,
+        {
+          to: [{ email: recipientEmail, name: recipientName }],
+          sender: {
+            email: process.env.BREVO_SENDER_EMAIL,
+            name: process.env.BREVO_SENDER_NAME,
+          },
+          templateId: templateId || undefined,
+          subject: templateId ? undefined : `Tu pedido fue cancelado — Pedido #${orderId}`,
+          htmlContent: templateId
+            ? undefined
+            : `
+              <img src="https://pub-c0ec2ca658064853a766252fdca0ebf1.r2.dev/logo-color.png" alt="Double-I Cards" width="110" style="display:block;margin:0 0 16px;">
+              <p>Hola ${recipientName},</p>
+              <p>Te informamos que tu pedido <strong>#${orderId}</strong> fue cancelado.</p>
+              ${wasPaid ? `<p>Como tu pago ya estaba confirmado, procesaremos el reembolso correspondiente.</p>` : ''}
+              <p>Si tienes dudas, escríbenos por WhatsApp.</p>
+            `,
+          params: {
+            ORDER_ID: orderId,
+            CUSTOMER_NAME: recipientName,
+            WAS_PAID: wasPaid ? 'true' : 'false',
+          },
+        },
+        { headers: brevoHeaders() }
+      ),
+    { label: 'Brevo pedido cancelado' }
   )
 }
 
@@ -584,7 +649,7 @@ function buildWelcomeHtml(displayName: string): string {
 
         <!-- Header -->
         <tr><td style="background-color:#111111;padding:24px 32px;text-align:center;border-bottom:1px solid #222;">
-          <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;">Double-I Cards</p>
+          <img src="https://pub-c0ec2ca658064853a766252fdca0ebf1.r2.dev/logo-color.png" alt="Double-I Cards" width="120" style="display:block;margin:0 auto 12px;">
           <p style="margin:4px 0 0;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">Pokémon · Lorcana</p>
         </td></tr>
 
@@ -633,7 +698,7 @@ function buildOrderConfirmationHtml(order: any, recipientName: string, orderLabe
 
         <!-- Header -->
         <tr><td style="background-color:#111111;padding:24px 32px;text-align:center;border-bottom:1px solid #222;">
-          <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px;">Double-I Cards</p>
+          <img src="https://pub-c0ec2ca658064853a766252fdca0ebf1.r2.dev/logo-color.png" alt="Double-I Cards" width="120" style="display:block;margin:0 auto 12px;">
           <p style="margin:4px 0 0;font-size:12px;color:#888;letter-spacing:2px;text-transform:uppercase;">Pokémon · Lorcana</p>
         </td></tr>
 
