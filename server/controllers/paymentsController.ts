@@ -7,6 +7,7 @@ import {
   sendOrderConfirmationEmail,
   sendPaymentVerificationEmail,
   sendAdminSaleNotificationEmail,
+  sendAdminVerificationPendingEmail,
 } from './emailController'
 import { withRetry } from '../lib/retry'
 import crypto from 'crypto'
@@ -359,6 +360,12 @@ export async function handleWebhook(req: Request, res: Response, next: NextFunct
         // No relanzar si el email falla — la orden ya quedó registrada.
         await sendPaymentVerificationEmail(orderId, paymentType).catch((err) =>
           console.error(`Error al enviar email de verificación para orden ${orderId}:`, err)
+        )
+
+        // Avisar a Irving que hay un pedido esperando verificación manual,
+        // para que no dependa de entrar al panel admin a revisarlo por su cuenta.
+        await sendAdminVerificationPendingEmail(orderId, paymentType).catch((err) =>
+          console.error(`Error al enviar email de verificación pendiente a admin para orden ${orderId}:`, err)
         )
       } else {
         await confirmOrderPayment({

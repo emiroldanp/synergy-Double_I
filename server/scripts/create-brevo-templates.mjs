@@ -160,6 +160,31 @@ const paymentVerifHtml = `<!DOCTYPE html>
   </table>
 </body></html>`
 
+// ── Plantilla: Pedido enviado (con guía) ──────────────────────────────────
+// params: ORDER_ID, CUSTOMER_NAME, TRACKING_NUMBER, CARRIER
+const orderShippedHtml = `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d0d0d;font-family:Arial,sans-serif;color:#e5e5e5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#151515;border-top:3px solid #e53e3e;">
+    <tr><td style="padding:32px 40px 16px;text-align:center;">
+      <img src="https://pub-c0ec2ca658064853a766252fdca0ebf1.r2.dev/logo-color.png" alt="Double-I Cards" width="120" style="display:block;margin:0 auto 24px;">
+      <p style="color:#e53e3e;font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">Pedido en camino</p>
+      <h1 style="color:#e5e5e5;font-size:22px;margin:0 0 12px;">¡Tu pedido va en camino, {{ params.CUSTOMER_NAME }}!</h1>
+    </td></tr>
+    <tr><td style="padding:0 40px 24px;">
+      <p style="color:#b0b0b0;font-size:15px;line-height:1.6;margin:0 0 16px;">
+        Tu pedido <strong style="color:#e5e5e5;">#{{ params.ORDER_ID }}</strong> ya fue enviado vía <strong style="color:#e5e5e5;">{{ params.CARRIER }}</strong>.
+      </p>
+      <p style="color:#b0b0b0;font-size:14px;margin:0 0 4px;">Número de guía:</p>
+      <p style="color:#e53e3e;font-size:20px;font-weight:bold;margin:0 0 20px;">{{ params.TRACKING_NUMBER }}</p>
+    </td></tr>
+    <tr><td style="padding:24px 40px;border-top:1px solid #2a2a2a;text-align:center;">
+      <p style="color:#555;font-size:12px;margin:0;">© 2026 Double-I Cards · <a href="https://doubleicards.com" style="color:#777;text-decoration:none;">doubleicards.com</a></p>
+    </td></tr>
+  </table>
+</body></html>`
+
 // ── Plantilla 4: Llegada de nuevo producto ────────────────────────────────
 // params: PRODUCT_NAME, PRODUCT_DESCRIPTION, PRODUCT_PRICE, PRODUCT_SLUG, PRODUCT_IMAGE
 const arrivalHtml = `<!DOCTYPE html>
@@ -216,6 +241,16 @@ async function main() {
     console.log(`Plantilla verificacion de pago creada. ID: ${paymentVerifId}`)
     console.log(`   -> BREVO_PAYMENT_VERIFICATION_TEMPLATE_ID=${paymentVerifId}`)
 
+    const orderShippedId = await createTemplate({
+      templateName: 'Pedido Enviado — Double-I',
+      subject: '¡Tu pedido va en camino! — Pedido #{{ params.ORDER_ID }}',
+      htmlContent: orderShippedHtml,
+      sender: { email: senderEmail, name: senderName },
+      isActive: true,
+    })
+    console.log(`Plantilla pedido enviado creada. ID: ${orderShippedId}`)
+    console.log(`   -> BREVO_ORDER_SHIPPED_TEMPLATE_ID=${orderShippedId}`)
+
     const arrivalId = await createTemplate({
       templateName: 'Llegada de Producto — Double-I',
       subject: 'Nuevo en stock: {{ params.PRODUCT_NAME }}',
@@ -231,6 +266,7 @@ async function main() {
     console.log(`BREVO_WELCOME_TEMPLATE_ID=${welcomeId}`)
     console.log(`BREVO_ORDER_CONFIRM_TEMPLATE_ID=${orderConfirmId}`)
     console.log(`BREVO_PAYMENT_VERIFICATION_TEMPLATE_ID=${paymentVerifId}`)
+    console.log(`BREVO_ORDER_SHIPPED_TEMPLATE_ID=${orderShippedId}`)
     console.log(`BREVO_ARRIVAL_TEMPLATE_ID=${arrivalId}`)
     console.log('-----------------------------------------')
   } catch (err) {

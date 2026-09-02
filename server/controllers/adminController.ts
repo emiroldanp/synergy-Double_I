@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client'
 import axios from 'axios'
 import { createInvoice } from './invoicesController'
 import { confirmOrderPayment } from './paymentsController'
+import { sendOrderShippedEmail } from './emailController'
 import { withRetry } from '../lib/retry'
 
 // Mapeo entre los valores del enum de DB (inglés) y los que usa el frontend (español)
@@ -462,6 +463,8 @@ export async function updateOrder(req: Request, res: Response, next: NextFunctio
     if (dbStatus) updateData.orderStatus = dbStatus as any
     if (trackingNumber !== undefined) updateData.trackingNumber = trackingNumber
 
+    const previousOrder = await prisma.order.findUnique({ where: { id }, select: { orderStatus: true } })
+
     const order = await prisma.order.update({ where: { id }, data: updateData })
 
     // Si Irving confirmó el pago manualmente desde el dropdown, disparar flujo completo
@@ -472,6 +475,13 @@ export async function updateOrder(req: Request, res: Response, next: NextFunctio
         paymentMethod: order.paymentMethod,
       }).catch((err) =>
         console.error(`[updateOrder] Error al confirmar pago de orden ${id}:`, err)
+      )
+    }
+
+    // Si Irving marca el pedido como enviado (con guía cargada), notificar al cliente
+    if (dbStatus === 'shipped' && previousOrder?.orderStatus !== 'shipped') {
+      sendOrderShippedEmail(id).catch((err) =>
+        console.error(`[updateOrder] Error al enviar email de envío de orden ${id}:`, err)
       )
     }
 

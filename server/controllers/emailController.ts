@@ -247,6 +247,79 @@ export async function sendAdminSaleNotificationEmail(orderId: string): Promise<v
 }
 
 /**
+ * Función interna — se llama desde el webhook de Mercado Pago junto con
+ * sendPaymentVerificationEmail, cuando un pago de OXXO/SPEI/cajero queda en
+ * 'awaiting_verification'. A diferencia de sendAdminSaleNotificationEmail
+ * (que solo se dispara cuando el pago ya está 'confirmed'), este correo avisa
+ * a Irving que hay un pedido pendiente de verificar manualmente, para que no
+ * dependa de entrar al panel admin a revisarlo por su cuenta.
+ * Ver [[project-flujo-pago-manual]] en la memoria del proyecto.
+ */
+export async function sendAdminVerificationPendingEmail(
+  orderId: string,
+  paymentMethod: string | null
+): Promise<void> {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL
+  if (!adminEmail) {
+    console.error('sendAdminVerificationPendingEmail: falta ADMIN_NOTIFICATION_EMAIL en las env vars')
+    return
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      items: { include: { product: { select: { name: true } } } },
+      customer: true,
+    },
+  })
+
+  if (!order) {
+    console.error(`sendAdminVerificationPendingEmail: orden no encontrada ${orderId}`)
+    return
+  }
+
+  const buyerName = order.guestName || order.customer?.fullName || 'Cliente'
+  const buyerEmail = order.guestEmail || order.customer?.email || 'sin email'
+  const orderLabel = `#${orderId.slice(0, 8).toUpperCase()}`
+  const itemsText = order.items.map((i) => `- ${i.product.name} x${i.quantity}`).join('\n')
+  const methodLabel =
+    paymentMethod === 'ticket' ? 'OXXO'
+    : paymentMethod === 'bank_transfer' ? 'transferencia SPEI'
+    : paymentMethod === 'atm' ? 'cajero automático'
+    : 'transferencia'
+
+  await withRetry(
+    () =>
+      axios.post(
+        `${BREVO_API}/smtp/email`,
+        {
+          to: [{ email: adminEmail, name: 'Double-I Cards' }],
+          sender: {
+            email: process.env.BREVO_SENDER_EMAIL,
+            name: process.env.BREVO_SENDER_NAME,
+          },
+          subject: `⏳ Pedido ${orderLabel} esperando verificación (${methodLabel})`,
+          textContent: [
+            `Un cliente pagó por ${methodLabel} y el pedido quedó pendiente de verificación manual.`,
+            ``,
+            `Pedido: ${orderLabel}`,
+            `Cliente: ${buyerName} (${buyerEmail})`,
+            ``,
+            `Productos:`,
+            itemsText,
+            ``,
+            `Total: $${Number(order.total).toFixed(2)} MXN`,
+            ``,
+            `Verifica el pago en tu cuenta de Mercado Pago y confirma el pedido desde el panel admin de doubleicards.com.`,
+          ].join('\n'),
+        },
+        { headers: brevoHeaders() }
+      ),
+    { label: 'Brevo notificación de verificación pendiente a admin' }
+  )
+}
+
+/**
  * Función interna — se llama desde el webhook de Mercado Pago cuando un pago
  * llegó en OXXO o transferencia SPEI y la orden queda en 'awaiting_verification'.
  *
@@ -315,6 +388,73 @@ export async function sendPaymentVerificationEmail(
         { headers: brevoHeaders() }
       ),
     { label: 'Brevo verificación de pago' }
+  )
+}
+
+/**
+ * Función interna — se llama desde updateOrder (adminController.ts) cuando
+ * Irving marca un pedido como 'shipped' y carga el número de guía.
+ *
+ * El correo informa al cliente que su pedido fue enviado, con el número
+ * de guía y la paquetería usada.
+ */
+export async function sendOrderShippedEmail(orderId: string): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { customer: true },
+  })
+
+  if (!order) {
+    console.error(`sendOrderShippedEmail: orden no encontrada ${orderId}`)
+    return
+  }
+
+  const recipientEmail = order.guestEmail || order.customer?.email
+  const recipientName = order.guestName || 'Cliente'
+
+  if (!recipientEmail) {
+    console.error(`sendOrderShippedEmail: sin email para orden ${orderId}`)
+    return
+  }
+
+  if (!order.trackingNumber) {
+    console.error(`sendOrderShippedEmail: orden ${orderId} sin trackingNumber, no se envía el correo`)
+    return
+  }
+
+  const templateId = parseInt(process.env.BREVO_ORDER_SHIPPED_TEMPLATE_ID || '0', 10)
+  const carrier = order.shippingMethod || 'la paquetería'
+
+  await withRetry(
+    () =>
+      axios.post(
+        `${BREVO_API}/smtp/email`,
+        {
+          to: [{ email: recipientEmail, name: recipientName }],
+          sender: {
+            email: process.env.BREVO_SENDER_EMAIL,
+            name: process.env.BREVO_SENDER_NAME,
+          },
+          templateId: templateId || undefined,
+          subject: templateId ? undefined : `¡Tu pedido va en camino! — Pedido #${orderId}`,
+          htmlContent: templateId
+            ? undefined
+            : `
+              <p>Hola ${recipientName},</p>
+              <p>¡Buenas noticias! Tu pedido <strong>#${orderId}</strong> ya fue enviado vía <strong>${carrier}</strong>.</p>
+              <p>Tu número de guía es: <strong>${order.trackingNumber}</strong></p>
+              <p>Gracias por tu compra 🎴</p>
+            `,
+          params: {
+            ORDER_ID: orderId,
+            CUSTOMER_NAME: recipientName,
+            TRACKING_NUMBER: order.trackingNumber,
+            CARRIER: carrier,
+          },
+        },
+        { headers: brevoHeaders() }
+      ),
+    { label: 'Brevo pedido enviado' }
   )
 }
 
